@@ -1,0 +1,1073 @@
+{
+  "width": 960,
+  "height": 720,
+  "supersample": 2,
+  "background": [
+    [
+      0.93,
+      0.95,
+      0.98
+    ],
+    [
+      0.78,
+      0.82,
+      0.87
+    ]
+  ],
+  "styles": {
+    "sedan": {
+      "whole_front_three_quarter": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            5.815229460365944,
+            4.128530153809538,
+            3.0819747722976754
+          ],
+          "target": [
+            -0.08092264957186401,
+            0.0,
+            0.7432441717205159
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": true,
+        "lines": true
+      },
+      "whole_rear_three_quarter": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -5.990063919208914,
+            4.137625261345955,
+            3.368826988996754
+          ],
+          "target": [
+            -0.08092264957186401,
+            0.0,
+            0.7432441717205159
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": true,
+        "lines": true
+      },
+      "wheel_01_outboard": {
+        "selection": "wheel_front_L",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            1.3750000000000002,
+            2.390602931596491,
+            0.32999999999999863
+          ],
+          "target": [
+            1.3750000000000002,
+            0.757934670479397,
+            0.32999999999999863
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "wheel_02_oblique": {
+        "selection": "wheel_front_L",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.4079671259696385,
+            1.9051608879884205,
+            0.8315932040756648
+          ],
+          "target": [
+            1.3750000000000002,
+            0.757934670479397,
+            0.32999999999999863
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "wheel_03_tread": {
+        "selection": "wheel_front_L",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.9299437984556,
+            1.088448177869243,
+            0.6678973757558611
+          ],
+          "target": [
+            1.3750000000000002,
+            0.757934670479397,
+            0.32999999999999863
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "wheel_context": {
+        "selection": "full",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.267262804179962,
+            2.67139842895659,
+            0.7022745098886696
+          ],
+          "target": [
+            1.3750000000000002,
+            0.757934670479397,
+            0.32999999999999863
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "headlight_isolated": {
+        "selection": "headlight_L",
+        "focus": "headlight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.844870990308858,
+            1.1920442174179486,
+            1.0110932690770833
+          ],
+          "target": [
+            2.1232061581622235,
+            0.6867290618880306,
+            0.655150168546528
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "headlight_lens_removed": {
+        "selection": "headlight_L",
+        "focus": "headlight_L",
+        "lens_removed": true,
+        "camera": {
+          "eye": [
+            2.844870990308858,
+            1.1920442174179486,
+            1.0110932690770833
+          ],
+          "target": [
+            2.1232061581622235,
+            0.6867290618880306,
+            0.655150168546528
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "headlight_context": {
+        "selection": "full",
+        "focus": "headlight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            3.0693596948256228,
+            1.3492329005635195,
+            1.1218166990689566
+          ],
+          "target": [
+            2.1232061581622235,
+            0.6867290618880306,
+            0.655150168546528
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "taillight_isolated": {
+        "selection": "taillight_L",
+        "focus": "taillight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -3.0863684532751776,
+            1.2985668725082506,
+            1.1071843212147872
+          ],
+          "target": [
+            -2.260505601221013,
+            0.7202914779725547,
+            0.7796027581944642
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "taillight_lens_removed": {
+        "selection": "taillight_L",
+        "focus": "taillight_L",
+        "lens_removed": true,
+        "camera": {
+          "eye": [
+            -3.0863684532751776,
+            1.2985668725082506,
+            1.1071843212147872
+          ],
+          "target": [
+            -2.260505601221013,
+            0.7202914779725547,
+            0.7796027581944642
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "taillight_context": {
+        "selection": "full",
+        "focus": "taillight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -3.3390594643129052,
+            1.4755030232747006,
+            1.2074151478599546
+          ],
+          "target": [
+            -2.260505601221013,
+            0.7202914779725547,
+            0.7796027581944642
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "mirror_housing_isolated": {
+        "selection": "mirror_L",
+        "focus": "mirror_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            0.9715629667648482,
+            1.38746306648784,
+            1.194281087999303
+          ],
+          "target": [
+            0.568,
+            0.9839000997229918,
+            0.9865544596277183
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "mirror_glass_isolated": {
+        "selection": "mirror_L",
+        "focus": "mirror_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            0.16607379962240282,
+            1.2653318550313715,
+            1.118026756570546
+          ],
+          "target": [
+            0.568,
+            0.9839000997229918,
+            0.9865544596277183
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "mirror_context": {
+        "selection": "full",
+        "focus": "mirror_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            1.0053872503743293,
+            1.9218800850933884,
+            1.2638675128657684
+          ],
+          "target": [
+            0.568,
+            0.9839000997229918,
+            0.9865544596277183
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "grille_isolated": {
+        "selection": "grille",
+        "focus": "grille",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            3.6407268209079025,
+            0.2839108434419955,
+            0.8719669923206343
+          ],
+          "target": [
+            2.305031318443267,
+            0.0,
+            0.5817134117475126
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "grille_context": {
+        "selection": "full",
+        "focus": "grille",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            4.106528619344132,
+            0.2531839343827128,
+            0.7408729324636223
+          ],
+          "target": [
+            2.305031318443267,
+            0.0,
+            0.5817134117475126
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "underside_oblique": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -5.549495900216609,
+            3.8291362133534257,
+            -4.472536839894145
+          ],
+          "target": [
+            -0.08092264957186401,
+            0.0,
+            0.7432441717205159
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "underside_bottom": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -0.08092264957186401,
+            0.014200118071728565,
+            -7.392815907959166
+          ],
+          "target": [
+            -0.08092264957186401,
+            0.0,
+            0.7432441717205159
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "underside_furniture_isolated": {
+        "selection": "underside_furniture",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -5.549495900216609,
+            3.8291362133534257,
+            -4.472536839894145
+          ],
+          "target": [
+            -0.08092264957186401,
+            0.0,
+            0.7432441717205159
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "exhaust_tip_isolated": {
+        "selection": "exhaust_L",
+        "focus": "exhaust_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -2.8269261567184185,
+            0.5233601973613071,
+            0.2960707893099115
+          ],
+          "target": [
+            -2.469445840593255,
+            0.39324800295567514,
+            0.41967758705989044
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      }
+    },
+    "sports": {
+      "whole_front_three_quarter": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            5.393253816614756,
+            3.781228546566124,
+            2.7657527976930476
+          ],
+          "target": [
+            -0.006900195200038706,
+            0.0,
+            0.6237616821697427
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": true,
+        "lines": true
+      },
+      "whole_rear_three_quarter": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -5.546981958756582,
+            3.879207013140433,
+            3.0853619081519748
+          ],
+          "target": [
+            -0.006900195200038706,
+            0.0,
+            0.6237616821697427
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": true,
+        "lines": true
+      },
+      "wheel_01_outboard": {
+        "selection": "wheel_front_L",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            1.2500000008805223,
+            2.504610742562465,
+            0.3399999973201706
+          ],
+          "target": [
+            1.2500000008805223,
+            0.806584373946831,
+            0.3399999973201706
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "wheel_02_oblique": {
+        "selection": "wheel_front_L",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.3314388695570365,
+            2.007643915521692,
+            0.8651303461124715
+          ],
+          "target": [
+            1.2500000008805223,
+            0.806584373946831,
+            0.3399999973201706
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "wheel_03_tread": {
+        "selection": "wheel_front_L",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.8553163671403716,
+            1.1478049011516385,
+            0.6888435940828924
+          ],
+          "target": [
+            1.2500000008805223,
+            0.806584373946831,
+            0.3399999973201706
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "wheel_context": {
+        "selection": "full",
+        "focus": "wheel_front_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.1835385599232144,
+            2.8085642743764057,
+            0.7294957914984292
+          ],
+          "target": [
+            1.2500000008805223,
+            0.806584373946831,
+            0.3399999973201706
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "headlight_isolated": {
+        "selection": "headlight_L",
+        "focus": "headlight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.5989700527161403,
+            1.2260663568264891,
+            0.882465824704008
+          ],
+          "target": [
+            1.8920059755918286,
+            0.7310447807805753,
+            0.5337735033297832
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "headlight_lens_removed": {
+        "selection": "headlight_L",
+        "focus": "headlight_L",
+        "lens_removed": true,
+        "camera": {
+          "eye": [
+            2.5989700527161403,
+            1.2260663568264891,
+            0.882465824704008
+          ],
+          "target": [
+            1.8920059755918286,
+            0.7310447807805753,
+            0.5337735033297832
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "headlight_context": {
+        "selection": "full",
+        "focus": "headlight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            2.8112646786917836,
+            1.3747166542560452,
+            0.9871748309208872
+          ],
+          "target": [
+            1.8920059755918286,
+            0.7310447807805753,
+            0.5337735033297832
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "taillight_isolated": {
+        "selection": "taillight_L",
+        "focus": "taillight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -2.7063568134290374,
+            1.2854303732044103,
+            0.9765086841392812
+          ],
+          "target": [
+            -1.968763415603689,
+            0.7689619159133884,
+            0.6839395274904342
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "taillight_lens_removed": {
+        "selection": "taillight_L",
+        "focus": "taillight_L",
+        "lens_removed": true,
+        "camera": {
+          "eye": [
+            -2.7063568134290374,
+            1.2854303732044103,
+            0.9765086841392812
+          ],
+          "target": [
+            -1.968763415603689,
+            0.7689619159133884,
+            0.6839395274904342
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "taillight_context": {
+        "selection": "full",
+        "focus": "taillight_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -2.9358406265035755,
+            1.44611666901631,
+            1.0675342896473137
+          ],
+          "target": [
+            -1.968763415603689,
+            0.7689619159133884,
+            0.6839395274904342
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "mirror_housing_isolated": {
+        "selection": "mirror_L",
+        "focus": "mirror_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            0.5190629810699627,
+            1.4219557007246524,
+            1.1135190444039889
+          ],
+          "target": [
+            0.11550001430511468,
+            1.0183927339598045,
+            0.9057924160324042
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "mirror_glass_isolated": {
+        "selection": "mirror_L",
+        "focus": "mirror_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -0.2864261860724826,
+            1.2998244892681843,
+            1.0372647129752322
+          ],
+          "target": [
+            0.11550001430511468,
+            1.0183927339598045,
+            0.9057924160324042
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "mirror_context": {
+        "selection": "full",
+        "focus": "mirror_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            0.5528872646794438,
+            1.9563727193302005,
+            1.1831054692704543
+          ],
+          "target": [
+            0.11550001430511468,
+            1.0183927339598045,
+            0.9057924160324042
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "grille_isolated": {
+        "selection": "grille",
+        "focus": "grille",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            3.5250231878795764,
+            0.30694999990897254,
+            0.7571708090224333
+          ],
+          "target": [
+            2.0809369762034153,
+            0.0,
+            0.4433633635216737
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "grille_context": {
+        "selection": "full",
+        "focus": "grille",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            4.03046913329255,
+            0.2739888766364607,
+            0.6156015365057725
+          ],
+          "target": [
+            2.0809369762034153,
+            0.0,
+            0.4433633635216737
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "underside_oblique": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -5.149255136466415,
+            3.6007156940246645,
+            -4.2808809052689
+          ],
+          "target": [
+            -0.006900195200038706,
+            0.0,
+            0.6237616821697427
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "underside_bottom": {
+        "selection": "full",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -0.006900195200038706,
+            0.012782755996654056,
+            -6.700210572661174
+          ],
+          "target": [
+            -0.006900195200038706,
+            0.0,
+            0.6237616821697427
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "underside_furniture_isolated": {
+        "selection": "underside_furniture",
+        "focus": "full",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -5.149255136466415,
+            3.6007156940246645,
+            -4.2808809052689
+          ],
+          "target": [
+            -0.006900195200038706,
+            0.0,
+            0.6237616821697427
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      },
+      "exhaust_tip_isolated": {
+        "selection": "exhaust_L",
+        "focus": "exhaust_L",
+        "lens_removed": false,
+        "camera": {
+          "eye": [
+            -2.5020369496707997,
+            0.6036221952398586,
+            0.21606005573401577
+          ],
+          "target": [
+            -2.144556633545636,
+            0.4735100008342266,
+            0.3396668534839947
+          ],
+          "up": [
+            0.0,
+            0.0,
+            1.0
+          ],
+          "fov_deg": 30
+        },
+        "ground": false,
+        "lines": false
+      }
+    }
+  }
+}
