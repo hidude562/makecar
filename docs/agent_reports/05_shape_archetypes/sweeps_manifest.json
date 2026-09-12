@@ -1,0 +1,4002 @@
+{
+  "source_sha256": "1cf8ae59011bd8dc94c4f34e8107e8d66d4ff9aea34df377674116646c3ec69d",
+  "size": [
+    480,
+    320
+  ],
+  "supersample": 2,
+  "cameras": {
+    "side": {
+      "eye": [
+        -0.07704871827060325,
+        -25.0,
+        0.7437725921897445
+      ],
+      "target": [
+        -0.07704871827060478,
+        0.0,
+        0.7437725921897445
+      ],
+      "up": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "fov_deg": 32.0,
+      "ortho": true,
+      "ortho_height": 4.141680547540733
+    },
+    "front": {
+      "eye": [
+        24.922951281729397,
+        0.0,
+        0.7437725921897445
+      ],
+      "target": [
+        -0.07704871827060478,
+        0.0,
+        0.7437725921897445
+      ],
+      "up": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "fov_deg": 32.0,
+      "ortho": true,
+      "ortho_height": 1.8445227360515632
+    },
+    "three_quarter_front": {
+      "eye": [
+        19.166729564730826,
+        -13.474638617393905,
+        9.294276175331461
+      ],
+      "target": [
+        -0.07704871827060478,
+        0.0,
+        0.7437725921897445
+      ],
+      "up": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "fov_deg": 32.0,
+      "ortho": true,
+      "ortho_height": 4.012568861455654
+    },
+    "plan": {
+      "eye": [
+        -0.07704871827060478,
+        0.0,
+        25.743772592189746
+      ],
+      "target": [
+        -0.07704871827060478,
+        0.0,
+        0.7437725921897445
+      ],
+      "up": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "fov_deg": 32.0,
+      "ortho": true,
+      "ortho_height": 4.141680547540733
+    },
+    "nose": {
+      "eye": [
+        22.829483438755357,
+        -11.028974080468247,
+        9.243003583141718
+      ],
+      "target": [
+        2.087,
+        0.0,
+        0.6925
+      ],
+      "up": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "fov_deg": 32.0,
+      "ortho": true,
+      "ortho_height": 1.816066826857687
+    }
+  },
+  "views": [
+    "side",
+    "front",
+    "plan",
+    "three_quarter_front"
+  ],
+  "variants": [
+    "full",
+    "clay"
+  ],
+  "groups": {
+    "face_wedge": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 0.0
+        },
+        "effective_modifiers": {
+          "face/wedge": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.7000000017881394,
+          "nose_z_bottom": 0.2325000011920929,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 0.5
+        },
+        "effective_modifiers": {
+          "face/wedge": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4149996945149206,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.6200000035762787,
+          "nose_z_bottom": 0.2000000023841858,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 1.0
+        },
+        "effective_modifiers": {
+          "face/wedge": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4114975584453666,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59293,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "face_upright": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/upright": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/upright": 0.0
+        },
+        "effective_modifiers": {
+          "face/upright": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/upright": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.8749999988079071,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/upright": 0.5
+        },
+        "effective_modifiers": {
+          "face/upright": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.418500000026077,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60061,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/upright": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.9699999976158142,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/upright": 1.0
+        },
+        "effective_modifiers": {
+          "face/upright": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.421500000052154,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60253,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "face_shark": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/shark": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/shark": 0.0
+        },
+        "effective_modifiers": {
+          "face/shark": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/shark": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.7200000013411045,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/shark": 0.5
+        },
+        "effective_modifiers": {
+          "face/shark": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/shark": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.660000002682209,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/shark": 1.0
+        },
+        "effective_modifiers": {
+          "face/shark": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "face_snub": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/snub": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/snub": 0.0
+        },
+        "effective_modifiers": {
+          "face/snub": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/snub": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589349828922617,
+          "height": 1.445,
+          "x_cowl": 1.2120000029802322,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.2719999994039536,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.10799999701976781,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9701253362113704,
+          "y_belt": 0.929425258623407,
+          "y_shoulder": 0.859341999665926,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.8599999982118607,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6497881084906363,
+          "nose_top_half_width": 0.5805814980941318,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/snub": 0.5
+        },
+        "effective_modifiers": {
+          "face/snub": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1071372151802517,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1071372151802517,
+            1.4869956970372875
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60097,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/snub": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589977432514424,
+          "height": 1.445,
+          "x_cowl": 1.4120000059604645,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.38199999880790714,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": 0.09200000596046443,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9800000004584064,
+          "y_belt": 0.9294988716257212,
+          "y_shoulder": 0.8594724041513155,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.9399999964237213,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6227548074203038,
+          "nose_top_half_width": 0.5293415866272949,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/snub": 1.0
+        },
+        "effective_modifiers": {
+          "face/snub": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.106916609105816,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.106916609105816,
+            1.486541787031508
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60325,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "face_cabforward": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/cabforward": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/cabforward": 0.0
+        },
+        "effective_modifiers": {
+          "face/cabforward": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/cabforward": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589694940026467,
+          "height": 1.445,
+          "x_cowl": 1.3520000035762787,
+          "z_cowl": 1.050000000745058,
+          "x_roof_front": 0.2520000035762787,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.1679999994039536,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9701253362113704,
+          "y_belt": 0.9294161533663573,
+          "y_shoulder": 0.8593547929094394,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.8500000002980233,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6035598039107822,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/cabforward": 0.5
+        },
+        "effective_modifiers": {
+          "face/cabforward": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1071884499271856,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1071884499271856,
+            1.487097304765566
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60285,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/cabforward": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589981725705196,
+          "height": 1.445,
+          "x_cowl": 1.6920000071525574,
+          "z_cowl": 1.1000000014901161,
+          "x_roof_front": 0.3420000071525574,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.027999998807907156,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9800000004584064,
+          "y_belt": 0.9294806611116219,
+          "y_shoulder": 0.8594979906383424,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.9200000005960465,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.5752981982605957,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/cabforward": 1.0
+        },
+        "effective_modifiers": {
+          "face/cabforward": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1070190785996838,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1070190785996838,
+            1.4867131628056223
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60237,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "face_longhood": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 0.0
+        },
+        "effective_modifiers": {
+          "face/longhood": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589597934625033,
+          "height": 1.445,
+          "x_cowl": 0.8520000035762787,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.0020000035762787194,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.46799999642372136,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9583894190259372,
+          "y_belt": 0.9292037587994418,
+          "y_shoulder": 0.8587512858839228,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.8550000029802323,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 0.5
+        },
+        "effective_modifiers": {
+          "face/longhood": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1074117135342258,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1074117135342258,
+            1.4884016995454938
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59403,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 99
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589996603311756,
+          "height": 1.445,
+          "x_cowl": 0.6920000071525574,
+          "z_cowl": 1.0,
+          "x_roof_front": -0.1579999928474426,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.6279999928474427,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.95652816608754,
+          "y_belt": 0.9290558719777909,
+          "y_shoulder": 0.8582909765873092,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.9300000059604645,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 1.0
+        },
+        "effective_modifiers": {
+          "face/longhood": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1074656058137644,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1074656058137644,
+            1.4895265125434716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59317,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 99
+      }
+    ],
+    "plan_pointed": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/pointed": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/pointed": 0.0
+        },
+        "effective_modifiers": {
+          "plan/pointed": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/pointed": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8672123846543585,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8787586775621098,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.734424769308717,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.5146215994136834,
+          "nose_top_half_width": 0.4709762937801384,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.5867103984663009,
+          "tail_top_half_width": 0.5417103984663009,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/pointed": 0.5
+        },
+        "effective_modifiers": {
+          "plan/pointed": 0.5
+        },
+        "bounds": [
+          [
+            -2.582097436541209,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59581,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/pointed": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8540730117121057,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8762493051457992,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7081460234242114,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.3524217892663979,
+          "nose_top_half_width": 0.310131177999308,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.4695660969326019,
+          "tail_top_half_width": 0.42456609693260183,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/pointed": 1.0
+        },
+        "effective_modifiers": {
+          "plan/pointed": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 58985,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "plan_square": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/square": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/square": 0.0
+        },
+        "effective_modifiers": {
+          "plan/square": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/square": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.7669324044363999,
+          "nose_top_half_width": 0.7219324044363998,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7759435003706932,
+          "tail_top_half_width": 0.7309435003706931,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/square": 0.5
+        },
+        "effective_modifiers": {
+          "plan/square": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59293,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/square": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.8570433993118309,
+          "nose_top_half_width": 0.8120433993118309,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.8480323007413864,
+          "tail_top_half_width": 0.8030323007413863,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/square": 1.0
+        },
+        "effective_modifiers": {
+          "plan/square": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4155,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59317,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "plan_cokebottle": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/cokebottle": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/cokebottle": 0.0
+        },
+        "effective_modifiers": {
+          "plan/cokebottle": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/cokebottle": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.839727844749095,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.865550327214034,
+          "y_shoulder": 0.7997397048502217,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8533872770868145,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.47155166268375326,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8778185037643426,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.878775484249589,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7556370075286851,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6452825580018067,
+          "nose_top_half_width": 0.6002825580018066,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.6858325017699718,
+          "tail_top_half_width": 0.6408325017699718,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/cokebottle": 0.5
+        },
+        "effective_modifiers": {
+          "plan/cokebottle": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.0396068308639097,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.0396068308639097,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59797,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "plan/cokebottle": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.839727844749095,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.8017490088069753,
+          "y_shoulder": 0.7402678145199071,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8408204014204346,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.40883443852292306,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8752852499320739,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8762829185207575,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7505704998641478,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6137437064426445,
+          "nose_top_half_width": 0.5687437064426445,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.6678103035399436,
+          "tail_top_half_width": 0.6228103035399436,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "plan/cokebottle": 1.0
+        },
+        "effective_modifiers": {
+          "plan/cokebottle": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -0.9718558404731321,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            0.9718558404731321,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59725,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "section_tumblehome": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/tumblehome": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/tumblehome": 0.0
+        },
+        "effective_modifiers": {
+          "section/tumblehome": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/tumblehome": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.575259999254942,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/tumblehome": 0.5
+        },
+        "effective_modifiers": {
+          "section/tumblehome": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59853,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/tumblehome": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.5252599985098839,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/tumblehome": 1.0
+        },
+        "effective_modifiers": {
+          "section/tumblehome": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59837,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "section_slabside": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/slabside": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/slabside": 0.0
+        },
+        "effective_modifiers": {
+          "section/slabside": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/slabside": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8529989332133472,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.6988199994659424,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9263516455950157,
+          "y_shoulder": 0.8742115948452602,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6738214095348918,
+          "nose_top_half_width": 0.6288214095348917,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7008546999739229,
+          "tail_top_half_width": 0.6558546999739229,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/slabside": 0.5
+        },
+        "effective_modifiers": {
+          "section/slabside": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1223578209194112,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1223578209194112,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59885,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/slabside": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8469989331611931,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.7723799989318848,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9233516455689387,
+          "y_shoulder": 0.8892115945099841,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6708214095088147,
+          "nose_top_half_width": 0.6258214095088147,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.6978546999478459,
+          "tail_top_half_width": 0.6528546999478458,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/slabside": 1.0
+        },
+        "effective_modifiers": {
+          "section/slabside": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.137357820584135,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.137357820584135,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59901,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "section_domed": [
+      {
+        "label": "0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/domed": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/domed": 0.0
+        },
+        "effective_modifiers": {
+          "section/domed": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/domed": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.6091687501168251,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8467115949942718,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/domed": 0.5
+        },
+        "effective_modifiers": {
+          "section/domed": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.0948578210684228,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.0948578210684228,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "section/domed": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.5930775002336502,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8342115948080073,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.78,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "section/domed": 1.0
+        },
+        "effective_modifiers": {
+          "section/domed": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.0823578208821583,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.0823578208821583,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59853,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "blend_wedge_upright": [
+      {
+        "label": "1 + 0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 1.0,
+              "face/upright": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.6200000035762787,
+          "nose_z_bottom": 0.2000000023841858,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 1.0,
+          "face/upright": 0.0
+        },
+        "effective_modifiers": {
+          "face/wedge": 1.0,
+          "face/upright": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4114975584453666,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59293,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0.5 + 0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 0.5,
+              "face/upright": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.7950000005960465,
+          "nose_z_bottom": 0.2325000011920929,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 0.5,
+          "face/upright": 0.5
+        },
+        "effective_modifiers": {
+          "face/wedge": 0.5,
+          "face/upright": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4181197678583226,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60061,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "0 + 1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 0.0,
+              "face/upright": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.9699999976158142,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 0.0,
+          "face/upright": 1.0
+        },
+        "effective_modifiers": {
+          "face/wedge": 0.0,
+          "face/upright": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.421500000052154,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60253,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1 + 1 (normalized)",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/wedge": 1.0,
+              "face/upright": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.7950000005960465,
+          "nose_z_bottom": 0.2325000011920929,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/wedge": 1.0,
+          "face/upright": 1.0
+        },
+        "effective_modifiers": {
+          "face/wedge": 0.5,
+          "face/upright": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4181197678583226,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 60061,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      }
+    ],
+    "blend_longhood_shark": [
+      {
+        "label": "1 + 0",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 1.0,
+              "face/shark": 0.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589996603311756,
+          "height": 1.445,
+          "x_cowl": 0.6920000071525574,
+          "z_cowl": 1.0,
+          "x_roof_front": -0.1579999928474426,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.6279999928474427,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.95652816608754,
+          "y_belt": 0.9290558719777909,
+          "y_shoulder": 0.8582909765873092,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.9300000059604645,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 1.0,
+          "face/shark": 0.0
+        },
+        "effective_modifiers": {
+          "face/longhood": 1.0,
+          "face/shark": 0.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1074656058137644,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1074656058137644,
+            1.4895265125434716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59317,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 99
+      },
+      {
+        "label": "0.5 + 0.5",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 0.5,
+              "face/shark": 0.5
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589597934625033,
+          "height": 1.445,
+          "x_cowl": 0.8520000035762787,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.0020000035762787194,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.46799999642372136,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9583894190259372,
+          "y_belt": 0.9292037587994418,
+          "y_shoulder": 0.8587512858839228,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.7950000043213368,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 0.5,
+          "face/shark": 0.5
+        },
+        "effective_modifiers": {
+          "face/longhood": 0.5,
+          "face/shark": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1074117135342258,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1074117135342258,
+            1.4884016995454938
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59403,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 99
+      },
+      {
+        "label": "0 + 1",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 0.0,
+              "face/shark": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589989332655013,
+          "height": 1.445,
+          "x_cowl": 1.012,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.16200000000000003,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.30800000000000005,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9602506719643344,
+          "y_belt": 0.9293516456210927,
+          "y_shoulder": 0.8592115951805364,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.660000002682209,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 0.0,
+          "face/shark": 1.0
+        },
+        "effective_modifiers": {
+          "face/longhood": 0.0,
+          "face/shark": 1.0
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1073578212546873,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1073578212546873,
+            1.4875317599524716
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59869,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 100
+      },
+      {
+        "label": "1 + 1 (normalized)",
+        "config": {
+          "name": "sedan",
+          "seed": 0,
+          "body": {
+            "style": "sedan",
+            "modifiers": {
+              "face/longhood": 1.0,
+              "face/shark": 1.0
+            }
+          },
+          "palette": {
+            "paint": "#91acc1"
+          },
+          "components": {
+            "defaults": true
+          }
+        },
+        "assembly_scope": "complete default assembly",
+        "measurements": {
+          "x_front": 2.387,
+          "x_rear": -2.512,
+          "length": 4.899,
+          "width": 1.8589597934625033,
+          "height": 1.445,
+          "x_cowl": 0.8520000035762787,
+          "z_cowl": 1.0,
+          "x_roof_front": 0.0020000035762787194,
+          "z_roof_front": 1.445,
+          "x_roof_rear": -0.9119999999999999,
+          "z_roof_rear": 1.425,
+          "x_deck": -1.5619999999999998,
+          "z_deck": 0.98,
+          "x_bpillar": -0.46799999642372136,
+          "roof_half_width": 0.62526,
+          "z_belt": 0.9583894190259372,
+          "y_belt": 0.9292037587994418,
+          "y_shoulder": 0.8587512858839228,
+          "z_sill": 0.3600000000000007,
+          "y_sill": 0.8659541527531944,
+          "z_floor": 0.15000000000000002,
+          "y_floor_edge": 0.5342688868445834,
+          "wheel_front_x": 1.412000000000001,
+          "wheel_front_z": 0.33415,
+          "arch_front_r": 0.394150000000002,
+          "wheel_front_y": 0.8803517575966112,
+          "wheel_rear_x": -1.4120000000000024,
+          "wheel_rear_z": 0.33414999999999584,
+          "arch_rear_r": 0.39415000000000777,
+          "wheel_rear_y": 0.8812680499784205,
+          "wheelbase": 2.8240000000000034,
+          "track": 1.7607035151932224,
+          "nose_z_top": 0.7950000043213368,
+          "nose_z_bottom": 0.265,
+          "nose_half_width": 0.6768214095609688,
+          "nose_top_half_width": 0.6318214095609688,
+          "tail_z_top": 0.94,
+          "tail_z_bottom": 0.275,
+          "tail_half_width": 0.7038546999999999,
+          "tail_top_half_width": 0.6588546999999999,
+          "bed": 0.02734375,
+          "has_bed": 0.0
+        },
+        "requested_modifiers": {
+          "face/longhood": 1.0,
+          "face/shark": 1.0
+        },
+        "effective_modifiers": {
+          "face/longhood": 0.5,
+          "face/shark": 0.5
+        },
+        "bounds": [
+          [
+            -2.5820974365412095,
+            -1.1074117135342258,
+            1.342442701746105e-05
+          ],
+          [
+            2.4154999999999998,
+            1.1074117135342258,
+            1.4884016995454938
+          ]
+        ],
+        "body_faces": 5620,
+        "assembly_faces": 59403,
+        "clay_faces": 8068,
+        "silhouette_faces": 6192,
+        "components": 99
+      }
+    ]
+  }
+}
