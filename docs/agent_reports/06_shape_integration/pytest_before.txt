@@ -1,0 +1,125 @@
+/home/nathan/popo-wt/shape-integration
+16:### Exhaust and lower valance
+20:Visual inspection caught a second problem after endpoint tests were green: the old high tips occupied painted bumper volume, while clear underfloor feeds formed exposed hooks below them. A shared, mount-only `exhaust_mount` helper now samples the actual lower rear-valance edge. The 38mm-radius outlets sit 4mm beneath it. Examples, left mount XYZ in metres; right mirrors Y:
+70:No tests were deleted. Stock lamp assertions were **strengthened** to actual exported triangles; the old taillight exception relative to an already folded reference was removed. Exhaust continuity, symmetry, console gaps, road clearance and `tests/test_fit_sanity.py` were not relaxed. The suite gained **179 cases** overall.
+95:Each linked sheet contains front three-quarter, rear three-quarter, side, nose, rear bumper/exhaust and wheel views. All four final sheets and all twelve full-size closeups were opened and inspected after the final engine freeze; baseline comparisons were also viewed.
+105:`front_three_quarter.png`, `rear_three_quarter.png`, `side.png`, `nose_closeup.png`, `rear_bumper_exhaust_closeup.png`, `wheel_closeup.png`.
+111:- `exhaust_{before,after}_{sedan,sports}_{underbody,side,rear_closeup}.png`: 12 images, selected shell/wheels/tips/system with a grey, below-lit pan to expose routing.
+121:python3 docs/agent_reports/04_integration/render_exhaust.py --phase both
+131:- **Exhaust feeds are conspicuous in low views**, especially sports: real curved branches and inlet hardware remain visible beneath the valance, including in the CLI preview. They are connected and clear the shell/road, but less visually concealed than a production car's underbody. No pan penetration, omitted geometry or camera change was used to hide them.
+........................................................................ [  7%]
+........................................................................ [ 14%]
+........................................................................ [ 21%]
+........................................................................ [ 28%]
+...........................................F......................F..... [ 35%]
+........................................................................ [ 42%]
+........................................................................ [ 49%]
+........................................................................ [ 56%]
+........................................................................ [ 64%]
+........................................................................ [ 71%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........................................................................ [ 92%]
+........................................................................ [ 99%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+_________ test_exhaust_cans_and_branch_turn_clear_current_pan[sports] __________
+
+detailed_body = BodyResult(mesh=Mesh('body', 6108 verts, 5620 faces), full_mesh=Mesh('body', 6108 verts, 6192 faces), connectors=[Circ...0, door_count=4), hints={'mud_flaps': True, 'style': 'sports', 'door_count': 2, 'tire_width': 0.205, 'arch_gap': 0.06})
+
+    def test_exhaust_cans_and_branch_turn_clear_current_pan(detailed_body):
+>       assert_exhaust_pan_fit(detailed_body)
+
+tests/test_components_connectors_extra.py:447: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+body = BodyResult(mesh=Mesh('body', 6108 verts, 5620 faces), full_mesh=Mesh('body', 6108 verts, 6192 faces), connectors=[Circ...0, door_count=4), hints={'mud_flaps': True, 'style': 'sports', 'door_count': 2, 'tire_width': 0.205, 'arch_gap': 0.06})
+
+    def assert_exhaust_pan_fit(body):
+        conn = body.connector("exhaust_system")
+        ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+        mesh = get_component("exhaust.system").build(conn, {}, ctx).mesh
+        # Both full-length can skins and the tunnel pipe must remain outside the
+        # actual pan; merely checking their ground clearance hid crown penetration.
+        for name in ("catalyst", "silencer", "pipe_run_0"):
+            part = mesh.subset(mesh.zones[name])
+            edges = np.array([(a, b) for face in part.faces for a, b in zip(face, face[1:] + face[:1])])
+            samples = np.vstack([part.vertices, part.vertices[edges].mean(axis=1)])
+            assert underbody_clearance(body, samples).min() >= .004 - 1e-8, name
+            if name != "pipe_run_0":
+                assert part.vertices[:, 2].min() >= .05 - 1e-8, name
+                assert np.ptp(part.vertices[:, 2]) > .02, "can must not collapse"
+                assert_closed_solid(part, name)
+        for k in (1, 2):
+            path = np.asarray(conn.meta["paths"][k])
+            rings = swept_rings(mesh, f"pipe_run_{k}", path, 10)
+            # The whole branch stays below the pan until its short rise inside the
+            # rear bumper: checking only the turn missed an early floor penetration.
+            last = len(path) - 3
+            samples = np.vstack([rings[:last + 1].reshape(-1, 3),
+                                 ((rings[:last] + rings[1:last + 1]) / 2).reshape(-1, 3)])
+>           assert underbody_clearance(body, samples).min() >= .004 - 1e-8, k
+E           AssertionError: 1
+E           assert 0.0010254979740492443 >= (0.004 - 1e-08)
+E            +  where 0.0010254979740492443 = <built-in method min of numpy.ndarray object at 0x7061d255e670>()
+E            +    where <built-in method min of numpy.ndarray object at 0x7061d255e670> = array([0.033     , 0.04769463, 0.05677641, 0.05677641, 0.04769463,\n       0.033     , 0.01830537, 0.00922359, 0.009223...6 , 0.05842594, 0.06867103, 0.0678986 , 0.05640369,\n       0.03857696, 0.02122762, 0.01033694, 0.01121359, 0.02324987]).min
+E            +      where array([0.033     , 0.04769463, 0.05677641, 0.05677641, 0.04769463,\n       0.033     , 0.01830537, 0.00922359, 0.009223...6 , 0.05842594, 0.06867103, 0.0678986 , 0.05640369,\n       0.03857696, 0.02122762, 0.01033694, 0.01121359, 0.02324987]) = underbody_clearance(BodyResult(mesh=Mesh('body', 6108 verts, 5620 faces), full_mesh=Mesh('body', 6108 verts, 6192 faces), connectors=[Circ...0, door_count=4), hints={'mud_flaps': True, 'style': 'sports', 'door_count': 2, 'tire_width': 0.205, 'arch_gap': 0.06}), array([[-0.91680623, -0.0248934 ,  0.152     ],\n       [-0.91636577, -0.02013918,  0.13730537],\n       [-0.91521266, -...5493385,  0.19144412],\n       [-1.80920658,  0.13950142,  0.19103968],\n       [-1.81389306,  0.12739239,  0.18274054]]))
+
+tests/test_components_connectors_extra.py:412: AssertionError
+________ test_exhaust_pan_and_tip_fit_follow_morphs[sports-modifiers0] _________
+
+car_body = <makecar.body.body.CarBody object at 0x7061debb92b0>
+style = 'sports', modifiers = {'ground_clearance': -1}
+
+    @pytest.mark.parametrize("style,modifiers", [
+        ("sports", {"ground_clearance": -1}),
+        ("sedan", {"tunnel_height": 1, "tunnel_width": -1}),
+        ({"coupe": .6, "wagon": .4}, {"wheelbase": .7, "rear_fascia_rake": -.8,
+                                      "ground_clearance": -.4, "tunnel_height": -.7}),
+    ])
+    def test_exhaust_pan_and_tip_fit_follow_morphs(car_body, style, modifiers):
+        body = car_body.build(style=style, modifiers=modifiers)
+>       assert_exhaust_pan_fit(body)
+
+tests/test_components_connectors_extra.py:458: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+body = BodyResult(mesh=Mesh('body', 6108 verts, 5620 faces), full_mesh=Mesh('body', 6108 verts, 6192 faces), connectors=[Circ...=0.02, bed_depth=0.0, door_count=4), hints={'style': 'sports', 'door_count': 2, 'tire_width': 0.205, 'arch_gap': 0.06})
+
+    def assert_exhaust_pan_fit(body):
+        conn = body.connector("exhaust_system")
+        ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+        mesh = get_component("exhaust.system").build(conn, {}, ctx).mesh
+        # Both full-length can skins and the tunnel pipe must remain outside the
+        # actual pan; merely checking their ground clearance hid crown penetration.
+        for name in ("catalyst", "silencer", "pipe_run_0"):
+            part = mesh.subset(mesh.zones[name])
+            edges = np.array([(a, b) for face in part.faces for a, b in zip(face, face[1:] + face[:1])])
+            samples = np.vstack([part.vertices, part.vertices[edges].mean(axis=1)])
+            assert underbody_clearance(body, samples).min() >= .004 - 1e-8, name
+            if name != "pipe_run_0":
+                assert part.vertices[:, 2].min() >= .05 - 1e-8, name
+                assert np.ptp(part.vertices[:, 2]) > .02, "can must not collapse"
+                assert_closed_solid(part, name)
+        for k in (1, 2):
+            path = np.asarray(conn.meta["paths"][k])
+            rings = swept_rings(mesh, f"pipe_run_{k}", path, 10)
+            # The whole branch stays below the pan until its short rise inside the
+            # rear bumper: checking only the turn missed an early floor penetration.
+            last = len(path) - 3
+            samples = np.vstack([rings[:last + 1].reshape(-1, 3),
+                                 ((rings[:last] + rings[1:last + 1]) / 2).reshape(-1, 3)])
+>           assert underbody_clearance(body, samples).min() >= .004 - 1e-8, k
+E           AssertionError: 1
+E           assert 0.0010254979740492165 >= (0.004 - 1e-08)
+E            +  where 0.0010254979740492165 = <built-in method min of numpy.ndarray object at 0x7061bbc7b6f0>()
+E            +    where <built-in method min of numpy.ndarray object at 0x7061bbc7b6f0> = array([0.033     , 0.04769463, 0.05677641, 0.05677641, 0.04769463,\n       0.033     , 0.01830537, 0.00922359, 0.009223...3 , 0.06864408, 0.08077436, 0.0795788 , 0.06551406,\n       0.0439524 , 0.02282579, 0.0100104 , 0.01129693, 0.02619397]).min
+E            +      where array([0.033     , 0.04769463, 0.05677641, 0.05677641, 0.04769463,\n       0.033     , 0.01830537, 0.00922359, 0.009223...3 , 0.06864408, 0.08077436, 0.0795788 , 0.06551406,\n       0.0439524 , 0.02282579, 0.0100104 , 0.01129693, 0.02619397]) = underbody_clearance(BodyResult(mesh=Mesh('body', 6108 verts, 5620 faces), full_mesh=Mesh('body', 6108 verts, 6192 faces), connectors=[Circ...=0.02, bed_depth=0.0, door_count=4), hints={'style': 'sports', 'door_count': 2, 'tire_width': 0.205, 'arch_gap': 0.06}), array([[-0.91680623, -0.0248934 ,  0.102     ],\n       [-0.91636577, -0.02013918,  0.08730537],\n       [-0.91521266, -...5465632,  0.16300531],\n       [-1.80505097,  0.13923086,  0.16255552],\n       [-1.81150097,  0.12723213,  0.15531376]]))
+
+tests/test_components_connectors_extra.py:412: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_components_connectors_extra.py::test_exhaust_cans_and_branch_turn_clear_current_pan[sports]
+FAILED tests/test_components_connectors_extra.py::test_exhaust_pan_and_tip_fit_follow_morphs[sports-modifiers0]
+2 failed, 1010 passed in 161.98s (0:02:41)
+
+[exited with code 1]
