@@ -12,7 +12,34 @@ from ..geometry.curves import circle_points, rounded_rect_points
 from ..connectors import Connector, PointConnector, PolygonConnector, RectangleConnector, CircleConnector
 from ..morph.morphable import ModifierSpec
 from .base import CarComponent, MorphableComponent, ComponentResult, BuildContext, register
-from .fills import fill_connector
+from .fills import fill_connector, coons_patch
+
+
+def _part(mesh, part, name):
+    """Keep detail groups/zones addressable for inspection and export."""
+    part.add_group(name, range(part.n_vertices))
+    part.add_zone(name, range(part.n_faces))
+    mesh.merge(part)
+    return mesh
+
+
+def _surround(width, height, band, depth, material, z=0.0):
+    """An open rounded rectangular bezel, not overlapping solid plates."""
+    band = min(band, width * .18, height * .18)
+    radius = min(.035, height * .24, width * .24)
+    outer = rounded_rect_points(width, height, radius, 4)
+    inner = rounded_rect_points(width - 2 * band, height - 2 * band,
+                                max(.001, radius - band), 4)
+    rings = [np.column_stack([p, np.full(len(p), h)]) for p, h in
+             ((inner, z), (outer, z), (outer, z + depth), (inner, z + depth), (inner, z))]
+    return P.loft(rings, material=material)
+
+
+def _pipe(path, radius, material, closed=False, sides=8):
+    m = P.sweep_profile(np.asarray(path), circle_points(radius, sides), material=material,
+                        closed_path=closed)
+    # sweep_profile's (binormal, normal) basis has negative handedness.
+    return m.flip_normals()
 
 
 # =============================================================== WHEEL
@@ -34,7 +61,8 @@ class Wheel(MorphableComponent):
     accepts = (CircleConnector,)
     default_for = ("wheel",)
     params_cls = WheelParams
-    options = {"spokes": 5, "spoke_width": 0.55, "hubcap": True, "tread_grooves": 3}
+    options = {"spokes": 5, "spoke_width": 0.55, "hubcap": True, "tread_grooves": 3,
+               "tread_blocks": 40, "dish": 0.04, "caliper_color": "#b52d22"}
     description = "tyre with alloy rim; radius/width/rim size fitted from the hub connector"
     modifier_specs = [
         ModifierSpec("radius", 0.10, 0.14, "size", "tyre radius"),
@@ -43,40 +71,29 @@ class Wheel(MorphableComponent):
         ModifierSpec("dish", 0.03, 0.05, "style", "spoke dish depth"),
     ]
 
-    N = 36  # tyre segments
+    N = 48
 
     def generate(self, p: WheelParams) -> Mesh:
-        n = self.N
+        # Only the carcass, barrel, lips and hub belong to the target library.
+        # Count-dependent tread/spokes/hardware are fitted AFTER morphing it.
         R, w, rr = p.radius, p.width, p.rim_ratio * p.radius
-        b = p.sidewall_bulge
-        # tyre as a revolved profile (r, z) about +Z; z from -w/2 (inboard) to +w/2 (outboard)
-        # R is the outer (tread) radius; the sidewall bulge is kept inside R so the tyre touches the ground
-        prof = np.array([
-            [rr + 0.005, -w / 2 + 0.015],
-            [rr + 0.02, -w / 2 + 0.008],
-            [R - 0.05, -w / 2 + 0.004],
-            [R - 0.02, -w / 2 + 0.008],
-            [R - 0.006, -w / 2 + 0.03],
-            [R, -w * 0.25],
-            [R, w * 0.25],
-            [R - 0.006, w / 2 - 0.03],
-            [R - 0.02, w / 2 - 0.008],
-            [R - 0.05, w / 2 - 0.004],
-            [rr + 0.02, w / 2 - 0.008],
-            [rr + 0.005, w / 2 - 0.015],
+        gap = R - rr
+        profile = np.array([
+            [rr + .004, -w / 2 + .016], [rr + gap * .18, -w / 2 + .006],
+            [rr + gap * .60, -w / 2], [R - .025, -w / 2 + .009],
+            [R - .008, -w * .37], [R - .007, -w * .32],
+            [R - .007, w * .32], [R - .008, w * .37],
+            [R - .025, w / 2 - .009], [rr + gap * .60, w / 2],
+            [rr + gap * .18, w / 2 - .006], [rr + .004, w / 2 - .016],
         ])
-        tyre = P.revolve(prof, n, material="tyre", name="tyre")
-        # rim barrel (inner cylinder) + lip
-        barrel = P.tube(rr + 0.006, rr - 0.02, w - 0.02, n, material="rim", name="barrel")
-        lip = P.tube(rr + 0.012, rr - 0.005, 0.02, n, material="rim", center=(0, 0, w / 2 - 0.02), name="lip")
-        # spoke face: a dished disc built as a revolve (fixed topology; spoke cut-outs are done by material)
-        zf = w / 2 - 0.02 - p.dish
-        face_prof = np.array([[0.0, zf + 0.01], [0.05, zf + 0.012], [0.09, zf + 0.0], [rr * 0.55, zf - 0.005],
-                              [rr - 0.02, zf + 0.004], [rr - 0.02, zf - 0.02], [0.0, zf - 0.02]])
-        face = P.revolve(face_prof, n, material="rim", name="spokes")
-        hub = P.cylinder(0.055, 0.03, 16, material="rim_dark", center=(0, 0, zf + 0.012), name="hub")
-        m = tyre.merge(barrel).merge(lip).merge(face).merge(hub)
-        m.add_group("face_ring", list(range(tyre.n_vertices + barrel.n_vertices + lip.n_vertices, m.n_vertices - hub.n_vertices)))
+        m = Mesh(name="wheel")
+        _part(m, P.revolve(profile, self.N, material="tyre"), "carcass")
+        _part(m, P.tube(rr + .004, rr - .012, w - .035, self.N, material="rim"), "barrel")
+        for side in (-1, 1):
+            _part(m, P.torus(rr + .004, .007, self.N, 6, material="rim",
+                            center=(0, 0, side * (w / 2 - .019))), f"lip_{side}")
+        zf = w / 2 - .024 - p.dish
+        _part(m, P.cylinder(.052, .028, 24, material="rim_dark", center=(0, 0, zf)), "face_ring")
         return m
 
     def fit(self, conn: CircleConnector, opts, ctx) -> Dict[str, float]:
@@ -86,6 +103,7 @@ class Wheel(MorphableComponent):
             v["width"] = self.value_for("width", tw)
         # bigger wheels get lower profile tyres
         v["rim_ratio"] = self.value_for("rim_ratio", float(opts.get("rim_ratio", 0.62 + (conn.radius - 0.33) * 0.6)))
+        v["dish"] = self.value_for("dish", float(opts["dish"]))
         return v
 
     def materials(self, ctx, opts):
@@ -93,28 +111,125 @@ class Wheel(MorphableComponent):
             "tyre": ctx.material("tyre", "#1a1a1c", shininess=0.08),
             "rim": ctx.material("rim", opts.get("rim_color", ctx.palette.rim), shininess=0.7, metallic=0.8),
             "rim_dark": ctx.material("rim_dark", "#3a3c40", shininess=0.4),
+            "brake_disc": ctx.material("brake_disc", "#777a7d", metallic=.8, shininess=.5),
+            "caliper": ctx.material("caliper", opts["caliper_color"], shininess=.5),
         }
 
     def build_local(self, conn, opts, ctx) -> ComponentResult:
         res = super().build_local(conn, opts, ctx)
-        m = res.mesh
-        # spoke cut-outs: paint the faces of the dished disc between the spokes as dark
-        n_spokes = int(opts.get("spokes", 5))
-        sw = float(opts.get("spoke_width", 0.55))
-        spokes_zone = [i for i, f in enumerate(m.faces) if m.face_materials[i] == "rim" and m.name and True]
-        cent = m.face_centroids()
-        rr = conn.radius * (0.62 + (conn.radius - 0.33) * 0.6)
-        for i in range(m.n_faces):
-            if m.face_materials[i] != "rim":
-                continue
-            x, y, z = cent[i]
-            r = np.hypot(x, y)
-            if r < 0.07 or r > rr * 0.9 or z < 0:
-                continue
-            ang = (np.arctan2(y, x) * n_spokes / (2 * np.pi)) % 1.0
-            if abs(ang - 0.5) < 0.5 * (1 - sw) * (0.55 + 0.45 * (r / rr)):
-                m.face_materials[i] = "rim_dark"
+        p = self.canonical()
+        for key, value in res.info["modifier_values"].items():
+            spec = self.spec(key)
+            setattr(p, key, getattr(p, key) + value * (spec.delta_plus if value >= 0 else spec.delta_minus))
+        # Differential targets add independently; use the same fitted rim radius
+        # as the library (rather than introducing a radius*ratio cross-term).
+        rr = .33 * p.rim_ratio + (p.radius - .33) * .62
+        self._tread(res.mesh, p, opts)
+        self._wheel_face(res.mesh, p, rr, opts)
+        self._hardware(res.mesh, p, rr, opts)
+        res.info.update({"tread_blocks": int(np.clip(opts["tread_blocks"], 0, 64)),
+                         "spokes": int(np.clip(opts["spokes"], 3, 12)), "rim_radius": rr})
         return res
+
+    def _tread(self, m, p, opts):
+        blocks = int(np.clip(opts["tread_blocks"], 0, 64))
+        grooves = int(np.clip(opts["tread_grooves"], 0, 4))
+        lane = p.width * .70 / (grooves + 1)
+        for j in range(grooves + 1):
+            z = -p.width * .35 + (j + .5) * lane
+            half = (lane - min(.006, lane * .18)) / 2
+            prof = [[p.radius - .007, z - half], [p.radius - .003, z - half],
+                    [p.radius - .003, z + half], [p.radius - .007, z + half]]
+            _part(m, P.revolve(prof, self.N, material="tyre"), f"tread_rib_{j}")
+            for k in range(blocks):
+                a = 2 * np.pi * (k + .5 * (j % 2)) / blocks
+                da = 2 * np.pi / blocks * .40
+                skew = .018 / p.radius * (1 if j % 2 else -1)
+                # Four-sided angled tread blocks, with an actual 4mm valley.
+                angles = np.array([a - da - skew, a + da - skew, a + da + skew, a - da + skew])
+                zz = np.array([z - half, z - half, z + half, z + half])
+                rings = [np.column_stack([r * np.cos(angles), r * np.sin(angles), zz])
+                         for r in (p.radius - .004, p.radius)]
+                block = P.loft(rings, cap_start=False, cap_end=False, material="tyre")
+                block.faces += [(3, 2, 1, 0), (4, 5, 6, 7)]
+                block.face_materials += ["tyre", "tyre"]
+                _part(m, block, f"tread_block_{j}_{k}")
+
+    def _wheel_face(self, m, p, rr, opts):
+        n = int(np.clip(opts["spokes"], 3, 12))
+        width = float(np.clip(opts["spoke_width"], .2, .85))
+        zf = p.width / 2 - .024 - p.dish
+        for k in range(n):
+            rings = []
+            for r, sweep, z in ((.042, -.02, zf), (rr * .52, .04, zf - .008),
+                                (rr - .008, .075, p.width / 2 - .028)):
+                half = min(.026, r * np.pi / n * width)
+                # A radial loft with a 22mm section and swept outer attachment.
+                rings.append(np.array([[r, -half + sweep * r, z - .012],
+                                       [r, half + sweep * r, z - .012],
+                                       [r, half + sweep * r, z + .010],
+                                       [r, -half + sweep * r, z + .010]]))
+            spoke = P.loft(rings, cap_start=True, cap_end=True, material="rim")
+            a = k * 2 * np.pi / n
+            spoke.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
+            _part(m, spoke, f"spoke_{k}")
+
+    def _hardware(self, m, p, rr, opts):
+        zf = p.width / 2 - .024 - p.dish
+        # Disc and caliper stay behind even the deepest part of each spoke.
+        disc_z = zf - .033
+        _part(m, P.tube(rr * .79, .046, .014, self.N, material="brake_disc",
+                        center=(0, 0, disc_z)), "brake_disc")
+        _part(m, P.tube(.070, .032, .026, 24, material="rim_dark",
+                        center=(0, 0, disc_z - .006)), "disc_hat")
+        for k in range(16):
+            a = k * 2 * np.pi / 16
+            # Radial ventilation slots on the disc's edge, not painted spoke gaps.
+            slot = P.box(.010, .018, .010, material="rim_dark",
+                         center=(rr * .75, 0, disc_z))
+            slot.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
+            _part(m, slot, f"disc_vent_{k}")
+        _part(m, P.box(.049, rr * .65, .037, bevel=.008, material="caliper",
+                        center=(-rr * .67, 0, disc_z - .002)), "caliper")
+        for k in range(5):
+            a = k * 2 * np.pi / 5
+            _part(m, P.cylinder(.007, .012, 6, material="rim", center=(.038 * np.cos(a), .038 * np.sin(a), zf + .019)),
+                  f"lug_{k}")
+        if opts["hubcap"]:
+            _part(m, P.cylinder(.025, .009, 24, material="rim", center=(0, 0, zf + .022)), "centre_cap")
+            _part(m, P.cylinder(.016, .003, 16, material="rim_dark", center=(0, 0, zf + .028)), "cap_badge")
+        _part(m, P.cylinder(.004, .024, 8, material="rim_dark",
+                            center=(rr * .70, -rr * .60, p.width / 2 - .022)), "valve_stem")
+
+
+@register
+class SteelWheel(Wheel):
+    name = "wheel.steel"
+    default_for = ()
+    description = "stamped steel wheel with open ventilation slots and a domed hubcap"
+
+    def _wheel_face(self, m, p, rr, opts):
+        zf = p.width / 2 - .024 - p.dish
+        # Pressed dish: annular inner web plus separated outer webs. The gaps
+        # between them are ventilation holes, open all the way to the brake.
+        profile = [[.045, zf], [rr * .52, zf], [rr * .55, zf - .006],
+                   [rr * .55, zf - .015], [.045, zf - .015], [.045, zf]]
+        _part(m, P.revolve(profile, self.N, material="rim"), "steel_dish")
+        for k in range(12):
+            a = k * 2 * np.pi / 12
+            section = [[rr * .52, zf - .010], [rr - .006, p.width / 2 - .035],
+                       [rr - .006, p.width / 2 - .024], [rr * .52, zf], [rr * .52, zf - .010]]
+            web = P.revolve(section, 4, angle=2 * np.pi / 12 * .55, material="rim")
+            # Cap the two exposed ends of each stamped web.
+            for ids in (list(range(5)), list(range(web.n_vertices - 5, web.n_vertices))):
+                web.faces.append(tuple(ids[:4]))
+                web.face_materials.append("rim")
+            web.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
+            _part(m, web, f"steel_web_{k}")
+        if opts["hubcap"]:
+            cap = P.cylinder(rr * .46, .025, 32, radius_top=rr * .35,
+                             material="rim", center=(0, 0, zf + .013))
+            _part(m, cap, "steel_hubcap")
 
 
 # =============================================================== GLASS
