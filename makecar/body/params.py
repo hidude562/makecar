@@ -45,6 +45,12 @@ class BodyParams:
     cowl_height: float = 1.00      # windshield base
     cowl_offset: float = 0.40      # windshield base is this far behind the front axle
     hood_crown: float = 0.03
+    hood_straightness: float = 0.0   # 0: original curved hood, 1: cowl-to-tip plane
+    nose_center_drop: float = 0.0   # centre tip below the outer fender tops
+    nose_center_extension: float = 0.0  # centreline beak ahead of the corners
+    fender_crown_height: float = 0.0 # raised front fender, independent of hood
+    fascia_roundness: float = 0.0   # additional elevation corner radius
+    fascia_slope: float = 0.0       # continuous upper-face setback, metres
     nose_width_ratio: float = 0.74  # flat nose width / body width
     front_corner_length: float = 0.28  # plan-view bumper corner radius ~0.25 m
     front_fascia_rake: float = 0.03    # upper fascia setback (bumper stays vertical)
@@ -84,6 +90,12 @@ class BodyParams:
     rear_bumper_bottom: float = 0.32
     tail_width_ratio: float = 0.77
     rear_corner_length: float = 0.27
+    nose_taper_length: float = 0.0  # extra plan taper run beyond front_corner_length
+    tail_taper_length: float = 0.0  # extra plan taper run beyond rear_corner_length
+    nose_taper_exponent: float = 2.2
+    tail_taper_exponent: float = 2.2
+    waist_depth: float = 0.0        # per-side door inset, fading to full-width arches
+    tumblehome: float = 0.0         # additional roof-rail inset, metres per side
     rear_fascia_rake: float = 0.02     # >0: tail top protrudes over the bumper
     deck_crown: float = 0.02
     bed_depth: float = 0.0             # >0 turns the deck into an open pickup bed
