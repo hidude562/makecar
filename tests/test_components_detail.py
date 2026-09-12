@@ -73,15 +73,13 @@ def test_lamp_panes_fit_apertures_without_inverted_faces(car_body, ctx, style):
             conn = body.connector(f"{kind}_{side}")
             m = get_component(f"light.{kind}").build(conn, None, ctx).mesh
             pane = m.subset(m.zones["lens"])
-            if kind == "headlight":
-                assert np.all(pane.face_normals() @ conn.normal > 0), (style, kind, side)
-            else:
-                # Wagon/SUV/van tail grids already fold in the unmodified body.
-                # Preserve their exact geometry; never "fix" it by flipping
-                # isolated cells. Bulging must not introduce any further folds.
-                from makecar.components.fills import fill_connector
-                reference = fill_connector(conn, "reference", upsample=3)
-                assert np.all(np.einsum("ij,ij->i", pane.face_normals(), reference.face_normals()) > 0)
+            # The reshaped tail no longer needs the old folded-grid exception.
+            # Check exported triangles as well: a positive quad/Newell normal
+            # can hide an inverted triangle at a concave fascia corner.
+            assert np.all(pane.face_normals() @ conn.normal > 0), (style, kind, side)
+            triangles, _ = pane.triangulated()
+            a, b, c = pane.vertices[triangles].transpose(1, 0, 2)
+            assert np.all(np.cross(b - a, c - a) @ conn.normal > 1e-12), (style, kind, side)
             assert np.isfinite(m.vertices).all()
             assert np.all(pane.vertices >= conn.points.min(axis=0) - .01)
             assert np.all(pane.vertices <= conn.points.max(axis=0) + .01)
@@ -99,14 +97,198 @@ def test_lamp_panes_fit_apertures_without_inverted_faces(car_body, ctx, style):
                 assert m.materials["tail_bezel"].color == ctx.material("paint").color
 
 
+@pytest.mark.parametrize("style", STYLES)
+def test_lamp_fill_keeps_a_sealed_nonoverlapping_disk(car_body, ctx, style):
+    from collections import defaultdict
+    from makecar.components.fills import fill_connector
+
+    body = car_body.build(style=style)
+    for kind in ("headlight", "taillight"):
+        for side in ("L", "R"):
+            conn = body.connector(f"{kind}_{side}")
+            original_grid, original_outline = conn.meta["grid_points"].copy(), conn.points.copy()
+            mesh = get_component(f"light.{kind}").build(conn, None, ctx).mesh
+            pane = mesh.subset(mesh.zones["lens"])
+            reference = fill_connector(conn, "reference", offset=.001,
+                                       bulge=.008 if kind == "headlight" else .006, upsample=3)
+            # No source-grid mutation or whole-pane smoothing. The only fit
+            # allowance is a <=2mm noncorner notch under the physical seal.
+            assert np.array_equal(conn.meta["grid_points"], original_grid)
+            assert np.array_equal(conn.points, original_outline)
+            displacement = np.linalg.norm(pane.vertices - reference.vertices, axis=1)
+            assert displacement.max() <= .002
+            if style != "sports" or kind != "headlight":
+                assert displacement.max() < 1e-12
+
+            triangles, _ = pane.triangulated()
+            edges = defaultdict(list)
+            for triangle in triangles:
+                for a, b in zip(triangle, np.roll(triangle, -1)):
+                    edges[tuple(sorted((a, b)))].append((a, b))
+            assert all(len(uses) in (1, 2) for uses in edges.values())
+            assert all(uses[0] == uses[1][::-1] for uses in edges.values() if len(uses) == 2)
+            assert pane.n_vertices - len(edges) + len(triangles) == 1
+            boundary, = pane.boundary_loops()
+            assert len(boundary) == sum(len(uses) == 1 for uses in edges.values())
+
+            # A consistently oriented disk with positive projected triangles
+            # and a simple projected boundary is embedded, not overlapping
+            # triangles disguised by flipping their winding independently.
+            xy = conn.frame.to_local(pane.vertices[boundary])[:, :2]
+            a, b = xy, np.roll(xy, -1, axis=0)
+            def cross(u, v):
+                return u[..., 0] * v[..., 1] - u[..., 1] * v[..., 0]
+            ab = b - a
+            c, d = a[:, None], b[:, None]
+            across = cross(ab, c - a) * cross(ab, d - a)
+            other = cross(d - c, a - c) * cross(d - c, b - c)
+            assert not np.any((across < -1e-22) & (other < -1e-22))
+
+            # The housing follows the same fit and has no hidden backfaces.
+            housing = mesh.subset(mesh.zones["housing"])
+            tris, _ = housing.triangulated()
+            a, b, c = housing.vertices[tris].transpose(1, 0, 2)
+            assert np.all(np.cross(b - a, c - a) @ conn.normal > 1e-12)
+            if kind == "headlight":
+                seal = mesh.vertices[mesh.groups["aperture_seal"]].reshape(-1, 8, 3)
+                centres = seal.mean(axis=1)
+                outline = np.vstack([conn.points, conn.points[:1]]) + conn.normal * .001
+                assert np.allclose(centres, outline)
+                assert np.allclose(np.linalg.norm(seal - centres[:, None], axis=2), .0025)
+                # The octagonal seal's INSCRIBED radius covers the entire
+                # displacement, not just its circumradius at eight vertices.
+                assert displacement[boundary].max() < .0025 * np.cos(np.pi / 8)
+
+
+@pytest.mark.parametrize("style", STYLES)
+def test_lamp_uv_axes_follow_world_height_not_aspect_ratio(car_body, style):
+    from makecar.components.exterior import _LampSurface
+    body = car_body.build(style=style)
+    for kind in ("headlight", "taillight"):
+        for side in ("L", "R"):
+            conn = body.connector(f"{kind}_{side}")
+            surf = _LampSurface(conn)
+            bottom, top, inner, outer = conn.frame.to_world(surf.at([[.5, .2], [.5, .8], [.2, .5], [.8, .5]]))
+            assert top[2] > bottom[2]
+            assert abs(outer[1]) > abs(inner[1])
+            if style == "pickup" and kind == "headlight":
+                assert surf.height > surf.width  # the original axis-swap regression
+
+
+@pytest.mark.parametrize("style, modifier, kind", [
+    ("sports", "hood_front_height", "headlight"),
+    ("sports", "bumper_crease_height", "headlight"),
+    ("sports", "fender_crease", "headlight"),
+    ("pickup", "tailgate_panel", "taillight"),
+    ("pickup", "rear_fascia_rake", "taillight"),
+    ("suv", "rear_fascia_rake", "taillight"),
+    ("suv", "deck_rear_height", "taillight"),
+    ("suv", "rear_corner_length", "taillight"),
+])
+@pytest.mark.parametrize("value", [-1., -.5, -.25, 0., .25, .5, 1.])
+def test_lamp_supported_modifiers_keep_embedded_panes(car_body, ctx, style, modifier, kind, value):
+    from collections import defaultdict
+    from makecar.components.exterior import _lamp_fill
+    from makecar.geometry.frame import Frame
+
+    body = car_body.build(style=style, modifiers={modifier: value})
+    for side in ("L", "R"):
+        conn = body.connector(f"{kind}_{side}")
+        original = conn.meta["grid_points"].copy()
+        result = get_component(f"light.{kind}").build(conn, None, ctx)
+        pane = _lamp_fill(conn, "test", .001, .008 if kind == "headlight" else .006, 3)
+        assert np.isfinite(result.mesh.vertices).all()
+        assert np.array_equal(conn.meta["grid_points"], original)
+        normal = np.asarray(pane.meta.get("lamp_projection_normal", conn.normal))
+        assert normal @ conn.normal > 0  # Never silently choose an inward view.
+        triangles, _ = pane.triangulated()
+        a, b, c = pane.vertices[triangles].transpose(1, 0, 2)
+        assert np.all(np.cross(b - a, c - a) @ normal > 1e-12)
+        if "lamp_fit_warning" in pane.meta:
+            assert result.info.get("fit_warnings")
+        if style == "sports" and modifier == "hood_front_height" and -.5 <= value <= 0:
+            # Mild supported changes get a genuine fascia-normal fit, not the
+            # oblique fallback reserved for substantially wrapped apertures.
+            assert "lamp_projection_normal" not in pane.meta
+            assert np.all(np.cross(b - a, c - a) @ conn.normal > 1e-12)
+
+        edges = defaultdict(list)
+        for triangle in triangles:
+            for a, b in zip(triangle, np.roll(triangle, -1)):
+                edges[tuple(sorted((a, b)))].append((a, b))
+        assert all(len(uses) in (1, 2) for uses in edges.values())
+        assert all(uses[0] == uses[1][::-1] for uses in edges.values() if len(uses) == 2)
+        assert pane.n_vertices - len(edges) + len(triangles) == 1
+        boundary, = pane.boundary_loops()
+        assert len(boundary) == sum(len(uses) == 1 for uses in edges.values())
+        frame = Frame.from_normal(conn.origin, normal)
+        xy = frame.to_local(pane.vertices[boundary])[:, :2]
+        def cross(u, v):
+            return u[..., 0] * v[..., 1] - u[..., 1] * v[..., 0]
+        a, b = xy, np.roll(xy, -1, axis=0)
+        c, d = a[:, None], b[:, None]
+        # Positive projected triangles, a consistent disk and a simple
+        # boundary prove non-overlap in projection, hence no 3-D intersections.
+        assert not np.any((cross(b - a, c - a) * cross(b - a, d - a) < -1e-22)
+                          & (cross(d - c, a - c) * cross(d - c, b - c) < -1e-22))
+        for corner in original[[0, -1]][:, [0, -1]].reshape(-1, 3):
+            assert np.linalg.norm(pane.vertices - corner - .001 * conn.normal, axis=1).min() < 1e-8
+        # Even a wrapped fallback keeps the actual boundary, not its convex
+        # hull. Only the explicitly bounded adaptive seal can bridge a notch.
+        outline = conn.points + .001 * conn.normal
+        a, b = outline, np.roll(outline, -1, axis=0)
+        edge = b - a
+        p = pane.vertices[boundary][:, None]
+        t = np.clip(np.sum((p - a) * edge, axis=2) / np.sum(edge * edge, axis=1), 0., 1.)
+        distance = np.linalg.norm(p - a - t[:, :, None] * edge, axis=2).min(axis=1)
+        assert distance.max() <= .003 + 1e-10
+        if distance.max() > .002:
+            assert result.info.get("fit_warnings")
+            seal = result.mesh.vertices[result.mesh.groups["aperture_seal"]].reshape(-1, 8, 3)
+            radius = np.linalg.norm(seal - seal.mean(axis=1)[:, None], axis=2).min()
+            assert radius * np.cos(np.pi / 8) > distance.max()
+            assert radius < .004  # A bounded seal, not oversized trim hiding gaps.
+
+
+def test_unprojectable_lamp_boundary_warns_instead_of_returning_a_fold(ctx):
+    from makecar.components.exterior import _lamp_fill
+    from makecar.connectors import PolygonConnector
+    # A truly intersecting 3-D boundary has no embedded exact-boundary pane.
+    grid = np.array([[[0., 0., 0.], [1., 0., 0.]], [[1., 1., 0.], [0., 1., 0.]]])
+    conn = PolygonConnector("impossible_lamp", Frame.identity(), grid[[0, 1, 1, 0], [0, 0, 1, 1]],
+                            meta={"grid": [2, 2], "grid_points": grid})
+    pane = _lamp_fill(conn, "test", .001)
+    assert "exact boundary fit is unavailable" in pane.meta["lamp_fit_warning"]
+    assert pane.n_faces == 2
+    assert np.all(pane.face_normals() @ conn.normal > 0)
+    assert np.allclose(pane.bounds(), [[0., 0., .001], [1., 1., .001]])
+    result = get_component("light.headlight").build(conn, None, ctx)
+    assert any("exact boundary fit is unavailable" in warning for warning in result.info["fit_warnings"])
+    assert np.isfinite(result.mesh.vertices).all()
+
+
+def test_wrapped_lamp_fallback_is_mirrored(car_body):
+    from makecar.components.exterior import _lamp_fill
+    body = car_body.build(style="sports", modifiers={"fender_crease": 1})
+    left = _lamp_fill(body.connector("headlight_L"), "test", .001, .008)
+    right = _lamp_fill(body.connector("headlight_R"), "test", .001, .008)
+    assert left.n_vertices == right.n_vertices
+    distances = np.linalg.norm(left.vertices[:, None] * [1, -1, 1] - right.vertices, axis=2)
+    assert distances.min(axis=0).max() < 1e-10
+    assert distances.min(axis=1).max() < 1e-10
+    assert np.allclose(np.asarray(left.meta["lamp_projection_normal"]) * [1, -1, 1], right.meta["lamp_projection_normal"])
+
+
 def test_grille_variants_and_badge_clearance(sedan, ctx):
     conn = sedan.connector("grille")
-    slats = get_component("grille.slats").build(conn, None, ctx).mesh
+    slats = get_component("grille.slats").build(conn, {"badge": True}, ctx).mesh
+    rim = conn.frame.to_local(slats.vertices[slats.groups["badge_rim"]])
+    badge_radius = np.linalg.norm(rim[:, :2], axis=1).max()
     for name, ids in slats.groups.items():
         if name.startswith("slat_"):
             pts = conn.frame.to_local(slats.vertices[ids])
             assert np.ptp(pts[:, 2]) == pytest.approx(.030)
-            assert np.linalg.norm(pts[:, :2], axis=1).min() >= .046 - 1e-9
+            assert np.linalg.norm(pts[:, :2], axis=1).min() >= badge_radius + .006 - 1e-9
     for name, prefix in (("grille.honeycomb", "cell_"), ("grille.mesh", "wire_")):
         mesh = get_component(name).build(conn, None, ctx).mesh
         assert any(k.startswith(prefix) for k in mesh.groups)
@@ -169,7 +351,10 @@ def test_intake_backing_clears_uncut_fascia(car_body, ctx, style):
     conn = body.connector("intake")
     intake = get_component("grille.intake").build(conn, None, ctx).mesh
     back = intake.subset(intake.zones["back"])
-    for x, y in itertools.product((-.35 * conn.width, 0, .35 * conn.width), (-.06, 0, .06)):
+    # The new bumper fits 70–140mm inserts; ±60mm misses the smaller ones.
+    # Sample their actual footprint, retaining the original 2mm clearance.
+    for x, y in itertools.product((-.35 * conn.width, 0, .35 * conn.width),
+                                  (-.43 * conn.height, 0, .43 * conn.height)):
         assert _front_depth(back, conn.frame, [x, y]) > _front_depth(body.mesh, conn.frame, [x, y]) + .002
     plate_conn = body.connector("plate_front")
     plate = get_component("plate.standard").build(plate_conn, None, ctx).mesh

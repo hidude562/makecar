@@ -168,6 +168,31 @@ def test_dashboard_controls_and_closure_all_styles(cabin):
     assert mirror.result.mesh.vertices[:, 0].mean() > cabin.body.measurements["x_roof_front"] - 0.20
 
 
+@pytest.mark.parametrize("drive", ["left", "right"])
+@pytest.mark.parametrize("h_point", [0.17, 0.198, 0.22, 0.27, 0.35])
+def test_low_cabin_control_stack_clears_the_rising_console_nose(drive, h_point):
+    # Exercise both capped and uncapped nose rise, including the retuned sports
+    # default. Keeping the level console deck clear was insufficient here.
+    cabin = assemble(CarBody().build("sports", hints={"drive": drive, "h_point_height": h_point}))
+    parts = instances(cabin)
+    console = parts["console"].result.mesh
+    nose_top = console.vertices[console.groups["console_body"], 2].max()
+    hvac = parts["dashboard/hvac"]
+    hlo, hhi = hvac.result.mesh.bounds()
+    slo, shi = parts["dashboard/screen"].result.mesh.bounds()
+    assert hlo[2] - nose_top >= 0.010 - 1e-8
+    assert slo[2] - hhi[2] >= 0.005
+    for side in ("L", "R"):
+        vlo, _ = parts[f"dashboard/vent_center_{side}"].result.mesh.bounds()
+        assert vlo[2] - shi[2] >= 0.005
+    # Clearance is obtained by moving full-sized controls, not scaling them.
+    assert hvac.connector.width == pytest.approx(0.24)
+    assert hvac.connector.height == pytest.approx(0.05)
+    assert np.ptp(hvac.result.mesh.vertices[:, 2]) == pytest.approx(0.05)
+    assert parts["dashboard/screen"].connector.height == pytest.approx(0.07)
+    assert parts["dashboard/vent_center_L"].connector.radius == pytest.approx(0.045)
+
+
 def test_console_floor_doors_and_ceiling_all_styles(cabin):
     parts = instances(cabin)
     assert {"cup_sliding_cover", "ebrake_switch", "armrest_seam"} <= set(parts["console"].result.mesh.groups)
@@ -186,6 +211,135 @@ def test_console_floor_doors_and_ceiling_all_styles(cabin):
     assert {"vanity_mirror_L", "vanity_mirror_R"} <= set(parts["headliner"].result.mesh.groups)
     for side in ("L", "R"):
         assert {"grab_base_0", "grab_base_1"} <= set(parts[f"headliner/grab_handle_{side}"].result.mesh.groups)
+
+
+def _seat_section_gap(front, rear):
+    """Compare actual seat solids along X at shared Y/Z cross sections.
+
+    Reclined headrests overlap a following cushion's X bounds at entirely
+    different heights, so whole-seat AABBs cannot measure the seating gap.
+    """
+    flo, fhi = front.bounds()
+    rlo, rhi = rear.bounds()
+    lo, hi = np.maximum(flo[1:], rlo[1:]), np.minimum(fhi[1:], rhi[1:])
+    yy, zz = np.meshgrid(np.linspace(lo[0], hi[0], 35), np.linspace(lo[1], hi[1], 100))
+    yz = np.column_stack([yy.ravel(), zz.ravel()])
+
+    def extents(mesh):
+        triangles, _ = mesh.triangulated()
+        a, b, c = mesh.vertices[triangles].transpose(1, 0, 2)
+        u, v = b[:, 1:] - a[:, 1:], c[:, 1:] - a[:, 1:]
+        det = u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]
+        valid = abs(det) > 1e-12
+        a, b, c, u, v, det = (x[valid] for x in (a, b, c, u, v, det))
+        low, high = [], []
+        for samples in np.array_split(yz, 35):
+            q = samples[:, None] - a[:, 1:]
+            s = (q[:, :, 0] * v[:, 1] - q[:, :, 1] * v[:, 0]) / det
+            t = (u[:, 0] * q[:, :, 1] - u[:, 1] * q[:, :, 0]) / det
+            inside = (s >= -1e-8) & (t >= -1e-8) & (s + t <= 1 + 1e-8)
+            x = a[:, 0] + s * (b[:, 0] - a[:, 0]) + t * (c[:, 0] - a[:, 0])
+            low.extend(np.where(inside, x, np.inf).min(axis=1))
+            high.extend(np.where(inside, x, -np.inf).max(axis=1))
+        return np.array(low), np.array(high)
+
+    front_rear, _ = extents(front)
+    _, rear_front = extents(rear)
+    gaps = front_rear - rear_front
+    assert np.isfinite(gaps).any()
+    return gaps.min()
+
+
+@pytest.mark.parametrize("rows", ["auto", 3])
+def test_pickup_rear_mounts_clear_the_trimmed_cab_wall_without_losing_rows(rows):
+    cabin = assemble(CarBody().build("pickup", hints={"seat_rows": rows}))
+    parts = instances(cabin)
+    assert {n for n in parts if n.startswith("seat_row")} == {"seat_row2", "seat_row3"}
+    wall_front = parts["rear_bulkhead"].result.mesh.bounds()[1][0]
+    for name in ("seat_row2", "seat_row3"):
+        assert parts[name].result.mesh.bounds()[0][0] - wall_front >= 0.02
+    front = parts["seat_front_driver"].connector
+    second, third = parts["seat_row2"].connector, parts["seat_row3"].connector
+    # Front mounts keep their old offsets; only the two rear mounts move.
+    x_h1 = cabin.body.measurements["x_cowl"] - 0.95
+    assert front.origin[0] == pytest.approx(x_h1 + 0.12)
+    pitch = second.origin[0] - third.origin[0]
+    assert 0.70 < pitch < 0.86
+    assert x_h1 + 0.10 - second.origin[0] == pytest.approx(pitch)
+    assert second.meta["legroom"] == pytest.approx(pitch)
+    assert third.meta["legroom"] == pytest.approx(pitch)
+    for leading, following in (("seat_front_driver", "seat_row2"),
+                               ("seat_front_passenger", "seat_row2"), ("seat_row2", "seat_row3")):
+        assert _seat_section_gap(parts[leading].result.mesh, parts[following].result.mesh) > 0.25
+
+
+@pytest.mark.parametrize("rows,recline,warning", [("auto", 24, False), (2, 24, False),
+                                                  (2, 30, False), (3, 30, True)])
+def test_pickup_custom_bench_recline_reports_actual_cab_clearance(rows, recline, warning):
+    cabin = assemble(CarBody().build("pickup", hints={"seat_rows": rows}),
+                     {"assign": {"seat_bench": {"options": {"recline_deg": recline}}}})
+    parts = instances(cabin)
+    seat = parts["seat_row3" if rows in ("auto", 3) else "seat_row2"]
+    actual = seat.result.mesh.bounds()[0][0] - parts["rear_bulkhead"].result.mesh.bounds()[1][0]
+    assert seat.result.info["cab_rear_clearance"] == pytest.approx(actual)
+    assert (actual < 0) == warning
+    assert bool(seat.result.info.get("fit_warnings")) == warning
+    # Diagnosis does not change the chosen pose or remove any headrests.
+    fitted = H.params_from_values(get_component("seat.bench"), seat.result.info["modifier_values"])
+    assert fitted.recline_deg == pytest.approx(recline)
+    assert seat.result.info["headrests"] == 3
+    if warning:
+        assert "seat_rows: 2" in seat.result.info["fit_warnings"][0]
+
+
+def test_explicit_two_row_pickup_keeps_original_mounts_and_pitch():
+    body = CarBody().build("pickup", hints={"seat_rows": 2})
+    seat = body.connector("seat_row2")
+    assert not any(c.name == "seat_row3" for c in body.connectors)
+    assert seat.origin[0] == pytest.approx(body.measurements["x_cowl"] - 0.95 - 0.86 + 0.10)
+    assert seat.meta["legroom"] == pytest.approx(0.86)
+
+
+def test_carpet_and_firewall_clear_front_wheel_solids(cabin):
+    parts = instances(cabin)
+    for side, sign in (("L", 1), ("R", -1)):
+        wheel = cabin.body.connector(f"wheel_front_{side}")
+        tyre_width = wheel.meta["tire_width"]
+        inner = abs(wheel.origin[1]) - tyre_width / 2 - 0.020
+        centre = wheel.origin[[0, 2]]
+        for name in ("floor", "firewall"):
+            mesh = parts[name].result.mesh
+            triangles, _ = mesh.triangulated()
+            for triangle in mesh.vertices[triangles]:
+                # Clip each triangle to the tyre's lateral band. Testing only
+                # vertices misses the old full-width firewall/floor faces.
+                polygon = list(triangle)
+                for boundary, sense in ((inner, 1), (inner + tyre_width + 0.040, -1)):
+                    clipped = []
+                    for a, b in zip(polygon, polygon[1:] + polygon[:1]):
+                        da, db = sense * (sign * a[1] - boundary), sense * (sign * b[1] - boundary)
+                        if da >= 0:
+                            clipped.append(a)
+                        if (da >= 0) != (db >= 0):
+                            clipped.append(a + (b - a) * da / (da - db))
+                    polygon = clipped
+                    if not polygon:
+                        break
+                if not polygon:
+                    continue
+                points = np.asarray(polygon)[:, [0, 2]] - centre
+                ends = np.roll(points, -1, axis=0)
+                edges = ends - points
+                cross = points[:, 0] * ends[:, 1] - points[:, 1] * ends[:, 0]
+                inside = abs(cross.sum()) > 1e-12 and (np.all(cross >= -1e-12) or np.all(cross <= 1e-12))
+                projection = np.clip(-np.sum(points * edges, axis=1) / np.maximum(np.sum(edges * edges, axis=1), 1e-20), 0, 1)
+                distance = 0.0 if inside else np.linalg.norm(points + projection[:, None] * edges, axis=1).min()
+                assert distance >= wheel.radius + 0.020 - 1e-8, (cabin.body.hints["style"], name, side, distance)
+    # Closure is reshaped rather than deleted; the cowl keeps its full span.
+    firewall = parts["firewall"]
+    upper = firewall.result.mesh.vertices[firewall.result.mesh.groups["upper_firewall"]]
+    assert np.ptp(upper[:, 1]) == pytest.approx(firewall.connector.width)
+    assert {"firewall_return_-1", "firewall_return_1"} <= firewall.result.mesh.groups.keys()
 
 
 def test_cargo_wheelhouses_track_rear_axle(cabin):

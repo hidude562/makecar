@@ -43,8 +43,8 @@ class TestParamsAndStyles:
             style_params("limousine")
 
     def test_style_params_on_custom_base(self):
-        base = BodyParams(width=2.1)
-        assert style_params("wagon", base).width == 2.1   # wagon does not override width
+        base = BodyParams(hood_crown=0.08)
+        assert style_params("wagon", base).hood_crown == 0.08   # unspecified fields still inherit
         assert style_params("suv", base).width == STYLE_OVERRIDES["suv"]["width"]
 
     def test_dict_roundtrip_and_validation(self):
@@ -187,7 +187,7 @@ class TestCarBody:
         assert sedan.modifier_values == {}
         assert sedan.base_params == BodyParams()
         assert sedan.hints["style"] == "sedan" and sedan.hints["door_count"] == 4
-        assert sedan.hints["tire_width"] == pytest.approx(0.225) and sedan.hints["arch_gap"] == pytest.approx(0.06)
+        assert sedan.hints["tire_width"] == pytest.approx(BodyParams().tire_width) and sedan.hints["arch_gap"] == pytest.approx(0.06)
         assert {"paint", "aperture", "underbody", "trim", "bed"} <= set(sedan.mesh.materials)
         assert sedan.mesh.materials["paint"].color == pytest.approx((0x8a / 255, 0x1c / 255, 0x1c / 255))
 

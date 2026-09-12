@@ -194,6 +194,9 @@ def test_connectors_follow_morphed_vertices(car_body, sedan):
         if "paths" in c.meta:
             for path, original in zip(c.meta["paths"], originals[c.name].meta["paths"]):
                 np.testing.assert_allclose(path, np.asarray(original) + delta, atol=1e-8)
+        if "floor_grid" in c.meta:
+            np.testing.assert_allclose(c.meta["floor_grid"],
+                                       np.asarray(originals[c.name].meta["floor_grid"]) + delta, atol=1e-8)
 
 
 # Component acceptance uses each style's actual measurements/hints, not the
@@ -357,6 +360,113 @@ def test_exhaust_geometry_is_continuous_and_meets_tips(detailed_assembly):
         np.testing.assert_allclose((ring - tip.origin) @ tip.normal, 0, atol=1e-9)
         assert np.max(np.linalg.norm(ring - tip.origin, axis=1)) < tip.radius
     assert np.linalg.norm(mesh.vertices.mean(axis=0) - conn.origin) < .5
+
+
+def underbody_clearance(body, points, *, whole_shell=False):
+    """Vertical clearance to actual pan triangles, independent of route metadata."""
+    shell = body.full_mesh if whole_shell else body.full_mesh.subset(body.full_mesh.zones["underbody"])
+    triangles, _ = shell.triangulated()
+    a, b, c = shell.vertices[triangles].transpose(1, 0, 2)
+    ab, ac = b[:, :2] - a[:, :2], c[:, :2] - a[:, :2]
+    det = ab[:, 0] * ac[:, 1] - ab[:, 1] * ac[:, 0]
+    den = np.where(abs(det) > 1e-12, det, 1.)
+    clearances = []
+    for p in points:
+        q = p[:2] - a[:, :2]
+        u = (q[:, 0] * ac[:, 1] - q[:, 1] * ac[:, 0]) / den
+        v = (ab[:, 0] * q[:, 1] - ab[:, 1] * q[:, 0]) / den
+        valid = (abs(det) > 1e-12) & (u >= -1e-9) & (v >= -1e-9) & (u + v <= 1 + 1e-9)
+        if whole_shell and not valid.any():
+            # Exterior tip mouths extend aft of the shell's XY footprint.
+            clearances.append(np.inf)
+            continue
+        assert valid.any(), ("no floor above exhaust", p)
+        heights = a[:, 2] + u * (b[:, 2] - a[:, 2]) + v * (c[:, 2] - a[:, 2])
+        clearances.append(heights[valid].min() - p[2])
+    return np.asarray(clearances)
+
+
+def assert_exhaust_pan_fit(body):
+    conn = body.connector("exhaust_system")
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    mesh = get_component("exhaust.system").build(conn, {}, ctx).mesh
+    # Both full-length can skins and the tunnel pipe must remain outside the
+    # actual pan; merely checking their ground clearance hid crown penetration.
+    for name in ("catalyst", "silencer", "pipe_run_0"):
+        part = mesh.subset(mesh.zones[name])
+        edges = np.array([(a, b) for face in part.faces for a, b in zip(face, face[1:] + face[:1])])
+        samples = np.vstack([part.vertices, part.vertices[edges].mean(axis=1)])
+        assert underbody_clearance(body, samples).min() >= .004 - 1e-8, name
+        if name != "pipe_run_0":
+            assert part.vertices[:, 2].min() >= .05 - 1e-8, name
+            assert np.ptp(part.vertices[:, 2]) > .02, "can must not collapse"
+            assert_closed_solid(part, name)
+    for k in (1, 2):
+        path = np.asarray(conn.meta["paths"][k])
+        rings = swept_rings(mesh, f"pipe_run_{k}", path, 10)
+        # The whole branch stays below the pan until its short rise inside the
+        # rear bumper: checking only the turn missed an early floor penetration.
+        last = len(path) - 3
+        samples = np.vstack([rings[:last + 1].reshape(-1, 3),
+                             ((rings[:last] + rings[1:last + 1]) / 2).reshape(-1, 3)])
+        assert underbody_clearance(body, samples).min() >= .004 - 1e-8, k
+        # Below-valance outlets no longer need to punch through the rear floor:
+        # extend the same clearance requirement through the complete terminal.
+        whole_branch = np.vstack([rings.reshape(-1, 3),
+                                  ((rings[:-1] + rings[1:]) / 2).reshape(-1, 3)])
+        assert underbody_clearance(body, whole_branch, whole_shell=True).min() >= .004 - 1e-8, k
+
+
+@pytest.mark.parametrize("dual,length", [(False, .08), (True, .08), (True, .14)])
+def test_exhaust_outlets_fit_below_actual_valance(detailed_body, dual, length):
+    body = detailed_body
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    for side in ("L", "R"):
+        conn = body.connector("exhaust_" + side)
+        mesh = get_component("exhaust.tip").build(conn, {"dual": dual, "length": length}, ctx).mesh
+        # A full-shell downward-ray envelope catches buried upper rims and
+        # wrongly stacked twins, including the inlet portions inside the skirt.
+        clearance = underbody_clearance(body, mesh.vertices, whole_shell=True)
+        assert np.isfinite(clearance).any(), "tip inlet must remain beneath the car"
+        assert clearance.min() >= .001 - 1e-8
+        assert mesh.vertices[:, 2].min() >= .05
+        local = conn.frame.to_local(mesh.vertices)
+        assert np.ptp(local[:, 1]) == pytest.approx(2 * conn.radius)
+        assert np.ptp(local[:, 0]) == pytest.approx(2 * conn.radius * (2.2 if dual else 1))
+        assert local[:, 2].max() == pytest.approx(length - .03)
+        inlet = mesh.subset(mesh.zones["collector" if dual else "inlet"])
+        assert_closed_solid(inlet, "outlet inlet connection")
+        if dual:
+            # Its wider shared inlet spans the original central system endpoint.
+            lp = conn.frame.to_local(inlet.vertices)
+            assert lp[:, 2].min() < -.03 < 0 < lp[:, 2].max()
+            assert lp[:, 1].min() < -.025 and lp[:, 1].max() > .025
+
+
+def test_exhaust_cans_and_branch_turn_clear_current_pan(detailed_body):
+    assert_exhaust_pan_fit(detailed_body)
+
+
+@pytest.mark.parametrize("style,modifiers", [
+    ("sports", {"ground_clearance": -1}),
+    ("sedan", {"tunnel_height": 1, "tunnel_width": -1}),
+    ({"coupe": .6, "wagon": .4}, {"wheelbase": .7, "rear_fascia_rake": -.8,
+                                  "ground_clearance": -.4, "tunnel_height": -.7}),
+])
+def test_exhaust_pan_and_tip_fit_follow_morphs(car_body, style, modifiers):
+    body = car_body.build(style=style, modifiers=modifiers)
+    assert_exhaust_pan_fit(body)
+    conn = body.connector("exhaust_system")
+    for path, tip_meta, side in zip(conn.meta["paths"][1:], conn.meta["tips"], ("L", "R")):
+        tip = body.connector("exhaust_" + side)
+        np.testing.assert_allclose(path[-1], tip.origin, atol=1e-9)
+        np.testing.assert_allclose(tip_meta, tip.origin, atol=1e-9)
+        tangent = np.subtract(path[-1], path[-2])
+        np.testing.assert_allclose(tangent / np.linalg.norm(tangent), tip.normal, atol=1e-9)
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    pipe_only = get_component("exhaust.system").build(conn, {"muffler": False}, ctx).mesh
+    assert not {"catalyst", "silencer"} & pipe_only.groups.keys()
+    assert {"pipe_run_0", "pipe_run_1", "pipe_run_2"} <= pipe_only.groups.keys()
 
 
 def test_diffuser_has_real_tapered_fins_only_on_sporty_styles(detailed_assembly):

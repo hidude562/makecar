@@ -274,6 +274,209 @@ class Glass(CarComponent):
 
 
 # =============================================================== LIGHTS
+def _lamp_grid(conn):
+    """Fit only sub-3mm boundary notches under the lamp's aperture seal.
+
+    The stock sports fit stays below 2mm; mild supported modifiers need up
+    to 3mm, with the physical seal expanded by the same measured allowance.
+    The sports fascia has a noncorner sample that doubles back by 0.8mm in
+    height. Its boundary crosses itself in the mount-plane projection, so no
+    outward pane can follow it exactly. Straighten only a crossed cell's tiny
+    boundary notch onto its neighboring chord; retain all four corners and
+    leave the body/connector grid untouched. Larger changes are not a fit.
+    """
+    source = conn.meta.get("grid_points")
+    if source is None:
+        return None
+    source = np.asarray(source, dtype=float)
+    grid = source.copy()
+    rows, cols = grid.shape[:2]
+
+    def crossed(g):
+        q = np.stack([g[:-1, :-1], g[1:, :-1], g[1:, 1:], g[:-1, 1:]], axis=-2)
+        def area(a, b, c):
+            return np.cross(q[..., b, :] - q[..., a, :], q[..., c, :] - q[..., a, :]) @ conn.normal
+        a, b, c, d = area(0, 1, 2), area(0, 2, 3), area(0, 1, 3), area(1, 2, 3)
+        sign = 1 if (a + b).sum() >= 0 else -1
+        return (np.minimum(sign * a, sign * b) <= 1e-12) & (np.minimum(sign * c, sign * d) <= 1e-12)
+
+    bad = crossed(grid)
+    while bad.any():
+        candidates = []
+        for i, j in zip(*np.where(bad)):
+            for r, c in ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)):
+                if c in (0, cols - 1) and 0 < r < rows - 1:
+                    a, b = grid[r - 1, c], grid[r + 1, c]
+                elif r in (0, rows - 1) and 0 < c < cols - 1:
+                    a, b = grid[r, c - 1], grid[r, c + 1]
+                else:
+                    continue  # Never move a corner or an interior sample.
+                edge = b - a
+                t = np.clip((grid[r, c] - a) @ edge / max(edge @ edge, 1e-20), 0., 1.)
+                point = a + t * edge
+                distance = np.linalg.norm(point - source[r, c])
+                if distance > .003:
+                    continue
+                trial = grid.copy()
+                trial[r, c] = point
+                remaining = crossed(trial)
+                if remaining.sum() < bad.sum():
+                    candidates.append((distance, r, c, point, remaining))
+        if not candidates:
+            break
+        _, r, c, point, bad = min(candidates, key=lambda candidate: candidate[:3])
+        grid[r, c] = point
+    return grid
+
+
+def _lamp_wrapped_patch(conn, grid, material, offset, bulge):
+    """An embedded graph for an extreme aperture, not a flipped folded grid.
+
+    Keep the boundary and well-separated interior source samples that can
+    lie on the same graph. Search outward viewing directions nearest the mount normal,
+    ear-clip only a simple projected outline, then insert interior samples.
+    All triangles are positive in that projection, which prevents crossings
+    in 3-D too. This deliberately does not claim an extreme folded aperture
+    has the same local outward direction as its single average mount frame.
+    """
+    if conn.side() == "right":
+        # Canonicalize reflection BEFORE choosing a projection/ear order, so
+        # floating-point ties cannot give left/right lamps different surfaces.
+        reflect = np.array([1., -1., 1.])
+        left = PolygonConnector(conn.name, Frame.from_normal(conn.origin * reflect,
+                                conn.normal * reflect, conn.frame.x_axis * reflect),
+                                conn.points[::-1] * reflect, meta={"side": "left"})
+        mesh = _lamp_wrapped_patch(left, grid[::-1] * reflect, material, offset, bulge).mirrored()
+        mesh.meta["lamp_projection_normal"] = (np.asarray(mesh.meta["lamp_projection_normal"]) * reflect).tolist()
+        return mesh
+    rows, cols = grid.shape[:2]
+    vertices = grid.reshape(-1, 3)
+    boundary = ([i * cols for i in range(rows)]
+                + [(rows - 1) * cols + j for j in range(1, cols)]
+                + [i * cols + cols - 1 for i in range(rows - 2, -1, -1)]
+                + list(range(cols - 2, 0, -1)))
+
+    def cross(a, b):
+        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
+
+    # A deterministic hemisphere, sampled from closest to furthest from the
+    # mount normal. This is component geometry, never connector-frame repair.
+    k = np.arange(384)
+    z = 1 - (k + .5) / len(k)
+    angle = k * np.pi * (3 - np.sqrt(5))
+    radius = np.sqrt(1 - z * z)
+    directions = np.vstack([[0., 0., 1.], np.column_stack([radius * np.cos(angle), radius * np.sin(angle), z])])
+    for normal in directions @ conn.frame.rotation.T:
+        frame = Frame.from_normal(conn.origin, normal, conn.frame.x_axis)
+        xy = frame.to_local(vertices)[:, :2]
+        a, b = xy[boundary], np.roll(xy[boundary], -1, axis=0)
+        if cross(a, b).sum() <= 1e-12:
+            continue
+        edge = b - a
+        c, d = a[:, None], b[:, None]
+        if np.any((cross(edge, c - a) * cross(edge, d - a) < -1e-24)
+                  & (cross(d - c, a - c) * cross(d - c, b - c) < -1e-24)):
+            continue
+        loop, faces = list(boundary), []
+        while len(loop) > 3:
+            ears = []
+            for i, middle in enumerate(loop):
+                first, last = loop[i - 1], loop[(i + 1) % len(loop)]
+                a, b, c = xy[[first, middle, last]]
+                if cross(b - a, c - a) <= 1e-12:
+                    continue
+                other = xy[[v for v in loop if v not in (first, middle, last)]]
+                inside = ((cross(b - a, other - a) >= -1e-12)
+                          & (cross(c - b, other - b) >= -1e-12)
+                          & (cross(a - c, other - c) >= -1e-12))
+                if not inside.any():
+                    ears.append((np.linalg.norm(c - a), i, (first, middle, last)))
+            if not ears:
+                break
+            _, i, face = min(ears)
+            faces.append(face)
+            loop.pop(i)
+        if len(loop) == 3 and cross(xy[loop[1]] - xy[loop[0]], xy[loop[2]] - xy[loop[0]]) > 1e-12:
+            faces.append(tuple(loop))
+            break
+    else:
+        # A documented scalar modifier should not abort the whole assembly.
+        # An unprojectable boundary gets a conservative convex-envelope pane,
+        # explicitly warned below, rather than an intersecting legacy fill.
+        normal = conn.normal
+        xy = conn.frame.to_local(vertices)[:, :2]
+        order = np.lexsort((xy[:, 1], xy[:, 0])).tolist()
+        halves = []
+        for sequence in (order, order[::-1]):
+            hull = []
+            for index in sequence:
+                while len(hull) > 1 and cross(xy[hull[-1]] - xy[hull[-2]], xy[index] - xy[hull[-1]]) <= 1e-12:
+                    hull.pop()
+                hull.append(index)
+            halves.append(hull[:-1])
+        hull = halves[0] + halves[1]
+        faces = [(hull[0], hull[i], hull[i + 1]) for i in range(1, len(hull) - 1)]
+        mesh = Mesh(vertices.copy(), faces, [material] * len(faces), name="lamp_fit")
+        mesh.prune_unused_vertices().translate(offset * normal)
+        mesh.meta["lamp_fit_warning"] = "Infeasible lamp aperture: conservative convex-envelope pane; exact boundary fit is unavailable."
+        mesh.meta["lamp_projection_normal"] = normal.tolist()
+        return mesh
+
+    # Preserve source curvature where its projection lies strictly inside the
+    # polygon. A sample on the boundary must not pull that boundary off its
+    # exact 3-D segment; projected duplicate/outer samples are not inserted.
+    for index in (i * cols + j for i in range(1, rows - 1) for j in range(1, cols - 1)):
+        point = xy[index]
+        used = np.unique(np.asarray(faces))
+        if np.linalg.norm(xy[used] - point, axis=1).min() < 1e-10:
+            continue
+        a, b, c = xy[np.asarray(faces)].transpose(1, 0, 2)
+        areas = np.column_stack([cross(b - a, point - a), cross(c - b, point - b), cross(a - c, point - c)])
+        hit = np.flatnonzero(np.all(areas > 1e-10, axis=1))
+        if len(hit) != 1:
+            continue  # Do not create sliver triangles on an existing edge.
+        first, middle, last = faces.pop(int(hit[0]))
+        faces.extend([(first, middle, index), (middle, last, index), (last, first, index)])
+    u, v = np.meshgrid(np.linspace(0, 1, rows), np.linspace(0, 1, cols), indexing="ij")
+    dome = (np.sin(np.pi * u) * np.sin(np.pi * v)).reshape(-1, 1)
+    mesh = Mesh(vertices + offset * conn.normal + bulge * dome * normal, faces, [material] * len(faces), name="lamp_fit")
+    mesh.prune_unused_vertices()
+    turn = np.degrees(np.arccos(np.clip(normal @ conn.normal, -1., 1.)))
+    mesh.meta["lamp_fit_warning"] = (f"Wrapped lamp aperture: embedded boundary-fit pane uses a {turn:.1f}-degree "
+                                     "local projection change; extreme-aperture optics are approximate.")
+    mesh.meta["lamp_projection_normal"] = normal.tolist()
+    return mesh
+
+
+def _lamp_fill(conn, material, offset, bulge=0.0, upsample=2):
+    """Fit a pane, choosing the noncrossing diagonal of concave fascia cells."""
+    from .fills import coons_fill
+    grid = _lamp_grid(conn)
+    if grid is None:
+        return fill_connector(conn, material, offset=offset, bulge=bulge, upsample=upsample)
+    mesh = coons_fill(conn.points, *grid.shape[:2], material, conn.normal, offset=offset,
+                      bulge=bulge, upsample=upsample, grid_points=grid)
+    quads = np.asarray(mesh.faces)
+    a, b, c, d = mesh.vertices[quads].transpose(1, 0, 2)
+    default = np.minimum(np.cross(b - a, c - a) @ conn.normal,
+                         np.cross(c - a, d - a) @ conn.normal) > 1e-12
+    alternate = np.minimum(np.cross(b - a, d - a) @ conn.normal,
+                           np.cross(c - b, d - b) @ conn.normal) > 1e-12
+    if not np.all(default | alternate):
+        return _lamp_wrapped_patch(conn, grid, material, offset, bulge)
+    faces = []
+    for keep, face in zip(default, mesh.faces):
+        if keep:
+            faces.append(face)
+        else:
+            # A concave quad's default fan can invert a triangle even when its
+            # Newell normal points out. Change the diagonal, not the winding.
+            faces.extend([(face[0], face[1], face[3]), (face[1], face[2], face[3])])
+    mesh.faces = faces
+    mesh.face_materials = [material] * len(faces)
+    return mesh
+
+
 class _LampSurface:
     """Decorations in aperture UVs, following the exact (possibly warped) grid.
 
@@ -281,7 +484,7 @@ class _LampSurface:
     handedness nor the lamp's steep corner rake is guessed from local Y.
     """
     def __init__(self, conn):
-        grid = conn.meta.get("grid_points")
+        grid = _lamp_grid(conn)
         shape = conn.meta.get("grid")
         if grid is None and shape and len(conn.points) == 2 * (shape[0] + shape[1] - 2):
             grid = coons_patch(conn.points, *shape, max(shape[0], 3), max(shape[1], 3))
@@ -296,8 +499,10 @@ class _LampSurface:
             grid = conn.frame.to_world(np.array([[[c[0] - r, c[1] - r, c[2]], [c[0] - r, c[1] + r, c[2]]],
                                                 [[c[0] + r, c[1] - r, c[2]], [c[0] + r, c[1] + r, c[2]]]]))
         grid = np.asarray(grid, dtype=float)
-        lengths = [np.linalg.norm(np.diff(grid, axis=i), axis=2).sum(axis=i).mean() for i in (0, 1)]
-        if lengths[1] > lengths[0]:
+        # The pickup's lamp is taller than it is wide. Choose the vertical
+        # axis by world elevation, not by assuming the longest axis is U.
+        rise = [np.ptp(grid[:, :, 2], axis=i).mean() for i in (0, 1)]
+        if rise[0] > rise[1]:
             grid = grid.transpose(1, 0, 2)
         if grid[:, -1, 2].mean() < grid[:, 0, 2].mean():
             grid = grid[:, ::-1]
@@ -392,7 +597,7 @@ class Headlight(CarComponent):
         }
         inv = np.linalg.inv(conn.frame.matrix)
         m = Mesh(name="headlight")
-        _part(m, fill_connector(conn, "lamp_dark", offset=-.056).transform(inv), "housing")
+        _part(m, _lamp_fill(conn, "lamp_dark", offset=-.056).transform(inv), "housing")
         surf = _LampSurface(conn)
         _part(m, surf.border("bezel"), "bezel")
         radius = min(.052, surf.height * .27, surf.width * .15)
@@ -403,9 +608,20 @@ class Headlight(CarComponent):
         uv = np.column_stack([np.linspace(.08, .84, 25), np.full(25, .85)])
         _part(m, surf.ribbon(uv, min(.008, surf.height * .065), "lamp_led"), "drl")
         _part(m, surf.patch(.86, .95, .18, .77, "indicator", -.010), "indicator")
-        _part(m, fill_connector(conn, "lens", offset=.001, bulge=.008, upsample=3).transform(inv), "lens")
+        pane = _lamp_fill(conn, "lens", offset=.001, bulge=.008, upsample=3)
+        _part(m, pane.transform(inv), "lens")
+        fitted = _lamp_grid(conn)
+        deviation = float(np.linalg.norm(fitted - conn.meta["grid_points"], axis=2).max()) if fitted is not None else 0.
+        seal_radius = max(.0025, (deviation + .0003) / np.cos(np.pi / 8))
+        _part(m, _pipe(conn.points + conn.normal * .001, seal_radius, "lamp_dark", closed=True,
+                       sides=8).transform(inv), "aperture_seal")
         m.materials.update(mats)
-        return ComponentResult(m, [], {"projectors": 2 if opts["projector"] else 1})
+        info = {"projectors": 2 if opts["projector"] else 1}
+        if "lamp_fit_warning" in pane.meta:
+            info["fit_warnings"] = [pane.meta["lamp_fit_warning"]]
+        if deviation > .002:
+            info.setdefault("fit_warnings", []).append(f"Lamp boundary notch fitted by {deviation * 1000:.2f}mm under an adaptive seal.")
+        return ComponentResult(m, [], info)
 
 
 @register
@@ -427,7 +643,7 @@ class Taillight(CarComponent):
         }
         inv = np.linalg.inv(conn.frame.matrix)
         m = Mesh(name="taillight")
-        _part(m, fill_connector(conn, "lamp_dark", offset=-.038).transform(inv), "housing")
+        _part(m, _lamp_fill(conn, "lamp_dark", offset=-.038).transform(inv), "housing")
         surf = _LampSurface(conn)
         _part(m, surf.border("tail_bezel", .001), "bezel")
         uv = rounded_rect_points(.78, .54, .10, 6) + [.5, .57]
@@ -437,9 +653,21 @@ class Taillight(CarComponent):
         # Small prismatic flutes are geometry, rather than a single red patch.
         for u in np.linspace(.14, .86, 19):
             _part(m, surf.ribbon([[u, .135], [u, .215]], .0025, "tail_reflector", -.007), f"reflex_flute_{u:.2f}")
-        _part(m, fill_connector(conn, "tail_lens", offset=.001, bulge=.006, upsample=3).transform(inv), "lens")
+        pane = _lamp_fill(conn, "tail_lens", offset=.001, bulge=.006, upsample=3)
+        _part(m, pane.transform(inv), "lens")
+        fitted = _lamp_grid(conn)
+        deviation = float(np.linalg.norm(fitted - conn.meta["grid_points"], axis=2).max()) if fitted is not None else 0.
+        if deviation > 0:
+            radius = max(.0025, (deviation + .0003) / np.cos(np.pi / 8))
+            _part(m, _pipe(conn.points + conn.normal * .001, radius, "lamp_dark", closed=True,
+                           sides=8).transform(inv), "aperture_seal")
         m.materials.update(mats)
-        return ComponentResult(m)
+        info = {}
+        if "lamp_fit_warning" in pane.meta:
+            info["fit_warnings"] = [pane.meta["lamp_fit_warning"]]
+        if deviation > .002:
+            info.setdefault("fit_warnings", []).append(f"Lamp boundary notch fitted by {deviation * 1000:.2f}mm under an adaptive seal.")
+        return ComponentResult(m, [], info)
 
 
 # =============================================================== GRILLE / INTAKE / PLATE / BADGE
@@ -448,7 +676,7 @@ class Grille(CarComponent):
     name = "grille.slats"
     accepts = (RectangleConnector,)
     default_for = ("grille",)
-    options = {"slats": 5, "frame": True, "mesh": False, "badge": True}
+    options = {"slats": None, "frame": True, "mesh": False, "badge": False}
     description = "deep horizontal slats interrupted around an inset roundel, with an open surround"
     pattern = "slats"
 
@@ -466,14 +694,17 @@ class Grille(CarComponent):
         pattern = "mesh" if opts.get("mesh") else self.pattern
         badge_r = min(.040, h * .29) if opts.get("badge") and pattern == "slats" else 0
         if pattern == "slats":
-            n = int(np.clip(opts["slats"], 1, 14))
+            # Five slats crowd the new 45mm sports opening into a chrome strip.
+            # Fit the default spacing; explicit counts retain their old range.
+            requested = opts["slats"]
+            n = int(np.clip(min(5, int(ih / .014)) if requested is None else requested, 1, 14))
             for k in range(n):
                 y = -ih / 2 + (k + .5) * ih / n
                 thick = min(.012, ih / n * .32)
-                cut = np.sqrt(max(0, (badge_r + .006) ** 2 - max(0, abs(y) - thick / 2) ** 2))
+                cut = np.sqrt(max(0, (badge_r + .006) ** 2 - max(0, abs(y) - thick / 2) ** 2)) if badge_r else 0
                 spans = [(-iw / 2, -cut), (cut, iw / 2)] if cut else [(-iw / 2, iw / 2)]
                 for j, (lo, hi) in enumerate(spans):
-                    _part(m, P.box(hi - lo, thick, .030, material="chrome", bevel=.002,
+                    _part(m, P.box(hi - lo, thick, .030, material="chrome", bevel=min(.002, thick * .2),
                                    center=((lo + hi) / 2, y, -.001)), f"slat_{k}_{j}")
         elif pattern == "honeycomb":
             # Individual open hexagonal cells. Cell size is bounded to keep a
@@ -501,16 +732,10 @@ class Grille(CarComponent):
         if badge_r:
             _part(m, P.tube(badge_r, badge_r - .004, .012, 24, material="chrome", center=(0, 0, .003)), "badge_rim")
             _part(m, P.cylinder(badge_r - .005, .008, 24, material="grille_dark", center=(0, 0, .004)), "badge")
-        # These mounts sit on uncut fascia, unlike the lamp apertures. Keep the
-        # radiator backing in front of the skin so paint cannot fill the cells.
-        m.translate([0, 0, .022])
-        if conn.meta.get("lower"):
-            # The rounded lower bumper projects past the average fascia plane.
-            # Rake the insert's backing and cells together, anchored at its top,
-            # rather than leaving blue bodywork visible through the lower rows.
-            rake = .75 * abs(conn.normal[2]) / max(abs(conn.normal[0]), .5)
-            down = -1 if conn.frame.y_axis[2] > 0 else 1
-            m.vertices[:, 2] += .007 + rake * (down * m.vertices[:, 1] + h / 2)
+        # These mounts clear the WHOLE stepped fascia footprint. Seat the back
+        # of the 10mm radiator backing at the mount, with no obsolete rake or
+        # negative offset burying it in the uncut skin.
+        m.translate([0, 0, .027])
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -565,10 +790,30 @@ class LicensePlate(CarComponent):
         if opts.get("region", "eu") == "eu":
             m.merge(P.box(w * 0.08, h - 0.01, 0.002, material="plate_blue", center=(-w / 2 + w * 0.05, 0, 0.007), name="euband"))
         if conn.meta.get("position") == "front":
-            # The lower intake and plate overlap in elevation on short fascias;
-            # a 65mm plinth puts the plate ahead of, not behind, the insert.
-            _part(m, P.box(w * .82, h * .72, .065, material="plate_text", center=(0, 0, -.0325)), "mounting_plinth")
-            m.translate([0, 0, .065])
+            # The new bumper separates the EU plate from both inserts. Its
+            # bracket reaches back through the mount's 12mm skin clearance;
+            # the old 65mm pedestal needlessly floated the plate off the car.
+            projection = .006
+            # A raised bumper can bring even the EU plate into the intake's
+            # footprint. Recover its fitted vertical span from the measured
+            # bottom and this plate's crease-relative mount (not a style name).
+            intake_z = ctx.measurements.get("nose_z_bottom", -np.inf) + .105
+            crease_z = conn.origin[2] + .075
+            intake_h = max(.05, min(.14, 2 * (crease_z - .145 - intake_z)))
+            grille_lo = crease_z + .030
+            grille_hi = ctx.measurements.get("nose_z_top", np.inf) - .045
+            grille_z = (grille_lo + grille_hi) / 2
+            grille_h = max(.045, min(.17, grille_hi - grille_lo))
+            overlaps_lower = conn.origin[2] - h / 2 < intake_z + intake_h / 2 + .005
+            overlaps_upper = conn.origin[2] + h / 2 > grille_z - grille_h / 2 - .005
+            if h > conn.height or overlaps_lower or overlaps_upper:
+                # Clear the entire 41mm insert depth, including its foremost
+                # bumper step, when either plate format overlaps an insert.
+                projection = max(projection, ctx.measurements.get("x_front", conn.origin[0])
+                                 - conn.origin[0] + .050)
+            depth = projection + .012
+            _part(m, P.box(w * .82, h * .72, depth, material="plate_text", center=(0, 0, -depth / 2)), "mounting_plinth")
+            m.translate([0, 0, projection])
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -606,13 +851,27 @@ class ExhaustTip(CarComponent):
         L = float(opts["length"])
         mats = {"chrome": ctx.material("chrome", ctx.palette.chrome, shininess=0.85, metallic=0.9),
                 "exhaust_dark": ctx.material("exhaust_dark", "#151517", shininess=0.2)}
-        def tip(cy):
-            t = P.tube(r, r - 0.006, L, 20, material="chrome", center=(0, cy, L / 2 - 0.03), name="tip")
-            inner = P.cylinder(r - 0.006, 0.004, 20, material="exhaust_dark", center=(0, cy, L - 0.03 - 0.01), name="tip_inner")
+        def tip(cx):
+            t = P.tube(r, r - 0.006, L, 20, material="chrome", center=(cx, 0, L / 2 - 0.03), name="tip")
+            inner = P.cylinder(r - 0.006, 0.004, 20, material="exhaust_dark", center=(cx, 0, L - 0.03 - 0.01), name="tip_inner")
             return t.merge(inner)
         m = tip(0.0)
-        if opts.get("dual"):
+        dual = bool(opts.get("dual"))
+        if dual:
+            # Rear local X is lateral; local Y points down. Stacking along Y
+            # buries the upper twin in the skirt even when the single tip fits.
             m = tip(-r * 1.2).merge(tip(r * 1.2))
+        # Join the unchanged central pipe inlet to the sleeve(s): a circular
+        # ferrule for one outlet, an oval collector for two separate mouths.
+        # Twice the circumference budget for twins retains the public 2:1
+        # single/dual topology contract, including these inlet connections.
+        n = 20 if dual else 10
+        circle = circle_points(1., n)
+        rings = [np.column_stack([circle[:, 0] * rx, circle[:, 1] * ry, np.full(n, z)])
+                 for z, rx, ry in ((-.045, r * .78, r * .78),
+                                   (.005, r * (1.95 if dual else .84), r * .84))]
+        _part(m, P.loft(rings, cap_start=True, cap_end=True, material="exhaust_dark"),
+              "collector" if dual else "inlet")
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -908,13 +1167,30 @@ class ExhaustSystem(CarComponent):
                 axis = main[index + 1] - main[index]
                 can = P.cylinder(radius, length, 16, radius_top=radius * .90, material="exhaust_steel")
                 can.apply_frame(Frame.from_normal(point, axis))
-                # Low sports floors need an oval can, not a round muffler that
-                # almost scrapes the ground. Flatten only its vertical section.
+                # Fit an oval can between the road and the measured tunnel,
+                # not just above the road: a 118mm round silencer otherwise
+                # pokes through a crown only 33mm above the pipe centreline.
                 if conn.meta.get("paths_space") == "world":
                     up = conn.frame.rotation[2]
                     height = conn.frame.to_world(point)[0, 2]
                     vertical = (can.vertices - point) @ up
-                    factor = min(1., max(.020, height - .050) / max(-vertical.min(), 1e-6))
+                    factor = min(1., max(0., height - .050) / max(-vertical.min(), 1e-6))
+                    if "floor_grid" in conn.meta:
+                        grid = np.asarray(conn.meta["floor_grid"])
+                        world = conn.frame.to_world(can.vertices)
+                        lo, hi = world[:, 0].min(), world[:, 0].max()
+                        lateral = np.abs(world[:, 1]).max()
+                        # The lowest roof over the entire can footprint,
+                        # including station breaks between its end rings.
+                        xs = grid[:, 0, 0]
+                        samples = np.r_[lo, xs[(xs > lo) & (xs < hi)], hi]
+                        roof = []
+                        for x in samples:
+                            row = np.array([[np.interp(x, chain[:, 0], chain[:, k]) for k in (1, 2)]
+                                            for chain in grid.transpose(1, 0, 2)])
+                            roof.append(np.interp(lateral, row[:, 0], row[:, 1]))
+                        room = max(0., min(roof) - .008 - height)
+                        factor = min(factor, room / max(vertical.max(), 1e-6))
                     can.vertices += vertical[:, None] * (factor - 1) * up
                 _part(m, can, name)
         m.materials["exhaust_steel"] = ctx.material("exhaust_steel", "#787e83", metallic=.7, shininess=.45)

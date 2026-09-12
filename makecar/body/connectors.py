@@ -76,6 +76,86 @@ def aperture_loop(mesh: Mesh, name: str) -> Tuple[np.ndarray, Tuple[int, int], n
     return pts, (r1s - r0s + 1, j1e - j0 + 1), fn, grid
 
 
+def fascia_triangles(mesh: Mesh, end: str, tris=None) -> np.ndarray:
+    """Triangulated end surface; callers fitting several mounts can reuse it."""
+    ids = np.append(mesh.groups[f"fascia/{end}"], mesh.groups[f"apex_{end}"])
+    mask = np.zeros(mesh.n_vertices, dtype=bool)
+    mask[ids] = True
+    if tris is None:
+        tris, _ = mesh.triangulated()
+    return mesh.vertices[tris[mask[tris].all(axis=1)]]
+
+
+def fascia_point(mesh: Mesh, end: str, z: float, y: float = 0.0, triangles=None) -> np.ndarray:
+    """Mount on the actual stepped fascia, including the rear plate pocket.
+
+    Intersect an X ray with the fascia triangles instead of treating a bumper,
+    upper panel and recess as one raked plane. All inputs come from the morphed
+    mesh, so differential targets and style blends move the mounts with it.
+    """
+    if triangles is None:
+        triangles = fascia_triangles(mesh, end)
+    a, b, c = triangles[:, 0], triangles[:, 1], triangles[:, 2]
+    u, v = b[:, 1:] - a[:, 1:], c[:, 1:] - a[:, 1:]
+    q = np.array([y, z]) - a[:, 1:]
+    det = u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]
+    valid = np.abs(det) > 1e-12
+    den = np.where(valid, det, 1.0)
+    s = (q[:, 0] * v[:, 1] - q[:, 1] * v[:, 0]) / den
+    t = (u[:, 0] * q[:, 1] - u[:, 1] * q[:, 0]) / den
+    valid &= (s >= -1e-8) & (t >= -1e-8) & (s + t <= 1 + 1e-8)
+    x = a[:, 0] + s * (b[:, 0] - a[:, 0]) + t * (c[:, 0] - a[:, 0])
+    if valid.any():
+        return np.array([x[valid].max() if end == "front" else x[valid].min(), y, z])
+    # Out-of-range custom hints still get a finite nearest-surface mount.
+    pts = triangles.reshape(-1, 3)
+    nearest = pts[np.argmin(np.linalg.norm(pts[:, 1:] - [y, z], axis=1))]
+    return np.array([nearest[0], y, z])
+
+
+def fascia_mount(mesh: Mesh, end: str, z: float, width: float, height: float,
+                 ahead=0.004, triangles=None) -> np.ndarray:
+    """Clear a rigid rectangle's whole footprint, not just its centre ray.
+
+    A linear triangle reaches its X extremum at a clipped polygon vertex:
+    original vertices, edge/rectangle intersections, or rectangle corners.
+    Checking those points avoids both buried plates and coarse sampling misses.
+    """
+    if triangles is None:
+        triangles = fascia_triangles(mesh, end)
+    lo, hi = np.array([-width / 2, z - height / 2]), np.array([width / 2, z + height / 2])
+    candidates = [triangles.reshape(-1, 3)]
+    edges = triangles.reshape(-1, 3)
+    ends = np.roll(triangles, -1, axis=1).reshape(-1, 3)
+    delta = ends - edges
+    for axis in (1, 2):
+        for bound in (lo[axis - 1], hi[axis - 1]):
+            den = delta[:, axis]
+            t = (bound - edges[:, axis]) / np.where(abs(den) > 1e-12, den, 1)
+            valid = (abs(den) > 1e-12) & (t >= 0) & (t <= 1)
+            candidates.append(edges[valid] + delta[valid] * t[valid, None])
+    candidates.append(np.array([fascia_point(mesh, end, zz, yy, triangles)
+                                for yy in (lo[0], hi[0]) for zz in (lo[1], hi[1])]))
+    pts = np.vstack(candidates)
+    inside = ((pts[:, 1:] >= lo - 1e-9) & (pts[:, 1:] <= hi + 1e-9)).all(axis=1)
+    sign = 1 if end == "front" else -1
+    x = sign * np.max(sign * pts[inside, 0])
+    return np.array([x + sign * ahead, 0, z])
+
+
+def exhaust_mount(mesh: Mesh, meas: Dict[str, float], side: float, radius=0.038) -> np.ndarray:
+    """Seat a rearward tip immediately below the measured lower valance edge.
+
+    A 76mm outlet cannot fit inside the shallow skirt band. Sample its real
+    bottom boundary, not an out-of-range fascia ray or the old painted-bumper
+    offset, and leave 4mm above the complete tube's outer radius.
+    """
+    edge = mesh.vertices[mesh.groups["fascia/rear_face"]][:J["B"] + 1]
+    y = side * (meas["tail_half_width"] - 0.32)
+    x, z = (np.interp(abs(y), edge[:, 1], edge[:, k]) for k in (0, 2))
+    return np.array([x - 0.004, y, z - radius - 0.004])
+
+
 # ------------------------------------------------------------ measurements
 def measure(mesh: Mesh) -> Dict[str, float]:
     V = mesh.vertices
@@ -91,8 +171,8 @@ def measure(mesh: Mesh) -> Dict[str, float]:
     cowl, rf, rr, deck = ring("cowl"), ring("roof_front"), ring("roof_rear"), ring("deck")
     bp = ring("bp_r")
     m: Dict[str, float] = {}
-    m["x_front"] = float(V[G["apex_front"]][0, 0])
-    m["x_rear"] = float(V[G["apex_rear"]][0, 0])
+    m["x_front"] = float(V[G["fascia/front"]][:, 0].max())
+    m["x_rear"] = float(V[G["fascia/rear"]][:, 0].min())
     m["length"] = m["x_front"] - m["x_rear"]
     m["width"] = float(2 * np.abs(V[:, 1]).max())
     m["height"] = float(V[:, 2].max())
@@ -109,7 +189,8 @@ def measure(mesh: Mesh) -> Dict[str, float]:
     m["z_sill"] = float(np.mean([lring("ra_end")[D, 2], lring("fa_start")[D, 2]]))
     m["y_sill"] = float(lring("fa_start")[D, 1])
     cabin_st = range(station_index("bp_r") - 4, station_index("bp_f") + 4)
-    m["z_floor"] = float(np.mean([V[vidx(mesh, i, A), 2] for i in cabin_st]))
+    # A is the raised tunnel crown; the flat pan is sampled at B.
+    m["z_floor"] = float(np.mean([V[vidx(mesh, i, J["B"]), 2] for i in cabin_st]))
     m["y_floor_edge"] = float(np.mean([V[vidx(mesh, i, J["B"]), 1] for i in cabin_st]))
     # wheels
     for tag in ("front", "rear"):
@@ -174,10 +255,45 @@ def feature_lines(mesh: Mesh, meas: Dict[str, float], door_count: int = 4) -> Li
     return lines
 
 
+def _sync_optional_zones(mesh: Mesh):
+    """Style targets move vertices but retain base metadata; follow the mesh.
+
+    Quarter glass and pickup liners must activate after morphing, before the
+    shell apertures are removed. Copy nested metadata, never mutate the cached
+    base library's rectangle table.
+    """
+    V, G = mesh.vertices, mesh.groups
+    width = V[G["ring/cp_r"]][J["G"], 0] - V[G["ring/roof_rear"]][J["G"], 0]
+    rects = dict(mesh.meta["aperture_rects"])
+    for name, (r0, r1, j0, j1) in mesh.meta.get("optional_aperture_rects", {}).items():
+        faces = [r * RING_N + j for r in range(r0, r1 + 1) for j in range(j0, j1 + 1)]
+        if width > 0.15:
+            rects[name] = (r0, r1, j0, j1)
+            mesh.add_zone(name, faces)
+            mesh.set_material("aperture", faces)
+        else:
+            rects.pop(name, None)
+            mesh.zones.pop(name, None)
+            mesh.set_material("paint", faces)
+    mesh.meta["aperture_rects"] = rects
+    previous = mesh.zones.pop("bed", [])
+    mesh.set_material("paint", previous)
+    bed = []
+    for i in range(1, station_index("deck")):
+        ring = ring_pts(mesh, i)
+        if ring[J["G2"], 2] - ring[J["H"], 2] > 0.05:
+            bed.extend((i + mesh.meta["ring_offset"]) * RING_N + j
+                       for j in range(J["G2"], RING_N - J["G2"]))
+    if bed:
+        mesh.add_zone("bed", bed)
+        mesh.set_material("bed", bed)
+
+
 # --------------------------------------------------------------- connectors
 def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Connector]:
     """All connectors the body emits.  `hints` carries non-geometric options:
     door_count, seat_rows ('auto'|int), drive ('left'|'right'), fuel_side."""
+    _sync_optional_zones(mesh)
     V = mesh.vertices
     out: List[Connector] = []
     door_count = int(hints.get("door_count", 4))
@@ -214,42 +330,42 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
         out.append(conn)
 
     # --------------------------------------------------------- exterior bits
-    nose = V[mesh.groups["nose_ring"]]
-    tail = V[mesh.groups["tail_ring"]]
-    apex_f = V[mesh.groups["apex_front"]][0]
-    apex_r = V[mesh.groups["apex_rear"]][0]
-    nose_n = _face_normal_from_ring(nose, +1)
-    tail_n = _face_normal_from_ring(tail, -1)
+    nose_n, tail_n = X, -X
+    tris, _ = mesh.triangulated()
+    fascia = {end: fascia_triangles(mesh, end, tris) for end in ("front", "rear")}
     z_nose_top, z_nose_bot = meas["nose_z_top"], meas["nose_z_bottom"]
     z_tail_top, z_tail_bot = meas["tail_z_top"], meas["tail_z_bottom"]
     nose_w = 2 * meas["nose_top_half_width"]
     tail_w = 2 * meas["tail_top_half_width"]
 
-    def on_face(apex, nrm, z, ahead=0.004):
-        # point on the fascia plane at height z (shifted along the normal a bit)
-        p = np.array([apex[0], 0.0, z])
-        # move onto the (raked) face: plane through apex with normal nrm
-        d = np.dot(apex - p, nrm) / max(abs(nrm[0]), 1e-6)
-        p[0] += d * np.sign(nrm[0])
-        return p + nrm * ahead
+    def rectangle(name, end, z, width, height, tags, meta, ahead=0.004):
+        normal = nose_n if end == "front" else tail_n
+        point = fascia_mount(mesh, end, z, width, height, ahead, fascia[end])
+        out.append(RectangleConnector(name, Frame.from_normal(point, normal, x_hint=-Y if end == "front" else Y),
+                                      width, height, tags=tags, meta=meta))
 
-    grille_z = z_nose_top - 0.18
-    out.append(RectangleConnector("grille", Frame.from_normal(on_face(apex_f, nose_n, grille_z), nose_n, x_hint=-Y),
-                                  min(nose_w * 0.62, 1.1), 0.17, tags=["grille"], meta={"style_hint": hints.get("style", "sedan")}))
-    intake_z = z_nose_bot + 0.16
-    out.append(RectangleConnector("intake", Frame.from_normal(on_face(apex_f, nose_n, intake_z), nose_n, x_hint=-Y),
-                                  min(nose_w * 0.8, 1.2), 0.14, tags=["grille", "intake"], meta={"lower": True}))
-    plate_z = z_nose_bot + 0.16 + 0.15
-    out.append(RectangleConnector("plate_front", Frame.from_normal(on_face(apex_f, nose_n, (grille_z + intake_z) / 2 - 0.02, 0.012), nose_n, x_hint=-Y),
-                                  0.52, 0.11, tags=["plate"], meta={"position": "front"}))
-    out.append(RectangleConnector("plate_rear", Frame.from_normal(on_face(apex_r, tail_n, z_tail_bot + 0.5 * (z_tail_top - z_tail_bot), 0.012), tail_n, x_hint=Y),
-                                  0.52, 0.11, tags=["plate"], meta={"position": "rear"}))
-    out.append(PointConnector("badge_front", Frame.from_normal(on_face(apex_f, nose_n, grille_z + 0.11, 0.012), nose_n, x_hint=-Y), tags=["badge"]))
-    out.append(PointConnector("badge_rear", Frame.from_normal(on_face(apex_r, tail_n, z_tail_top - 0.16, 0.012), tail_n, x_hint=Y), tags=["badge"]))
-    # exhaust tips
+    # Fit the upper grille between the bumper crease and the hood lip. The
+    # front plate lives on the upright bumper, not across the setback.
+    crease_z = V[mesh.groups["fascia/front_face"]][J["E"], 2]
+    grille_lo, grille_hi = crease_z + 0.030, z_nose_top - 0.045
+    grille_z = (grille_lo + grille_hi) / 2
+    grille_h = max(0.045, min(0.17, grille_hi - grille_lo))
+    rectangle("grille", "front", grille_z, min(nose_w * 0.62, 1.1), grille_h,
+              ["grille"], {"style_hint": hints.get("style", "sedan")})
+    intake_z = z_nose_bot + 0.105
+    intake_h = max(0.05, min(0.14, 2 * (crease_z - 0.145 - intake_z)))
+    rectangle("intake", "front", intake_z, min(nose_w * 0.8, 1.2), intake_h,
+              ["grille", "intake"], {"lower": True})
+    rectangle("plate_front", "front", crease_z - 0.075, 0.52, 0.11,
+              ["plate"], {"position": "front"}, 0.012)
+    rectangle("plate_rear", "rear", (z_tail_bot + z_tail_top) / 2, 0.52, 0.11,
+              ["plate"], {"position": "rear"}, 0.012)
+    for end, z, normal in (("front", z_nose_top - 0.035, nose_n), ("rear", z_tail_top - 0.16, tail_n)):
+        point = fascia_mount(mesh, end, z, 0.06, 0.05, 0.012, fascia[end])
+        out.append(PointConnector(f"badge_{end}", Frame.from_normal(point, normal, x_hint=-Y if end == "front" else Y), tags=["badge"]))
+    # Fit complete exhaust outlets below the actual lower valance edge.
     for side, ys in (("L", 1.0), ("R", -1.0)):
-        p = on_face(apex_r, tail_n, z_tail_bot + 0.10, 0.0)
-        p[1] = ys * (meas["tail_half_width"] - 0.32)
+        p = exhaust_mount(mesh, meas, ys)
         out.append(CircleConnector(f"exhaust_{side}", Frame.from_normal(p, tail_n, x_hint=Y), 0.038, tags=["exhaust"],
                                    meta={"side": "left" if ys > 0 else "right"}))
     # side mirrors at the front-bottom corner of the front door glass
@@ -295,8 +411,10 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     out.append(CircleConnector("fuel_cap", Frame.from_normal(line[k], [0, ys, 0], x_hint=X), 0.065, tags=["fuel_cap"],
                                meta={"side": fs}))
     # antenna / shark fin near the rear of the roof
-    i_ant = st("roof_rear") + 1
-    p = V[vidx(mesh, i_ant, J["H"])]
+    # Frame stations are only 25 mm from a glass edge; use physical roof
+    # clearance so the shark-fin footprint stays off the rear window.
+    x_ant = min(meas["x_roof_rear"] + 0.18, (meas["x_roof_rear"] + meas["x_roof_front"]) / 2)
+    p = surface_line_at_x(mesh, x_ant, J["H"], J["H"], range(st("roof_rear"), st("roof_front") + 1))[0]
     out.append(PointConnector("antenna", Frame.from_normal(p, Z, x_hint=X), tags=["antenna"]))
 
     # -------------------------------------------------------------- interior
@@ -306,12 +424,22 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     return out
 
 
+
 def _face_normal_from_ring(ring: np.ndarray, sign: float) -> np.ndarray:
+    """Outward normal of an end fascia, derived from the rake of its end ring.
+
+    Kept as a shared helper because `connectors_extra` mounts rear furniture
+    (reflectors, plate lamps, tow eye) against the same plane the body uses.
+    `sign` is +1 for the nose and -1 for the tail.
+    """
     top = ring[J["H"]]
     bot = ring[J["A"]]
     d = top - bot  # face direction (mostly vertical, tilted by the rake)
     n = np.array([d[2], 0.0, -d[0]])
-    n /= np.linalg.norm(n)
+    norm = np.linalg.norm(n)
+    if norm < 1e-9:  # a perfectly vertical fascia
+        return np.array([float(np.sign(sign)), 0.0, 0.0])
+    n /= norm
     if np.sign(n[0]) != np.sign(sign):
         n = -n
     return n
@@ -347,6 +475,17 @@ def interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List
         rows_cfg = int(rows_cfg)
         row_x = [x_h1 - k * pitch for k in range(max(1, rows_cfg))]
     n_rows = len(row_x)
+    if has_bed and n_rows > 1:
+        # The pickup's rear wall is a genuine cab/bed boundary. The default
+        # reclined bench (including its raised headrests) reaches 551 mm behind
+        # its floor mount, not the 300 mm cushion allowance in auto allocation.
+        # Reserve 560 mm, the 20 mm bulkhead trim and a 20 mm free gap. Preserve
+        # all requested/emitted rows and the front mounts; compress rear pitch
+        # only when the last complete seat would otherwise enter the bed.
+        last_mount_min = x_cab_rear + 0.56 + 0.02 + 0.02
+        if row_x[-1] + 0.10 < last_mount_min:
+            pitch = (x_h1 + 0.10 - last_mount_min) / (n_rows - 1)
+            row_x = [x_h1 - k * pitch for k in range(n_rows)]
     seat_w, seat_d = 0.52, 0.55
     for r, xh in enumerate(row_x):
         if r == 0:

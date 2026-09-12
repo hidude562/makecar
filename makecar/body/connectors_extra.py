@@ -31,7 +31,7 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
 
     from ..connectors import PointConnector, RectangleConnector
     from ..geometry.frame import Frame
-    from .connectors import _face_normal_from_ring, aperture_loop, surface_line_at_x
+    from .connectors import aperture_loop, surface_line_at_x, fascia_point, fascia_triangles
     from .generator import RING, RING_N, N_STATIONS, mirror_index
 
     V = mesh.vertices
@@ -39,14 +39,7 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
     out = []
     sides = (("L", 1.0, "left"), ("R", -1.0, "right"))
     nose, tail = (V[mesh.groups[name]] for name in ("nose_ring", "tail_ring"))
-    apex_r = V[mesh.groups["apex_rear"]][0]
-    tail_n = _face_normal_from_ring(tail, -1)
-
-    def on_plane(apex, normal, z, ahead=0.0):
-        # Same raked plane used by the built-in plate/exhaust connectors.
-        p = np.array([apex[0], 0.0, z])
-        p[0] += np.dot(apex - p, normal) / normal[0]
-        return p + ahead * normal
+    rear_triangles = fascia_triangles(mesh, "rear")
 
     # Project onto the actual rounded fascia, rather than an estimated box or
     # the apex plane (which misses the bumper corners on strongly raked noses).
@@ -111,17 +104,19 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
     for side, sign, side_name in sides:
         furniture(f"fog_front_{side}", "fog", "front", sign * meas["nose_half_width"] * 0.80,
                   meas["nose_z_bottom"] + 0.15, 0.14, 0.09, 0.035, side=side_name)
+        # Above the diffuser's sloping return: reflectors must face traffic,
+        # not the road. Leave a separate strip below the rear auxiliary lamps.
         furniture(f"rear_reflector_{side}", "rear_reflector", "rear", sign * meas["tail_half_width"] * 0.82,
-                  meas["tail_z_bottom"] + 0.12, 0.14, 0.035, 0.008, side=side_name)
+                  meas["tail_z_bottom"] + 0.17, 0.14, 0.035, 0.008, side=side_name)
         kind = "fog" if side == "L" else "reverse"
         furniture(f"rear_{kind}_{side}", "rear_aux", "rear", sign * meas["tail_half_width"] * 0.76,
                   meas["tail_z_bottom"] + 0.235, 0.13, 0.055, 0.018, side=side_name, kind=kind)
 
         plate_z = 0.5 * (meas["tail_z_bottom"] + meas["tail_z_top"])
-        plate = on_plane(apex_r, tail_n, plate_z, 0.012)
-        plate_up = Frame.from_normal(plate, tail_n, -Y).y_axis
-        p = plate + plate_up * 0.085 + sign * Y * 0.16
-        out.append(PointConnector(f"plate_lamp_{side}", Frame.from_normal(p, tail_n, -Y),
+        # The fan centre is now a recessed pocket, not a raked fascia plane.
+        # Sample the pocket above the plate at each fixture's actual position.
+        p = fascia_point(mesh, "rear", plate_z + 0.085, sign * 0.16, rear_triangles) - X * 0.008
+        out.append(PointConnector(f"plate_lamp_{side}", Frame.from_normal(p, -X, -Y),
                                  tags=["plate_lamp"], meta={"side": side_name, "position": "rear",
                                  "width": 0.055, "height": 0.022, "depth": 0.018}))
 
@@ -211,29 +206,79 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
                                  meta={"paths": paths, "blade_normals": normals, "path_uv": uv_paths,
                                        "pivots": pivots, "blade_clearance": clearance, "paths_space": "world"}))
 
-    floor = V[mesh.groups["line/floor"]]
+    from .connectors import exhaust_mount
 
-    def underfloor(x, clearance=0.033):
-        return np.array([x, 0.0, np.interp(x, floor[:, 0], floor[:, 2]) - clearance])
+    # A is now the raised tunnel crown, not the flat pan at B. Retain the
+    # measured cross-sections so cans also fit the tunnel's width and ceiling.
+    floor_grid = np.array([V[(off + i) * RING_N:(off + i) * RING_N + RING["B"] + 1]
+                           for i in range(N_STATIONS)])
+
+    def underfloor(x, clearance=0.033, y=0.0):
+        row = np.array([[np.interp(x, chain[:, 0], chain[:, k]) for k in range(3)]
+                        for chain in floor_grid.transpose(1, 0, 2)])
+        return np.array([x, y, np.interp(abs(y), row[:, 1], row[:, 2]) - clearance])
+
+    def branch_floor(x, y):
+        p = underfloor(x, y=y)
+        # Clearance is normal to a sloping pan, not a fixed vertical radius.
+        # The rear ramp is steep on lowered sports bodies.
+        heights = [underfloor(x + dx, y=y)[2] for dx in (-0.01, 0.01)]
+        slope = max(abs(h - p[2]) for h in heights) / 0.01
+        p[2] += 0.033 - (0.025 * np.sqrt(1 + slope * slope) + 0.008)
+        return p
 
     midpoint = 0.5 * (meas["wheel_front_x"] + meas["wheel_rear_x"])
     junction = underfloor(meas["wheel_rear_x"] + 0.24)
     # Dense tunnel samples keep the system's mesh centroid near its underfloor
     # origin; do not anchor this long component at either rear exhaust tip.
-    main_path = [underfloor(x).tolist() for x in np.linspace(meas["wheel_front_x"] + 0.16, junction[0], 41)]
+    main_path = [underfloor(x).tolist() for x in np.linspace(meas["wheel_front_x"] + 0.16, junction[0], 161)]
     exhaust_paths, tips = [main_path], []
     for _, sign, _ in sides:
-        tip = on_plane(apex_r, tail_n, meas["tail_z_bottom"] + 0.10)
-        tip[1] = sign * (meas["tail_half_width"] - 0.32)
-        approach = tip - tail_n * 0.14
-        bend = underfloor(meas["wheel_rear_x"] - 0.15)
-        bend[1] = tip[1] * 0.65
-        exhaust_paths.append([junction.tolist(), ((junction+bend)/2).tolist(), bend.tolist(),
-                              ((bend+approach)/2).tolist(), approach.tolist(), tip.tolist()])
+        # The exact shared mount derivation keeps both terminal position and
+        # rearward tangent aligned with the below-valance exhaust outlets.
+        tip = exhaust_mount(mesh, meas, sign)
+        approach = tip + X * 0.04
+        bend = branch_floor(meas["wheel_rear_x"] - 0.15, tip[1] * 0.65)
+        # Drop under the flat pan *before* turning out of the raised tunnel.
+        # A diagonal directly from the crown-height junction cuts its shoulder.
+        drop = branch_floor(junction[0] - 0.16, bend[1])
+        drop[1] = tip[1] * 0.10
+        # Follow every pan slope change until the short entry into the rear
+        # bumper. A straight bend-to-tip diagonal passes through most of the
+        # rear floor, making the visible pipe stop just behind the axle.
+        rear_x = approach[0] + 0.08
+        xs = floor_grid[:, 0, 0]
+        samples = np.unique(np.r_[rear_x, xs[(xs > rear_x) & (xs < bend[0])], bend[0]])[::-1]
+        rear_path = []
+        for x in samples:
+            t = (bend[0] - x) / (bend[0] - rear_x)
+            p = branch_floor(x, bend[1] * (1-t) + tip[1] * t)
+            # Drop redundant stations along straight stretches of pan, but
+            # retain every actual change of slope in the measured profile.
+            while len(rear_path) > 1 and np.linalg.norm(np.cross(
+                    rear_path[-1] - rear_path[-2], p - rear_path[-1])) < 1e-10:
+                rear_path.pop()
+            rear_path.append(p)
+        route = [junction, drop, *rear_path, approach, tip]
+        rounded = [junction]
+        for before, point, after in zip(route, route[1:-2], route[2:-1]):
+            incoming, outgoing = point - before, after - point
+            lengths = np.linalg.norm(incoming), np.linalg.norm(outgoing)
+            a, b = incoming / lengths[0], outgoing / lengths[1]
+            if np.dot(a, b) > 0.999:
+                rounded.append(point)
+                continue
+            distance = min(0.075, 0.35 * min(lengths))
+            entry, exit = point - distance * a, point + distance * b
+            for p in (entry, (entry + 2 * point + exit) / 4, exit):
+                p[2] = min(p[2], branch_floor(p[0], p[1])[2])
+                rounded.append(p)
+        # Preserve a straight collar and its exact rearward terminal tangent.
+        exhaust_paths.append([p.tolist() for p in [*rounded, approach, tip]])
         tips.append(tip.tolist())
     out.append(PointConnector("exhaust_system", Frame.from_normal(underfloor(midpoint), -Z, X),
                               tags=["exhaust_system"], meta={"paths": exhaust_paths, "tips": tips,
-                              "pipe_radius": 0.025, "paths_space": "world"}))
+                              "pipe_radius": 0.025, "paths_space": "world", "floor_grid": floor_grid.tolist()}))
 
     style = hints.get("style", "sedan")
     sporting = style in ("sports", "coupe") if isinstance(style, str) else any(

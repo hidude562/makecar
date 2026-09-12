@@ -1,0 +1,329 @@
+"""Metric regression tests for production-scale shell details (metres)."""
+from dataclasses import replace
+
+import numpy as np
+import pytest
+
+from makecar.body import BodyGenerator, BodyParams, CarBody, style_params, style_names
+from makecar.body.connectors import fascia_point, fascia_triangles
+from makecar.body.generator import RING, RING_N, N_FASCIA, N_STATIONS, mirror_index, station_index
+from makecar.body.targets import BODY_MODIFIER_SPECS
+
+
+def mesh(params=None):
+    return BodyGenerator(params or BodyParams()).build()
+
+
+def group(m, name):
+    return m.vertices[m.groups[name]]
+
+
+class TestFascia:
+    def test_bumper_is_upright_and_proud(self):
+        p = BodyParams()
+        m = mesh(p)
+        face = group(m, "fascia/front_face")
+        nose = group(m, "nose_ring")
+        # D is below the crease; it lies on the vertical bumper face.
+        assert face[RING["D"], 0] - nose[RING["D"], 0] >= p.bumper_projection - 1e-9
+        upright = face[(face[:, 2] > p.front_bumper_bottom + 0.045) &
+                       (face[:, 2] <= p.bumper_crease_height)]
+        assert len(upright) >= 4
+        assert np.ptp(upright[:, 0]) < 1e-9
+        assert N_FASCIA == 6
+
+    def test_hood_overhang_moves_upper_grille_not_hood_tip(self):
+        p = BodyParams()
+        a, b = mesh(p), mesh(replace(p, hood_overhang=p.hood_overhang + 0.02))
+        ga, gb = group(a, "fascia/front_face"), group(b, "fascia/front_face")
+        upper = (ga[:, 2] >= p.bumper_crease_height + 0.025) & (ga[:, 2] <= p.hood_front_height - 0.035)
+        assert upper.any()
+        assert np.allclose(gb[upper, 0] - ga[upper, 0], -0.02)
+        assert gb[RING["H"], 0] == pytest.approx(ga[RING["H"], 0])
+
+    def test_splitter_extends_beyond_face(self):
+        p = BodyParams(front_splitter=0.055)
+        face = group(mesh(p), "fascia/front_face")
+        assert face[RING["A"], 0] - face[RING["D"], 0] == pytest.approx(p.front_splitter)
+
+    def test_rear_pocket_has_flat_recessed_floor(self):
+        p = BodyParams(plate_recess=0.035)
+        m = mesh(p)
+        rim, floor = group(m, "fascia/rear_pocket_rim"), group(m, "fascia/rear_pocket_floor")
+        assert np.allclose(floor[:, 0] - rim[:, 0], p.plate_recess)
+        assert np.ptp(floor[:, 0]) < 1e-9
+        assert group(m, "apex_rear")[0, 0] == pytest.approx(floor[0, 0])
+        point = fascia_point(m, "rear", group(m, "apex_rear")[0, 2])
+        assert point[0] == pytest.approx(floor[0, 0])
+
+    def test_rear_diffuser_and_tailgate_panel_steps(self):
+        p = BodyParams(diffuser_step=0.06, tailgate_panel=0.04, rear_fascia_rake=0)
+        face = group(mesh(p), "fascia/rear_face")
+        assert face[RING["A"], 0] - p.layout()["x_rear"] == pytest.approx(p.diffuser_step)
+        assert face[RING["H"], 0] - p.layout()["x_rear"] == pytest.approx(p.tailgate_panel)
+
+    @pytest.mark.parametrize("name,group_name", [("bumper_crease_height", "fascia/front_face"),
+                                                ("rear_bumper_crease_height", "fascia/rear_face")])
+    def test_crease_height_is_a_mesh_landmark(self, name, group_name):
+        p = BodyParams()
+        before = group(mesh(p), group_name)[RING["E"], 2]
+        after = group(mesh(replace(p, **{name: getattr(p, name) + 0.02})), group_name)[RING["E"], 2]
+        assert after - before == pytest.approx(0.02)
+
+    def test_rear_plate_connector_follows_recess_target(self):
+        car = CarBody()
+        a = car.build()
+        b = car.build(modifiers={"plate_recess": 1})
+        assert b.connector("plate_rear").origin[0] - a.connector("plate_rear").origin[0] == pytest.approx(0.025, abs=1e-6)
+        assert a.connector("plate_rear").normal.tolist() == [-1, 0, 0]
+
+
+class TestSheetMetal:
+    def test_rocker_is_vertical_with_a_measured_door_hem(self):
+        p = BodyParams()
+        gen = BodyGenerator(p)
+        r = gen.ring(station_index("bp_f"))
+        sill = r[RING["C"]:RING["D"] + 1]
+        assert np.ptp(sill[:, 1]) < 1e-9
+        assert np.ptp(sill[:, 2]) == pytest.approx(p.rocker_height)
+        assert r[RING["D"] + 1, 1] - r[RING["D"], 1] == pytest.approx(p.door_step)
+        assert r[RING["E"], 1] > sill[0, 1] + 0.03
+        assert r[RING["B"], 1] < sill[0, 1]  # lower flare-in
+
+    @pytest.mark.parametrize("height", [0.11, 0.15, 0.19])
+    def test_rocker_height_changes_the_flat_face(self, height):
+        r = BodyGenerator(BodyParams(rocker_height=height)).ring(station_index("bp_f"))
+        assert r[RING["D"], 2] - r[RING["C"], 2] == pytest.approx(height)
+
+    @pytest.mark.parametrize("width", [0.008, 0.020, 0.035])
+    def test_arch_lip_is_a_uniform_radial_flange(self, width):
+        p = BodyParams(arch_lip_width=width)
+        g = BodyGenerator(p)
+        for i in range(station_index("fa_start", "lower") + 1, station_index("fa_end", "lower")):
+            r = g.ring(i)
+            inner, outer, root = r[RING["D"]:RING["D"] + 3]
+            assert np.linalg.norm(outer[[0, 2]] - inner[[0, 2]]) == pytest.approx(width)
+            assert outer[1] - root[1] == pytest.approx(width * 0.6)
+            assert np.hypot(inner[0] - p.wheelbase / 2, inner[2] - p.axle_height) == pytest.approx(p.arch_radius)
+
+    @pytest.mark.parametrize("radius", [0.01, 0.025, 0.04])
+    def test_shoulder_is_a_circular_quarter_radius(self, radius):
+        r = BodyGenerator(BodyParams(shoulder_radius=radius)).ring(station_index("bp_f"))
+        e = r[RING["E"], 1:]
+        center = e + [-radius, 0]
+        arc = r[RING["E"]:RING["E"] + 4, 1:]
+        assert np.allclose(np.linalg.norm(arc - center, axis=1), radius)
+
+    @pytest.mark.parametrize("depth", [0.002, 0.012, 0.024])
+    def test_fender_crease_has_a_real_fold_not_a_seam_line(self, depth):
+        r = BodyGenerator(BodyParams(fender_crease=depth)).ring(station_index("cowl") + 3)
+        assert r[RING["F"], 2] - r[RING["F"] + 1, 2] == pytest.approx(depth)
+        assert r[RING["F"], 1] - r[RING["F"] + 1, 1] == pytest.approx(0.006)
+
+
+class TestGreenhouse:
+    @pytest.mark.parametrize("depth", [0.002, 0.008, 0.016])
+    def test_glass_and_boundaries_sink_by_normal_distance(self, depth):
+        flush = mesh(BodyParams(glass_recess=0))
+        recessed = mesh(BodyParams(glass_recess=depth))
+        vertices = set()
+        for name, (r0, r1, j0, j1) in flush.meta["aperture_rects"].items():
+            if "light" in name:
+                continue
+            for row in range(r0, r1 + 2):
+                vertices.update(row * RING_N + j for j in range(j0, j1 + 2))
+        ids = sorted(vertices)
+        delta = recessed.vertices - flush.vertices
+        assert np.allclose(np.linalg.norm(delta[ids], axis=1), depth)
+        other = np.ones(flush.n_vertices, bool)
+        other[ids] = False
+        assert np.allclose(delta[other], 0)  # frame surface is not sunk with the glass
+
+    def test_apertures_have_unbroken_painted_frame_bands(self):
+        m = mesh()
+        for name, (r0, r1, j0, j1) in m.meta["aperture_rects"].items():
+            if "light" in name:
+                continue
+            for row in range(r0, r1 + 1):
+                assert m.face_materials[row * RING_N + j0 - 1] == "paint"
+                assert m.face_materials[row * RING_N + j1 + 1] == "paint"
+            for j in range(j0, j1 + 1):
+                assert m.face_materials[(r0 - 1) * RING_N + j] == "paint"
+                assert m.face_materials[(r1 + 1) * RING_N + j] == "paint"
+
+    def test_side_glass_top_follows_roof_curve(self):
+        m = mesh()
+        r0, r1, _, j1 = m.meta["aperture_rects"]["aperture/glass_front_L"]
+        top = m.vertices[np.arange(r0, r1 + 2) * RING_N + j1 + 1]
+        t = (top[:, 0] - top[0, 0]) / (top[-1, 0] - top[0, 0])
+        chord = top[0, 2] + (top[-1, 2] - top[0, 2]) * t
+        assert len(top) >= 6
+        assert np.max(np.abs(top[:, 2] - chord)) > 0.0005
+
+    def test_a_and_c_pillar_widths_move_mesh_boundaries(self):
+        p = BodyParams()
+        a = mesh(p)
+        b = mesh(replace(p, a_pillar_width=p.a_pillar_width + 0.025))
+        assert group(b, "ring/roof_front")[RING["F"], 0] - group(a, "ring/roof_front")[RING["F"], 0] == pytest.approx(-0.025)
+        c = mesh(replace(p, c_pillar_width=p.c_pillar_width + 0.04))
+        assert group(c, "ring/cp_f")[RING["G"], 0] - group(a, "ring/cp_f")[RING["G"], 0] == pytest.approx(0.04)
+
+    def test_roof_radius_and_drip_bead_do_not_inflate_roof(self):
+        p = BodyParams()
+        g = BodyGenerator(p)
+        r = g.ring(station_index("bp_f"))
+        radius = BodyGenerator(replace(p, roof_edge_radius=p.roof_edge_radius + 0.01)).ring(station_index("bp_f"))
+        bead = BodyGenerator(replace(p, drip_rail=p.drip_rail + 0.004)).ring(station_index("bp_f"))
+        assert radius[RING["G"], 2] - r[RING["G"], 2] == pytest.approx(-0.005)
+        assert bead[RING["G"] + 1, 2] - r[RING["G"] + 1, 2] == pytest.approx(0.004)
+        assert np.allclose(radius[RING["H"]], r[RING["H"]])
+        assert np.allclose(bead[RING["H"]], r[RING["H"]])
+
+
+class TestUnderbody:
+    @pytest.mark.parametrize("height,width", [(0.025, 0.20), (0.065, 0.28), (0.11, 0.38)])
+    def test_floor_is_flat_outside_a_longitudinal_tunnel(self, height, width):
+        p = BodyParams(tunnel_height=height, tunnel_width=width)
+        g = BodyGenerator(p)
+        for i in (station_index("bp_r"), station_index("bp_f"), station_index("roof_front")):
+            r = g.ring(i)
+            assert r[0, 2] - r[RING["B"], 2] == pytest.approx(height)
+            assert r[2, 1] * 2 == pytest.approx(width)
+            assert np.allclose(r[2:RING["B"] + 1, 2], p.ground_clearance)
+        for i in (0, len(g.x_lo) - 1):
+            r = g.ring(i)
+            assert r[0, 2] == pytest.approx(r[RING["B"], 2])  # tunnel fades before the bumpers
+
+    def test_tunnel_does_not_lift_floor_or_seat_connectors(self):
+        car = CarBody()
+        a = car.build()
+        b = car.build(modifiers={"tunnel_height": 1})
+        assert b.measurements["z_floor"] == pytest.approx(a.measurements["z_floor"])
+        assert np.allclose(b.connector("seat_front_driver").origin, a.connector("seat_front_driver").origin)
+        assert np.max(b.full_mesh.vertices[:, 2] - a.full_mesh.vertices[:, 2]) == pytest.approx(0.045)
+
+    def test_air_dam_and_valance_extend_below_the_bumpers(self):
+        p = BodyParams(air_dam_height=0.05, rear_valance_height=0.07)
+        m = mesh(p)
+        nose, tail = group(m, "nose_ring"), group(m, "tail_ring")
+        assert p.front_bumper_bottom - nose[RING["A"], 2] == pytest.approx(p.air_dam_height)
+        assert p.rear_bumper_bottom - tail[RING["A"], 2] == pytest.approx(p.rear_valance_height)
+        assert group(m, "fascia/front_face")[RING["A"], 2] == pytest.approx(nose[RING["A"], 2])
+        assert group(m, "fascia/rear_face")[RING["A"], 2] == pytest.approx(tail[RING["A"], 2])
+
+
+# L, W, roof skin, WB, nominal tyre diameter. Factory sources and the two
+# estimated bare roof heights (wagon/SUV) are distinguished in the report.
+REFERENCE_DIMENSIONS = {
+    "sedan": (4.879, 1.839, 1.445, 2.824, 0.6683),
+    "hatchback": (4.284, 1.789, 1.491, 2.619, 0.6319),
+    "wagon": (4.854, 1.854, 1.640, 2.746, 0.7243),
+    "suv": (4.595, 1.854, 1.660, 2.690, 0.7243),
+    "pickup": (5.885, 2.029, 1.920, 3.693, 0.7748),
+    "coupe": (4.811, 1.915, 1.397, 2.718, 0.6903),
+    "sports": (3.914, 1.735, 1.245, 2.309, 0.6163),
+    "van": (5.174, 1.994, 1.740, 3.061, 0.7373),
+}
+
+
+class TestProductionPresets:
+    @pytest.mark.parametrize("style", style_names())
+    def test_reference_dimensions_are_present_in_mesh(self, style):
+        from makecar.body.connectors import measure
+        p = style_params(style)
+        measured = measure(mesh(p))
+        length, width, roof, wb, tyre = REFERENCE_DIMENSIONS[style]
+        assert measured["length"] == pytest.approx(length, abs=0.025)
+        assert measured["width"] == pytest.approx(width, abs=0.03)
+        assert measured["height"] == pytest.approx(roof, abs=0.01)
+        assert measured["wheelbase"] == pytest.approx(wb, abs=0.001)
+        assert 2 * (measured["arch_front_r"] - p.arch_gap) == pytest.approx(tyre, abs=0.001)
+        assert measured["z_cowl"] == pytest.approx(p.cowl_height)
+        assert measured["x_cowl"] - measured["x_roof_front"] == pytest.approx(p.windshield_length)
+        assert measured["x_front"] - measured["wheel_front_x"] == pytest.approx(p.front_overhang, abs=0.001)
+        assert measured["wheel_rear_x"] - measured["x_rear"] == pytest.approx(p.rear_overhang, abs=0.025)
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_caps_have_no_opposing_triangle_normals(self, style):
+        m = mesh(style_params(style))
+        off = m.meta["ring_offset"]
+        rows = list(range(off)) + list(range(off + N_STATIONS - 1, m.meta["n_rings"] - 1))
+        faces = np.array([m.faces[r * RING_N + j] for r in rows for j in range(RING_N)])
+        a, b, c, d = m.vertices[faces].transpose(1, 0, 2)
+        n0, n1 = np.cross(b - a, c - a), np.cross(c - a, d - a)
+        dots = np.sum(n0 * n1, axis=1)
+        assert np.all(dots >= -1e-12)
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_lights_and_glass_fill_without_folded_cells(self, style):
+        from makecar.components.fills import fill_connector
+        result = CarBody().build(style=style)
+        for c in result.connectors:
+            if c.meta.get("aperture"):
+                fill = fill_connector(c, "glass")
+                assert np.all(fill.face_normals() @ c.normal > 0), (style, c.name)
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_style_macros_activate_their_optional_zones(self, style):
+        car = CarBody()
+        result = car.build(style=style)
+        generated = mesh(style_params(style))
+        assert set(result.full_mesh.meta["aperture_rects"]) == set(generated.meta["aperture_rects"])
+        assert ("bed" in result.full_mesh.zones) == (style == "pickup")
+        # No nested-metadata mutation may leak back into the cached sedan.
+        assert "aperture/glass_quarter_L" not in car.library.base.meta["aperture_rects"]
+        assert "aperture/glass_quarter_L" not in car.build().full_mesh.meta["aperture_rects"]
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_rigid_fascia_mounts_clear_their_entire_footprints(self, style):
+        result = CarBody().build(style=style)
+        for name in ("grille", "intake", "plate_front", "plate_rear"):
+            c = result.connector(name)
+            end = "rear" if name == "plate_rear" else "front"
+            sign = -1 if end == "rear" else 1
+            triangles = fascia_triangles(result.full_mesh, end)
+            for y in np.linspace(-c.width / 2, c.width / 2, 7):
+                for z in np.linspace(c.origin[2] - c.height / 2, c.origin[2] + c.height / 2, 9):
+                    surface = fascia_point(result.full_mesh, end, z, y, triangles)
+                    assert sign * (c.origin[0] - surface[0]) >= 0.0039, (style, name)
+        antenna = result.connector("antenna")
+        assert antenna.origin[0] - result.measurements["x_roof_rear"] >= 0.10
+        assert antenna.origin[0] < result.measurements["x_roof_front"]
+
+
+NEW_PARAMETERS = {
+    "bumper_projection", "bumper_crease_height", "hood_overhang", "front_splitter",
+    "rear_bumper_crease_height", "plate_recess", "diffuser_step", "tailgate_panel",
+    "arch_lip_width", "rocker_height", "door_step", "shoulder_radius", "fender_crease",
+    "a_pillar_width", "c_pillar_width", "glass_recess", "roof_edge_radius", "drip_rail",
+    "tunnel_height", "tunnel_width", "air_dam_height", "rear_valance_height",
+}
+
+
+class TestDetailTargets:
+    @pytest.mark.parametrize("spec", BODY_MODIFIER_SPECS, ids=lambda s: s.param)
+    def test_all_parameter_endpoints_keep_face_indices(self, spec):
+        p = BodyParams()
+        base = mesh(p)
+        for delta in (-spec.delta_minus, spec.delta_plus):
+            if not delta:
+                continue
+            variant = mesh(replace(p, **{spec.param: getattr(p, spec.param) + delta}))
+            assert variant.n_vertices == base.n_vertices
+            assert variant.faces == base.faces
+            assert np.isfinite(variant.vertices).all()
+            assert all(np.array_equal(base.groups[k], variant.groups[k]) for k in base.groups)
+            if spec.param in NEW_PARAMETERS:
+                assert np.max(np.linalg.norm(variant.vertices - base.vertices, axis=1)) > 0.0001
+
+    def test_new_sliders_have_real_differential_targets(self):
+        car = CarBody()
+        base = car.build().full_mesh.vertices
+        specs = {s.param: s for s in BODY_MODIFIER_SPECS}
+        assert NEW_PARAMETERS <= specs.keys()
+        for name in NEW_PARAMETERS:
+            spec = specs[name]
+            actual = car.build(modifiers={name: 1}).full_mesh.vertices
+            expected = mesh(replace(BodyParams(), **{name: getattr(BodyParams(), name) + spec.delta_plus})).vertices
+            assert np.allclose(actual, expected, atol=1e-6), name
+            assert not np.allclose(actual, base), name

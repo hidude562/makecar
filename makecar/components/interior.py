@@ -403,6 +403,19 @@ class BenchSeat(MorphableComponent):
         for k, y in enumerate(ys):
             res.mesh.merge(_headrest(top + np.array([0.0, y, 0.0]), u, t, 0.22, 0.18, 0.05), group_prefix=f"headrest_{k}")
         res.info["headrests"] = n
+        if ctx.measurements.get("has_bed", 0.0) > 0.5:
+            # Custom recline can exceed the default bench envelope reserved by
+            # the pickup's mount allocator. Report the completed seat's actual
+            # clearance to the measured cab wall + its default 20 mm trim;
+            # never shorten the seat or silently override its requested pose.
+            wall_x = min(ctx.measurements["x_deck"] - 0.05,
+                         ctx.measurements["x_roof_rear"] + 0.15) + 0.02
+            clearance = float(conn.frame.to_world(res.mesh.vertices)[:, 0].min() - wall_x)
+            res.info["cab_rear_clearance"] = clearance
+            if clearance < 0:
+                res.info.setdefault("fit_warnings", []).append(
+                    f"Bench exceeds the pickup cab rear clearance by {-clearance:.3f} m; "
+                    "reduce recline or use seat_rows: 2.")
         _finish(res.mesh, ctx)
         res.mesh.materials = {k: v for k, v in res.mesh.materials.items() if k in set(res.mesh.face_materials)}
         return res
@@ -530,6 +543,11 @@ class SteeringWheel(CarComponent):
         return ComponentResult(_finish(m, ctx), [], {"radius": R, "flat_bottom": flat})
 
 
+def _console_nose_rise(height: float) -> float:
+    """Console nose above its horizontal shifter deck, shared with dash packing."""
+    return float(np.clip(0.35 - height, 0.0, 0.11))
+
+
 # =============================================================== DASHBOARD
 @dataclass
 class DashParams:
@@ -654,10 +672,15 @@ class Dashboard(MorphableComponent):
         y_screen = y_vent - 0.058 - h_s / 2 - 0.008
         y_hvac = stack_bot + 0.028
         if sc is not None:
-            # Console top is H-point + 60 mm = wheel centre - 260 mm.
-            # Lift the control stack for tall H-points rather than burying its
-            # buttons behind the SUV/van console nose.
-            y_hvac = max(y_hvac, float(conn.frame.to_local(np.asarray(sc))[0, 1]) - 0.205)
+            wheel_y = float(conn.frame.to_local(np.asarray(sc))[0, 1])
+            # The level shifter deck is wheel centre - 260 mm, but in low
+            # cabins the console nose rises above it. Reserve the full 50 mm
+            # HVAC panel plus a 10 mm gap above that nose, not just the deck.
+            y_hvac = max(y_hvac, wheel_y - 0.205)
+            if "floor" in conn.meta:
+                console_height = float(np.asarray(sc)[2]) - float(conn.meta["floor"]) - 0.26
+                nose_y = wheel_y - 0.26 + _console_nose_rise(console_height)
+                y_hvac = max(y_hvac, nose_y + 0.025 + 0.010)
         y_screen = max(y_screen, y_hvac + 0.053 + h_s / 2)
         y_vent = max(y_vent, y_screen + h_s / 2 + 0.076)
         y_cluster = y_band + 0.01
@@ -945,7 +968,7 @@ class CenterConsole(CarComponent):
         # body: rounded-rect sections along x, height profile rises towards the dash
         secs, origins = [], []
         # Keep the nose below the centre-stack controls in high-H-point cars.
-        rise = float(np.clip(0.35 - hc, 0.0, 0.11))
+        rise = _console_nose_rise(hc)
         for x, hgt, wsc in ((xr, hc - 0.03, 0.92), (xr + 0.02, hc - 0.02, 1.0), (-0.16, hc - 0.02, 1.0), (-0.14, hc, 1.0),
                             (0.25, hc, 1.0), (0.42, hc + rise * 0.18, 1.0), (xf - 0.02, hc + rise * 0.91, 0.98), (xf, hc + rise, 0.9)):
             sec = rounded_rect_points(Wc * wsc, hgt, min(0.035, Wc * 0.15), 3)
@@ -1024,6 +1047,18 @@ class RoundCupholder(CarComponent):
 
 
 # =============================================================== FLOOR / PANELS / SHELVES
+def _front_wheelhouse(ctx):
+    """Rear X, crown Z and inboard Y of the measured front wheel-house envelope."""
+    meas = ctx.measurements
+    if not all(k in meas for k in ("wheel_front_x", "wheel_front_y", "wheel_front_z", "arch_front_r")):
+        return None
+    radius = meas["arch_front_r"]
+    tyre_width = float(ctx.hints.get("tire_width", 0.225))
+    return (meas["wheel_front_x"] - radius - 0.025,
+            meas["wheel_front_z"] + radius + 0.025,
+            meas["wheel_front_y"] - tyre_width - 0.035)
+
+
 @register
 class CarpetFloor(CarComponent):
     """Carpet slab with a raised transmission tunnel (tapering under the rear
@@ -1042,6 +1077,12 @@ class CarpetFloor(CarComponent):
         ramp = float(opts["toe_ramp"])
         x_front = Lx / 2
         xs = np.unique(np.concatenate([np.linspace(-Lx / 2, Lx / 2, 22), [x_front - 0.25, x_front - 1.3, x_front - 1.6]]))
+        wheelhouse = _front_wheelhouse(ctx)
+        if wheelhouse is not None:
+            rear_x = wheelhouse[0] - conn.origin[0]
+            # Finish the inset before the arch begins; explicit stations keep
+            # a long floor quad from cutting diagonally through the tyre.
+            xs = np.unique(np.r_[xs, np.clip([rear_x - 0.08, rear_x], -Lx / 2, Lx / 2)])
         ys = np.unique(np.concatenate([np.linspace(-Wy / 2, Wy / 2, 15), np.linspace(-hw, hw, 9)]))
 
         def z_top(X, Y):
@@ -1052,6 +1093,13 @@ class CarpetFloor(CarComponent):
             return 0.01 + tunnel * hfac + toe
 
         m = H.heightfield_slab(xs, ys, z_top, -0.01, "int_carpet", name="carpet")
+        if wheelhouse is not None and wheelhouse[2] < Wy / 2:
+            inner = wheelhouse[2]
+            fixed_half = min(0.60, inner - 0.04)
+            blend = H.smoothstep(rear_x - 0.08, rear_x, m.vertices[:, 0])
+            lateral = np.abs(m.vertices[:, 1])
+            inset = np.clip((lateral - fixed_half) / (Wy / 2 - fixed_half), 0, 1)
+            m.vertices[:, 1] -= np.sign(m.vertices[:, 1]) * inset * blend * (Wy / 2 - inner)
         xh = ctx.measurements.get("x_cowl", conn.origin[0] + Lx / 2) - float(ctx.hints.get("front_h_point_offset", 0.95))
         lateral = min(0.42, Wy / 2 - 0.30)
         for row, (ahead, length) in enumerate(((0.58, 0.50), (-0.28, 0.40))):
@@ -1077,17 +1125,43 @@ class BulkheadTrim(CarComponent):
         m = P.rounded_box(conn.width - 0.01, conn.height - 0.01, t, 0.03, material="int_carpet" if conn.meta.get("position") == "front" else "int_plastic",
                           center=(0, 0, t / 2), name="bulkhead")
         if conn.meta.get("position") == "front":
-            # Original mount only covers the lower 320 mm.  Continue behind the
-            # dashboard to the windshield base, with returns closing its ends.
+            # Close the cowl, but wrap the lower firewall around the front
+            # wheel houses rather than carrying a full-width slab through the
+            # tyre and rim. The upper cowl stays at its original full width.
             top = ctx.measurements["z_cowl"] - 0.025 - conn.origin[2]
             bottom = -conn.height / 2
             upper_bottom = conn.height / 2 - 0.015
+            wheelhouse = _front_wheelhouse(ctx)
+            intrudes = wheelhouse is not None and conn.origin[0] > wheelhouse[0]
+
+            def levels(lo, hi):
+                if not intrudes:
+                    return [lo, hi]
+                crown = wheelhouse[1] - conn.origin[2]
+                return np.unique(np.r_[lo, np.clip([crown, crown + 0.04], lo, hi), hi])
+
+            def width_at(y, width):
+                if not intrudes:
+                    return width
+                blend = H.smoothstep(wheelhouse[1], wheelhouse[1] + 0.04, y + conn.origin[2])
+                inner = min(width, 2 * wheelhouse[2])
+                return inner + (width - inner) * blend
+
+            def panel(lo, hi, width, material):
+                heights = levels(lo, hi)
+                sections = [rounded_rect_points(width_at(y, width), t, min(0.008, t / 3), 3) for y in heights]
+                origins = [[0, y, t / 2] for y in heights]
+                return H.orient_outward(H.section_loft(sections, origins, np.array([1, 0, 0]), np.array([0, 0, 1]), material))
+
+            m = panel(bottom + 0.005, conn.height / 2 - 0.005, conn.width - 0.01, "int_carpet")
             if top > upper_bottom:
-                m.merge(H.named(P.box(conn.width, top - upper_bottom, t, material="int_plastic",
-                                      center=(0, (top + upper_bottom) / 2, t / 2)), "upper_firewall"))
+                m.merge(H.named(panel(upper_bottom, top, conn.width, "int_plastic"), "upper_firewall"))
             for sign in (-1, 1):
-                m.merge(H.named(P.box(0.024, top - bottom, 0.16, material="int_plastic",
-                                      center=(sign * (conn.width / 2 - 0.012), (top + bottom) / 2, 0.08)), f"firewall_return_{sign}"))
+                heights = levels(bottom, top)
+                sections = [rounded_rect_points(0.024, 0.16, 0.004, 3) for _ in heights]
+                origins = [[sign * (width_at(y, conn.width) / 2 - 0.012), y, 0.08] for y in heights]
+                side = H.orient_outward(H.section_loft(sections, origins, np.array([1, 0, 0]), np.array([0, 0, 1]), "int_plastic"))
+                m.merge(H.named(side, f"firewall_return_{sign}"))
         return ComponentResult(_finish(m, ctx))
 
 

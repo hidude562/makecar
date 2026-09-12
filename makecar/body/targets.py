@@ -35,6 +35,15 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("wheel_diameter", 0.08, 0.14, "stance", "wheel/tyre diameter and arch size"),
     ModifierSpec("tire_width", 0.05, 0.06, "stance", "tyre width / wheel-well depth"),
     ModifierSpec("fender_flare", 0.02, 0.05, "stance", "arch lip flare"),
+    ModifierSpec("arch_lip_width", 0.012, 0.015, "stance", "radial width of the folded wheel arch flange"),
+    ModifierSpec("rocker_height", 0.04, 0.04, "lower_body", "height of the flat vertical sill face"),
+    ModifierSpec("door_step", 0.008, 0.012, "lower_body", "door bottom hem proud of the sill"),
+    ModifierSpec("shoulder_radius", 0.015, 0.015, "lower_body", "rolled shoulder radius"),
+    ModifierSpec("fender_crease", 0.010, 0.012, "front", "hood-to-fender folded step"),
+    ModifierSpec("tunnel_height", 0.04, 0.045, "lower_body", "floor pan tunnel rise"),
+    ModifierSpec("tunnel_width", 0.08, 0.10, "lower_body", "floor pan tunnel width"),
+    ModifierSpec("air_dam_height", 0.025, 0.025, "front", "front skirt depth below bumper"),
+    ModifierSpec("rear_valance_height", 0.025, 0.030, "rear", "rear skirt depth below bumper"),
     ModifierSpec("sill_height", 0.06, 0.09, "lower_body", "rocker panel height"),
     ModifierSpec("belt_height", 0.08, 0.10, "lower_body", "belt line / shoulder height"),
     ModifierSpec("belt_rake", 0.03, 0.06, "lower_body", "belt line rising towards the rear"),
@@ -47,6 +56,14 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("front_corner_length", 0.20, 0.25, "front", "plan-view rounding of the nose"),
     ModifierSpec("front_fascia_rake", 0.06, 0.08, "front", "nose top set back over the bumper"),
     ModifierSpec("front_bumper_bottom", 0.08, 0.10, "front", "front bumper lower edge"),
+    ModifierSpec("bumper_projection", 0.025, 0.035, "front", "bumper stand-off from body end"),
+    ModifierSpec("bumper_crease_height", 0.05, 0.05, "front", "top of the upright front bumper face"),
+    ModifierSpec("hood_overhang", 0.025, 0.025, "front", "hood leading lip over the grille"),
+    ModifierSpec("front_splitter", 0.025, 0.05, "front", "front lower lip projection"),
+    ModifierSpec("rear_bumper_crease_height", 0.05, 0.07, "rear", "rear bumper shoulder height"),
+    ModifierSpec("plate_recess", 0.025, 0.025, "rear", "licence plate pocket depth"),
+    ModifierSpec("diffuser_step", 0.012, 0.06, "rear", "lower rear valance setback"),
+    ModifierSpec("tailgate_panel", 0.0, 0.04, "rear", "lower tailgate panel inset"),
     ModifierSpec("windshield_length", 0.25, 0.30, "greenhouse", "windshield rake / horizontal run"),
     ModifierSpec("roof_height", 0.15, 0.28, "greenhouse", "roof height"),
     ModifierSpec("roof_drop", 0.02, 0.06, "greenhouse", "roof falling towards the rear"),
@@ -55,6 +72,11 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("roof_width_ratio", 0.08, 0.10, "greenhouse", "tumblehome (narrow <-> wide roof)"),
     ModifierSpec("roof_crown", 0.02, 0.04, "greenhouse", "transverse roof curvature"),
     ModifierSpec("shoulder_inset", 0.03, 0.04, "greenhouse", "glass base inboard of the belt"),
+    ModifierSpec("a_pillar_width", 0.025, 0.04, "greenhouse", "A-pillar painted band width"),
+    ModifierSpec("c_pillar_width", 0.03, 0.08, "greenhouse", "C-pillar longitudinal width"),
+    ModifierSpec("glass_recess", 0.006, 0.008, "greenhouse", "glass below the pillar surface"),
+    ModifierSpec("roof_edge_radius", 0.010, 0.015, "greenhouse", "rolled roof-side edge radius"),
+    ModifierSpec("drip_rail", 0.003, 0.004, "greenhouse", "roof-edge drip bead projection"),
     ModifierSpec("a_pillar_lean", 0.25, 0.30, "greenhouse", "A pillar diagonal"),
     ModifierSpec("c_pillar_lean", 0.25, 0.30, "greenhouse", "C pillar diagonal"),
     ModifierSpec("front_door_length", 0.25, 0.30, "greenhouse", "B pillar position"),
@@ -139,7 +161,7 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 3
+LIBRARY_VERSION = 11
 
 
 def _cache_dir():

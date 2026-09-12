@@ -1,0 +1,1000 @@
+{
+  "phase": "baseline",
+  "style": "sedan",
+  "captured_at": "2026-09-12T05:49:55Z",
+  "baseline_revision": "c8a44076540c091a88970cf1022c56c894d97ffe",
+  "source_head": "c8a44076540c091a88970cf1022c56c894d97ffe",
+  "source_kind": "git archive",
+  "source_sha256": {
+    "makecar/__init__.py": "3419c3889b3245eb1780180f03bcd35e9304fc550dcf5efc1ff23229d796aa9a",
+    "makecar/__main__.py": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279",
+    "makecar/assembly.py": "325b06bf16ea681a9e0cda796b4d6f34f4726dbe31e93156ffeba4e17ba91df9",
+    "makecar/body/__init__.py": "291be73e93b52b953b0c370c1029459134b123c851c827b44e9c175dbacfa635",
+    "makecar/body/body.py": "47272f0299ccf5da23efd2d39b6374e2dbe68dc49d028e895bfa4bfd2f404645",
+    "makecar/body/connectors.py": "49bd839dca3ed68ba9620d8e005199e311e3b510267974a5e42d4a956799c594",
+    "makecar/body/connectors_extra.py": "468d1601d715a0356efb2c4222ad51cd0bb6893f77257e5a3f99c1697524d8ef",
+    "makecar/body/generator.py": "9cb1848a734b2f0fc9a7996fc07fe3af050dde4e8c4f52f85839ef3deb61493e",
+    "makecar/body/params.py": "09af8ec965f398793e32d4dda946cd131ddf12c9a63daaa275a0ec1bb49a97a6",
+    "makecar/body/styles.py": "cf090afdf7b39b06c0445a27a62519963a0a35efbf28fc8468c3a3cfe81c8e70",
+    "makecar/body/targets.py": "0bcd224766ae7fee6209ce631339d9bdf309b72e5cdb7c2817a0273be9f72aa9",
+    "makecar/cli.py": "603883f79294eefb329690fe39041752c8c07b1f584398f561272e223196d27e",
+    "makecar/components/__init__.py": "e53a8f2a690086196172bbd8a2616106a94ce17bb665ba005b96e9de6bb08d67",
+    "makecar/components/base.py": "d8de15bdee9359fb1f1ac90c799bd8d2b6801c8bafa55615deef595f9838a6de",
+    "makecar/components/exterior.py": "81187f522e95c84654f008305097a3fc02ef82590c8a7c093ee36ef56ed24c7c",
+    "makecar/components/fills.py": "402c64ee70cecea693440637a58a5f363e8415233a6bb0381193777176a1a429",
+    "makecar/components/interior.py": "e4c1eef1203468a5e09eaf993625149ba2cb06da38f6ee338566cee67f12ac01",
+    "makecar/components/interior_helpers.py": "38c6e2d5e88a53b06f2e8658bcceade0a21cb8339129063c5bc8a40ae527c5ae",
+    "makecar/config.py": "5df2e2b09e12b5f17e8c66a66c03701296adda5de354ecaee144b3e6c4380079",
+    "makecar/connectors.py": "c157fdaaec0180bfa3f25566a8e27fb2b7d3ce48194343ebbb67174bf0acfe64",
+    "makecar/export/__init__.py": "991659e960512de95854a83057c3c5987a82aac2f7dd72bd9653403b08d3ebe1",
+    "makecar/export/obj.py": "45f8351a7a49d73a2e46f2e426d3ae6509ab404706a7f1f4e6336c1eabb0148a",
+    "makecar/export/png.py": "6accf471fb2e0537c006d4c83ad8351a02582b92c9ac9c6501cfc9ad117a033a",
+    "makecar/export/render.py": "6e3e859054b3aa69c10d96de4450ecb284b6ce5ad3aa6200b6cb526e397d511d",
+    "makecar/export/svg.py": "5d35ae6895240e9ffa42731963de84a4df0b7359468893ef26dcfd32215e1cf4",
+    "makecar/geometry/__init__.py": "c76a89741aeab57e857dcfe5e5d6d8081a410739753ebf6dc58c925e3935c2cf",
+    "makecar/geometry/curves.py": "28e1b479fc945a1c384d40ba4f2155cdfd6375e2b23fd2961a5e4f3a7c94bef7",
+    "makecar/geometry/frame.py": "917861c5ac5d2d8d8e5a565155ec7617b042ef0cf1f7f7563302967ab44a0711",
+    "makecar/geometry/mesh.py": "c1a95bfc2f23b259635795bf2556abfda64b12de2e291af80233749979ce128c",
+    "makecar/geometry/primitives.py": "738f0f8a8d243838fb3d738576f923523af06ad27428ca1fd4921ec0f0454845",
+    "makecar/morph/__init__.py": "5521eb59a81772d1274863b283a9dc02f3fde75060c5d9851b16aeaa972ef663",
+    "makecar/morph/morphable.py": "3a8eeb32d4dd89f32ef986aa0278c818228d384491e6f51ba666d9777396886b",
+    "makecar/morph/target.py": "979590c9ea79b6c11826e5ea546f2cb02c0492de365867d94ec2f1cb9d4b800f",
+    "makecar/pipeline.py": "c974819c0442d36c05f1bc23a787fa5333924797c4377c17a1d2a6f0d4ae3ff7"
+  },
+  "imported_modules": {
+    "makecar": "makecar/__init__.py",
+    "makecar.assembly": "makecar/assembly.py",
+    "makecar.body": "makecar/body/__init__.py",
+    "makecar.body.body": "makecar/body/body.py",
+    "makecar.body.connectors": "makecar/body/connectors.py",
+    "makecar.body.connectors_extra": "makecar/body/connectors_extra.py",
+    "makecar.body.generator": "makecar/body/generator.py",
+    "makecar.body.params": "makecar/body/params.py",
+    "makecar.body.styles": "makecar/body/styles.py",
+    "makecar.body.targets": "makecar/body/targets.py",
+    "makecar.components": "makecar/components/__init__.py",
+    "makecar.components.base": "makecar/components/base.py",
+    "makecar.components.exterior": "makecar/components/exterior.py",
+    "makecar.components.fills": "makecar/components/fills.py",
+    "makecar.components.interior": "makecar/components/interior.py",
+    "makecar.components.interior_helpers": "makecar/components/interior_helpers.py",
+    "makecar.connectors": "makecar/connectors.py",
+    "makecar.export": "makecar/export/__init__.py",
+    "makecar.export.obj": "makecar/export/obj.py",
+    "makecar.export.png": "makecar/export/png.py",
+    "makecar.export.render": "makecar/export/render.py",
+    "makecar.export.svg": "makecar/export/svg.py",
+    "makecar.geometry": "makecar/geometry/__init__.py",
+    "makecar.geometry.curves": "makecar/geometry/curves.py",
+    "makecar.geometry.frame": "makecar/geometry/frame.py",
+    "makecar.geometry.mesh": "makecar/geometry/mesh.py",
+    "makecar.geometry.primitives": "makecar/geometry/primitives.py",
+    "makecar.morph": "makecar/morph/__init__.py",
+    "makecar.morph.morphable": "makecar/morph/morphable.py",
+    "makecar.morph.target": "makecar/morph/target.py"
+  },
+  "python": "3.12.3",
+  "numpy": "1.26.4",
+  "script_sha256": "d7ff3a7a001d7537d409983953a77c00210c6fb1080bd0bba7195fffbb971eda",
+  "settings": {
+    "baseline_revision": "c8a44076540c091a88970cf1022c56c894d97ffe",
+    "width": 800,
+    "height": 600,
+    "supersample": 2,
+    "palette": {
+      "paint": "#426b88"
+    },
+    "seed": 0,
+    "background": [
+      [
+        0.93,
+        0.95,
+        0.98
+      ],
+      [
+        0.78,
+        0.82,
+        0.87
+      ]
+    ],
+    "light_dir": [
+      -0.5,
+      0.6,
+      1.0
+    ],
+    "fill_dir": [
+      0.7,
+      -0.4,
+      0.4
+    ],
+    "selection": "complete assembly; no clipping or omissions",
+    "styles": {
+      "sedan": {
+        "front_three_quarter": {
+          "camera": {
+            "eye": [
+              5.997186867412504,
+              4.246573574343991,
+              3.0073032229249375
+            ],
+            "target": [
+              -0.06754871827060471,
+              0.0,
+              0.7437725921897445
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 30
+          },
+          "ground": true,
+          "lines": true
+        },
+        "rear_three_quarter": {
+          "camera": {
+            "eye": [
+              -6.133273578750149,
+              4.247266272013815,
+              3.1497648531381763
+            ],
+            "target": [
+              -0.06754871827060471,
+              0.0,
+              0.7437725921897445
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 30
+          },
+          "ground": true,
+          "lines": true
+        },
+        "side": {
+          "camera": {
+            "eye": [
+              -0.06754871827060424,
+              8.40847599882136,
+              1.184442146442724
+            ],
+            "target": [
+              -0.06754871827060471,
+              0.0,
+              0.7437725921897445
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 30
+          },
+          "ground": true,
+          "lines": true
+        },
+        "nose_closeup": {
+          "camera": {
+            "eye": [
+              5.1320603956120205,
+              0.8022226062634014,
+              0.9968092003580138
+            ],
+            "target": [
+              2.1381248700566844,
+              0.0,
+              0.5058886869221108
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 30
+          },
+          "ground": true,
+          "lines": true
+        },
+        "rear_bumper_exhaust_closeup": {
+          "camera": {
+            "eye": [
+              -5.27372886417141,
+              0.8080830666443204,
+              0.7696531428269906
+            ],
+            "target": [
+              -2.2579218027187435,
+              0.0,
+              0.551328125
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 30
+          },
+          "ground": true,
+          "lines": true
+        },
+        "wheel_closeup": {
+          "camera": {
+            "eye": [
+              2.401692135632434,
+              2.8852533916342478,
+              0.7470744803293686
+            ],
+            "target": [
+              1.412000000000001,
+              0.7628517575966112,
+              0.33414999999999995
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 30
+          },
+          "ground": true,
+          "lines": true
+        }
+      }
+    }
+  },
+  "full_mesh": {
+    "vertices": 65391,
+    "faces": 59175,
+    "bounds_min": [
+      -2.5821,
+      -1.1074,
+      0.0
+    ],
+    "bounds_max": [
+      2.447,
+      1.1074,
+      1.4875
+    ],
+    "materials": [
+      "antenna_gasket",
+      "aperture",
+      "aux_trim",
+      "badge_dark",
+      "bed",
+      "bezel",
+      "brake_disc",
+      "caliper",
+      "chrome",
+      "exhaust_dark",
+      "exhaust_steel",
+      "fog_chrome",
+      "fog_lens",
+      "fog_trim",
+      "glass",
+      "glass_frame",
+      "grille_dark",
+      "indicator",
+      "int_accent",
+      "int_belt",
+      "int_carpet",
+      "int_chrome",
+      "int_fabric",
+      "int_gauge",
+      "int_grille",
+      "int_leather",
+      "int_lens",
+      "int_metal",
+      "int_mirror",
+      "int_needle",
+      "int_plastic",
+      "int_rubber",
+      "int_screen",
+      "int_soft",
+      "int_stitch",
+      "int_trim",
+      "int_ui",
+      "int_wood",
+      "lamp_dark",
+      "lamp_led",
+      "lens",
+      "light_plate",
+      "light_rear_auxfog",
+      "light_rear_auxreverse",
+      "light_rear_reflector",
+      "light_side_marker",
+      "mesh_dark",
+      "mirror_glass",
+      "mirror_housing",
+      "mirror_signal",
+      "paint",
+      "plate",
+      "plate_blue",
+      "plate_text",
+      "projector_glass",
+      "rim",
+      "rim_dark",
+      "tail_bezel",
+      "tail_guide",
+      "tail_lens",
+      "tail_reflector",
+      "tail_reverse",
+      "tow_gap",
+      "tow_steel",
+      "trim",
+      "trim_dark",
+      "tyre",
+      "underbody",
+      "wiper_arm",
+      "wiper_rubber"
+    ]
+  },
+  "components": {
+    "wheel_front_L": {
+      "component": "wheel.alloy",
+      "faces": 3682,
+      "options": {}
+    },
+    "wheel_front_R": {
+      "component": "wheel.alloy",
+      "faces": 3682,
+      "options": {}
+    },
+    "wheel_rear_L": {
+      "component": "wheel.alloy",
+      "faces": 3682,
+      "options": {}
+    },
+    "wheel_rear_R": {
+      "component": "wheel.alloy",
+      "faces": 3682,
+      "options": {}
+    },
+    "windshield": {
+      "component": "glass.tinted",
+      "faces": 576,
+      "options": {}
+    },
+    "rear_window": {
+      "component": "glass.tinted",
+      "faces": 432,
+      "options": {}
+    },
+    "glass_front_L": {
+      "component": "glass.tinted",
+      "faces": 360,
+      "options": {}
+    },
+    "glass_front_R": {
+      "component": "glass.tinted",
+      "faces": 360,
+      "options": {}
+    },
+    "glass_rear_L": {
+      "component": "glass.tinted",
+      "faces": 360,
+      "options": {}
+    },
+    "glass_rear_R": {
+      "component": "glass.tinted",
+      "faces": 360,
+      "options": {}
+    },
+    "headlight_L": {
+      "component": "light.headlight",
+      "faces": 1948,
+      "options": {}
+    },
+    "headlight_R": {
+      "component": "light.headlight",
+      "faces": 1948,
+      "options": {}
+    },
+    "taillight_L": {
+      "component": "light.taillight",
+      "faces": 2976,
+      "options": {}
+    },
+    "taillight_R": {
+      "component": "light.taillight",
+      "faces": 2976,
+      "options": {}
+    },
+    "grille": {
+      "component": "grille.slats",
+      "faces": 468,
+      "options": {}
+    },
+    "intake": {
+      "component": "grille.intake",
+      "faces": 1300,
+      "options": {}
+    },
+    "plate_front": {
+      "component": "plate.standard",
+      "faces": 60,
+      "options": {}
+    },
+    "plate_rear": {
+      "component": "plate.standard",
+      "faces": 54,
+      "options": {}
+    },
+    "badge_front": {
+      "component": "badge.roundel",
+      "faces": 192,
+      "options": {}
+    },
+    "badge_rear": {
+      "component": "badge.roundel",
+      "faces": 192,
+      "options": {}
+    },
+    "exhaust_L": {
+      "component": "exhaust.tip",
+      "faces": 140,
+      "options": {}
+    },
+    "exhaust_R": {
+      "component": "exhaust.tip",
+      "faces": 140,
+      "options": {}
+    },
+    "mirror_L": {
+      "component": "mirror.side",
+      "faces": 360,
+      "options": {}
+    },
+    "handle_front_L": {
+      "component": "handle.pull",
+      "faces": 148,
+      "options": {}
+    },
+    "handle_rear_L": {
+      "component": "handle.pull",
+      "faces": 148,
+      "options": {}
+    },
+    "mirror_R": {
+      "component": "mirror.side",
+      "faces": 360,
+      "options": {}
+    },
+    "handle_front_R": {
+      "component": "handle.pull",
+      "faces": 148,
+      "options": {}
+    },
+    "handle_rear_R": {
+      "component": "handle.pull",
+      "faces": 148,
+      "options": {}
+    },
+    "fuel_cap": {
+      "component": "fuel.cap",
+      "faces": 144,
+      "options": {}
+    },
+    "antenna": {
+      "component": "antenna.sharkfin",
+      "faces": 66,
+      "options": {}
+    },
+    "seat_front_driver": {
+      "component": "seat.bucket",
+      "faces": 522,
+      "options": {}
+    },
+    "seat_front_passenger": {
+      "component": "seat.bucket",
+      "faces": 522,
+      "options": {}
+    },
+    "seat_row2": {
+      "component": "seat.bench",
+      "faces": 456,
+      "options": {}
+    },
+    "steering_wheel": {
+      "component": "steering.wheel",
+      "faces": 948,
+      "options": {}
+    },
+    "dashboard": {
+      "component": "dashboard.sculpted",
+      "faces": 362,
+      "options": {}
+    },
+    "pedals": {
+      "component": "pedals.hinged",
+      "faces": 192,
+      "options": {}
+    },
+    "console": {
+      "component": "console.center",
+      "faces": 342,
+      "options": {}
+    },
+    "floor": {
+      "component": "floor.carpet",
+      "faces": 1436,
+      "options": {}
+    },
+    "firewall": {
+      "component": "bulkhead.trim",
+      "faces": 54,
+      "options": {}
+    },
+    "rear_bulkhead": {
+      "component": "bulkhead.trim",
+      "faces": 36,
+      "options": {}
+    },
+    "parcel_shelf": {
+      "component": "shelf.parcel",
+      "faces": 918,
+      "options": {}
+    },
+    "trunk_floor": {
+      "component": "floor.cargo",
+      "faces": 24,
+      "options": {}
+    },
+    "headliner": {
+      "component": "headliner.fabric",
+      "faces": 338,
+      "options": {}
+    },
+    "rearview_mirror": {
+      "component": "mirror.rearview",
+      "faces": 120,
+      "options": {}
+    },
+    "door_card_front_L": {
+      "component": "door.card",
+      "faces": 424,
+      "options": {}
+    },
+    "door_card_rear_L": {
+      "component": "door.card",
+      "faces": 356,
+      "options": {}
+    },
+    "door_card_front_R": {
+      "component": "door.card",
+      "faces": 424,
+      "options": {}
+    },
+    "door_card_rear_R": {
+      "component": "door.card",
+      "faces": 356,
+      "options": {}
+    },
+    "cowl_trim": {
+      "component": "cowl.trim",
+      "faces": 182,
+      "options": {}
+    },
+    "pillar_trim_A_L": {
+      "component": "pillar.trim",
+      "faces": 390,
+      "options": {}
+    },
+    "pillar_trim_B_L": {
+      "component": "pillar.trim",
+      "faces": 166,
+      "options": {}
+    },
+    "cabin_side_liner_L": {
+      "component": "pillar.trim",
+      "faces": 1090,
+      "options": {}
+    },
+    "pillar_trim_C_L": {
+      "component": "pillar.trim",
+      "faces": 62,
+      "options": {}
+    },
+    "pillar_trim_rear_L": {
+      "component": "pillar.trim",
+      "faces": 286,
+      "options": {}
+    },
+    "pillar_trim_belt_L": {
+      "component": "pillar.trim",
+      "faces": 274,
+      "options": {}
+    },
+    "pillar_trim_quarter_L": {
+      "component": "pillar.trim",
+      "faces": 108,
+      "options": {}
+    },
+    "belt_anchor_L": {
+      "component": "belt.shoulder",
+      "faces": 88,
+      "options": {}
+    },
+    "pillar_trim_A_R": {
+      "component": "pillar.trim",
+      "faces": 390,
+      "options": {}
+    },
+    "pillar_trim_B_R": {
+      "component": "pillar.trim",
+      "faces": 166,
+      "options": {}
+    },
+    "cabin_side_liner_R": {
+      "component": "pillar.trim",
+      "faces": 1090,
+      "options": {}
+    },
+    "pillar_trim_C_R": {
+      "component": "pillar.trim",
+      "faces": 62,
+      "options": {}
+    },
+    "pillar_trim_rear_R": {
+      "component": "pillar.trim",
+      "faces": 286,
+      "options": {}
+    },
+    "pillar_trim_belt_R": {
+      "component": "pillar.trim",
+      "faces": 274,
+      "options": {}
+    },
+    "pillar_trim_quarter_R": {
+      "component": "pillar.trim",
+      "faces": 108,
+      "options": {}
+    },
+    "belt_anchor_R": {
+      "component": "belt.shoulder",
+      "faces": 88,
+      "options": {}
+    },
+    "cargo_wheelhouse_L": {
+      "component": "cargo.wheelhouse",
+      "faces": 68,
+      "options": {}
+    },
+    "cargo_wheelhouse_R": {
+      "component": "cargo.wheelhouse",
+      "faces": 68,
+      "options": {}
+    },
+    "fog_front_L": {
+      "component": "light.fog",
+      "faces": 204,
+      "options": {}
+    },
+    "rear_reflector_L": {
+      "component": "light.rear_reflector",
+      "faces": 174,
+      "options": {}
+    },
+    "rear_fog_L": {
+      "component": "light.rear_aux",
+      "faces": 168,
+      "options": {}
+    },
+    "plate_lamp_L": {
+      "component": "light.plate",
+      "faces": 108,
+      "options": {}
+    },
+    "fog_front_R": {
+      "component": "light.fog",
+      "faces": 204,
+      "options": {}
+    },
+    "rear_reflector_R": {
+      "component": "light.rear_reflector",
+      "faces": 174,
+      "options": {}
+    },
+    "rear_reverse_R": {
+      "component": "light.rear_aux",
+      "faces": 168,
+      "options": {}
+    },
+    "plate_lamp_R": {
+      "component": "light.plate",
+      "faces": 108,
+      "options": {}
+    },
+    "tow_hook_cover_front": {
+      "component": "bumper.tow_cover",
+      "faces": 72,
+      "options": {}
+    },
+    "tow_hook_cover_rear": {
+      "component": "bumper.tow_cover",
+      "faces": 72,
+      "options": {}
+    },
+    "tow_eye": {
+      "component": "bumper.tow_eye",
+      "faces": 196,
+      "options": {}
+    },
+    "side_marker_L": {
+      "component": "light.side_marker",
+      "faces": 138,
+      "options": {}
+    },
+    "side_marker_R": {
+      "component": "light.side_marker",
+      "faces": 138,
+      "options": {}
+    },
+    "wipers": {
+      "component": "wipers.parked",
+      "faces": 480,
+      "options": {}
+    },
+    "exhaust_system": {
+      "component": "exhaust.system",
+      "faces": 656,
+      "options": {}
+    },
+    "dashboard/cluster": {
+      "component": "cluster.analog",
+      "faces": 1579,
+      "options": {}
+    },
+    "dashboard/screen": {
+      "component": "screen.infotainment",
+      "faces": 54,
+      "options": {}
+    },
+    "dashboard/hvac": {
+      "component": "hvac.knobs",
+      "faces": 486,
+      "options": {}
+    },
+    "dashboard/glovebox": {
+      "component": "glovebox.lid",
+      "faces": 78,
+      "options": {}
+    },
+    "dashboard/vent_L": {
+      "component": "vent.round",
+      "faces": 324,
+      "options": {}
+    },
+    "dashboard/vent_R": {
+      "component": "vent.round",
+      "faces": 324,
+      "options": {}
+    },
+    "dashboard/vent_center_L": {
+      "component": "vent.round",
+      "faces": 324,
+      "options": {}
+    },
+    "dashboard/vent_center_R": {
+      "component": "vent.round",
+      "faces": 324,
+      "options": {}
+    },
+    "console/shifter": {
+      "component": "shifter.lever",
+      "faces": 206,
+      "options": {}
+    },
+    "console/cupholder_1": {
+      "component": "cupholder.round",
+      "faces": 168,
+      "options": {}
+    },
+    "console/cupholder_2": {
+      "component": "cupholder.round",
+      "faces": 168,
+      "options": {}
+    },
+    "headliner/dome_light": {
+      "component": "light.dome",
+      "faces": 180,
+      "options": {}
+    },
+    "headliner/grab_handle_L": {
+      "component": "handle.grab",
+      "faces": 120,
+      "options": {}
+    },
+    "headliner/grab_handle_R": {
+      "component": "handle.grab",
+      "faces": 120,
+      "options": {}
+    },
+    "door_card_front_L/speaker": {
+      "component": "speaker.round",
+      "faces": 468,
+      "options": {}
+    },
+    "door_card_rear_L/speaker": {
+      "component": "speaker.round",
+      "faces": 468,
+      "options": {}
+    },
+    "door_card_front_R/speaker": {
+      "component": "speaker.round",
+      "faces": 468,
+      "options": {}
+    },
+    "door_card_rear_R/speaker": {
+      "component": "speaker.round",
+      "faces": 468,
+      "options": {}
+    }
+  },
+  "images": {
+    "front_three_quarter": {
+      "path": "baseline/sedan/front_three_quarter.png",
+      "sha256": "f3b1165716c8ac6a2cb2f79e6c360f9b966a904514e222526d84f7ba80efe0db",
+      "faces_rendered": 59175,
+      "faces_removed": 0,
+      "seconds": 3.613,
+      "camera": {
+        "eye": [
+          5.997186867412504,
+          4.246573574343991,
+          3.0073032229249375
+        ],
+        "target": [
+          -0.06754871827060471,
+          0.0,
+          0.7437725921897445
+        ],
+        "up": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fov_deg": 30
+      },
+      "ground": true,
+      "lines": true
+    },
+    "rear_three_quarter": {
+      "path": "baseline/sedan/rear_three_quarter.png",
+      "sha256": "c7b552b7e104ebe8595f92f437502bcf9183ff57e71852151ccca28e712c8529",
+      "faces_rendered": 59175,
+      "faces_removed": 0,
+      "seconds": 3.58,
+      "camera": {
+        "eye": [
+          -6.133273578750149,
+          4.247266272013815,
+          3.1497648531381763
+        ],
+        "target": [
+          -0.06754871827060471,
+          0.0,
+          0.7437725921897445
+        ],
+        "up": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fov_deg": 30
+      },
+      "ground": true,
+      "lines": true
+    },
+    "side": {
+      "path": "baseline/sedan/side.png",
+      "sha256": "a328d994444838500af470241c5e7f8d5cfed784218d6d886624fd29021dddf9",
+      "faces_rendered": 59175,
+      "faces_removed": 0,
+      "seconds": 3.523,
+      "camera": {
+        "eye": [
+          -0.06754871827060424,
+          8.40847599882136,
+          1.184442146442724
+        ],
+        "target": [
+          -0.06754871827060471,
+          0.0,
+          0.7437725921897445
+        ],
+        "up": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fov_deg": 30
+      },
+      "ground": true,
+      "lines": true
+    },
+    "nose_closeup": {
+      "path": "baseline/sedan/nose_closeup.png",
+      "sha256": "e6d8d674cd607e306830e650199ff4ff9f31130195d95f4bbfe4f8a81cd8f6ce",
+      "faces_rendered": 59175,
+      "faces_removed": 0,
+      "seconds": 3.944,
+      "camera": {
+        "eye": [
+          5.1320603956120205,
+          0.8022226062634014,
+          0.9968092003580138
+        ],
+        "target": [
+          2.1381248700566844,
+          0.0,
+          0.5058886869221108
+        ],
+        "up": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fov_deg": 30
+      },
+      "ground": true,
+      "lines": true
+    },
+    "rear_bumper_exhaust_closeup": {
+      "path": "baseline/sedan/rear_bumper_exhaust_closeup.png",
+      "sha256": "0c6b79fdb11c1039322090f53beb4c3c33f9714ccf0c28908071372daf1b273e",
+      "faces_rendered": 59175,
+      "faces_removed": 0,
+      "seconds": 3.793,
+      "camera": {
+        "eye": [
+          -5.27372886417141,
+          0.8080830666443204,
+          0.7696531428269906
+        ],
+        "target": [
+          -2.2579218027187435,
+          0.0,
+          0.551328125
+        ],
+        "up": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fov_deg": 30
+      },
+      "ground": true,
+      "lines": true
+    },
+    "wheel_closeup": {
+      "path": "baseline/sedan/wheel_closeup.png",
+      "sha256": "e2154782c2a752cdb508b95ce0ec302d6d3b21b5e1784a849915b00943253bc2",
+      "faces_rendered": 59175,
+      "faces_removed": 0,
+      "seconds": 2.266,
+      "camera": {
+        "eye": [
+          2.401692135632434,
+          2.8852533916342478,
+          0.7470744803293686
+        ],
+        "target": [
+          1.412000000000001,
+          0.7628517575966112,
+          0.33414999999999995
+        ],
+        "up": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "fov_deg": 30
+      },
+      "ground": true,
+      "lines": true
+    }
+  }
+}

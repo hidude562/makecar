@@ -16,42 +16,63 @@ import math
 @dataclass
 class BodyParams:
     # ---- overall proportions -------------------------------------------------
-    wheelbase: float = 2.75
-    front_overhang: float = 0.95
-    rear_overhang: float = 1.05
-    width: float = 1.84            # maximum body width (at the belt line)
+    wheelbase: float = 2.824
+    front_overhang: float = 0.975
+    rear_overhang: float = 1.080
+    width: float = 1.839           # maximum body width (at the belt line)
     ground_clearance: float = 0.15
     # ---- wheels / arches -----------------------------------------------------
-    wheel_diameter: float = 0.66
-    tire_width: float = 0.225
+    wheel_diameter: float = 0.6683 # 215/55 R17, Camry LE reference
+    tire_width: float = 0.215
     arch_gap: float = 0.06         # radial gap between tyre and arch lip
     fender_flare: float = 0.025    # outward bulge of the arch lip
+    arch_lip_width: float = 0.020  # radial width of the folded arch flange
     # ---- lower body ----------------------------------------------------------
     sill_height: float = 0.36      # top of the rocker panel
     sill_inset: float = 0.05       # rocker sits this far inboard of the belt line
-    belt_height: float = 0.93      # door shoulder / belt line height
+    rocker_height: float = 0.15   # flat, vertical sill face
+    door_step: float = 0.012      # door hem proud of the rocker
+    tunnel_height: float = 0.065  # longitudinal floor-pan tunnel (up into cabin)
+    tunnel_width: float = 0.28    # full width, including tunnel shoulders
+    air_dam_height: float = 0.035 # front skirt below the painted bumper
+    rear_valance_height: float = 0.045  # rear skirt below the bumper
+    belt_height: float = 0.95      # door shoulder / belt line height
     belt_rake: float = 0.03        # belt rises this much from front door to rear door
     side_bulge: float = 0.02       # convexity of the door skin
     # ---- front end -----------------------------------------------------------
     front_bumper_bottom: float = 0.30
-    hood_front_height: float = 0.76
-    cowl_height: float = 0.98      # windshield base
-    cowl_offset: float = 0.35      # windshield base is this far behind the front axle
+    hood_front_height: float = 0.78
+    cowl_height: float = 1.00      # windshield base
+    cowl_offset: float = 0.40      # windshield base is this far behind the front axle
     hood_crown: float = 0.03
-    nose_width_ratio: float = 0.72  # flat nose width / body width
-    front_corner_length: float = 0.55  # plan-view corner rounding run
-    front_fascia_rake: float = 0.08    # nose top set back relative to bumper bottom
+    nose_width_ratio: float = 0.74  # flat nose width / body width
+    front_corner_length: float = 0.28  # plan-view bumper corner radius ~0.25 m
+    front_fascia_rake: float = 0.03    # upper fascia setback (bumper stays vertical)
+    bumper_projection: float = 0.035  # bumper face proud of the end ring
+    bumper_crease_height: float = 0.60
+    hood_overhang: float = 0.03       # hood lip proud of the upper grille face
+    front_splitter: float = 0.025    # lower lip projection beyond the bumper
+    rear_bumper_crease_height: float = 0.62
+    plate_recess: float = 0.025      # depth of the rear licence-plate pocket
+    diffuser_step: float = 0.012     # lower rear valance setback
+    tailgate_panel: float = 0.0      # lower tailgate panel setback (two-box bodies)
     # ---- greenhouse ----------------------------------------------------------
-    windshield_length: float = 0.90    # horizontal run of the windshield
-    roof_height: float = 1.45
+    windshield_length: float = 0.85    # horizontal run of the windshield
+    roof_height: float = 1.445
     roof_drop: float = 0.02            # roof is lower at the rear
-    roof_rear_offset: float = 0.33     # roof ends this far ahead of (+) the rear axle
-    rear_window_length: float = 0.70
+    roof_rear_offset: float = 0.50     # roof ends this far ahead of (+) the rear axle
+    rear_window_length: float = 0.65
     roof_crown: float = 0.035
     roof_width_ratio: float = 0.68     # roof rail half width / body half width
     shoulder_inset: float = 0.06       # glass base sits inboard of the belt line
     shoulder_rise: float = 0.03
-    a_pillar_lean: float = 0.45        # as fraction of windshield_length
+    shoulder_radius: float = 0.025    # definite rolled shoulder, not a spline bulge
+    fender_crease: float = 0.012       # hood skin below fender top
+    a_pillar_lean: float = 0.98        # fraction of windshield run (1 = parallel to glass)
+    a_pillar_width: float = 0.070      # longitudinal pillar band at the cowl
+    glass_recess: float = 0.008        # inward normal offset below the frame
+    roof_edge_radius: float = 0.025   # rolled roof-side edge
+    drip_rail: float = 0.004          # bead proud of the rolled roof edge
     c_pillar_lean: float = 0.35        # as fraction of rear_window_length
     front_door_length: float = 1.32    # cowl -> B pillar centre
     b_pillar_width: float = 0.10
@@ -61,8 +82,8 @@ class BodyParams:
     deck_height: float = 0.98          # rear window base / trunk lid (or bed rail)
     deck_rear_height: float = 0.94     # trunk lid at the rear edge
     rear_bumper_bottom: float = 0.32
-    tail_width_ratio: float = 0.78
-    rear_corner_length: float = 0.45
+    tail_width_ratio: float = 0.77
+    rear_corner_length: float = 0.27
     rear_fascia_rake: float = 0.02     # >0: tail top protrudes over the bumper
     deck_crown: float = 0.02
     bed_depth: float = 0.0             # >0 turns the deck into an open pickup bed
