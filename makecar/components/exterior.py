@@ -275,8 +275,10 @@ class Glass(CarComponent):
 
 # =============================================================== LIGHTS
 def _lamp_grid(conn):
-    """Fit only sub-2mm boundary notches under the lamp's aperture seal.
+    """Fit only sub-3mm boundary notches under the lamp's aperture seal.
 
+    The stock sports fit stays below 2mm; mild supported modifiers need up
+    to 3mm, with the physical seal expanded by the same measured allowance.
     The sports fascia has a noncorner sample that doubles back by 0.8mm in
     height. Its boundary crosses itself in the mount-plane projection, so no
     outward pane can follow it exactly. Straighten only a crossed cell's tiny
@@ -313,7 +315,7 @@ def _lamp_grid(conn):
                 t = np.clip((grid[r, c] - a) @ edge / max(edge @ edge, 1e-20), 0., 1.)
                 point = a + t * edge
                 distance = np.linalg.norm(point - source[r, c])
-                if distance > .002:
+                if distance > .003:
                     continue
                 trial = grid.copy()
                 trial[r, c] = point
@@ -325,6 +327,125 @@ def _lamp_grid(conn):
         _, r, c, point, bad = min(candidates, key=lambda candidate: candidate[:3])
         grid[r, c] = point
     return grid
+
+
+def _lamp_wrapped_patch(conn, grid, material, offset, bulge):
+    """An embedded graph for an extreme aperture, not a flipped folded grid.
+
+    Keep the boundary and well-separated interior source samples that can
+    lie on the same graph. Search outward viewing directions nearest the mount normal,
+    ear-clip only a simple projected outline, then insert interior samples.
+    All triangles are positive in that projection, which prevents crossings
+    in 3-D too. This deliberately does not claim an extreme folded aperture
+    has the same local outward direction as its single average mount frame.
+    """
+    if conn.side() == "right":
+        # Canonicalize reflection BEFORE choosing a projection/ear order, so
+        # floating-point ties cannot give left/right lamps different surfaces.
+        reflect = np.array([1., -1., 1.])
+        left = PolygonConnector(conn.name, Frame.from_normal(conn.origin * reflect,
+                                conn.normal * reflect, conn.frame.x_axis * reflect),
+                                conn.points[::-1] * reflect, meta={"side": "left"})
+        mesh = _lamp_wrapped_patch(left, grid[::-1] * reflect, material, offset, bulge).mirrored()
+        mesh.meta["lamp_projection_normal"] = (np.asarray(mesh.meta["lamp_projection_normal"]) * reflect).tolist()
+        return mesh
+    rows, cols = grid.shape[:2]
+    vertices = grid.reshape(-1, 3)
+    boundary = ([i * cols for i in range(rows)]
+                + [(rows - 1) * cols + j for j in range(1, cols)]
+                + [i * cols + cols - 1 for i in range(rows - 2, -1, -1)]
+                + list(range(cols - 2, 0, -1)))
+
+    def cross(a, b):
+        return a[..., 0] * b[..., 1] - a[..., 1] * b[..., 0]
+
+    # A deterministic hemisphere, sampled from closest to furthest from the
+    # mount normal. This is component geometry, never connector-frame repair.
+    k = np.arange(384)
+    z = 1 - (k + .5) / len(k)
+    angle = k * np.pi * (3 - np.sqrt(5))
+    radius = np.sqrt(1 - z * z)
+    directions = np.vstack([[0., 0., 1.], np.column_stack([radius * np.cos(angle), radius * np.sin(angle), z])])
+    for normal in directions @ conn.frame.rotation.T:
+        frame = Frame.from_normal(conn.origin, normal, conn.frame.x_axis)
+        xy = frame.to_local(vertices)[:, :2]
+        a, b = xy[boundary], np.roll(xy[boundary], -1, axis=0)
+        if cross(a, b).sum() <= 1e-12:
+            continue
+        edge = b - a
+        c, d = a[:, None], b[:, None]
+        if np.any((cross(edge, c - a) * cross(edge, d - a) < -1e-24)
+                  & (cross(d - c, a - c) * cross(d - c, b - c) < -1e-24)):
+            continue
+        loop, faces = list(boundary), []
+        while len(loop) > 3:
+            ears = []
+            for i, middle in enumerate(loop):
+                first, last = loop[i - 1], loop[(i + 1) % len(loop)]
+                a, b, c = xy[[first, middle, last]]
+                if cross(b - a, c - a) <= 1e-12:
+                    continue
+                other = xy[[v for v in loop if v not in (first, middle, last)]]
+                inside = ((cross(b - a, other - a) >= -1e-12)
+                          & (cross(c - b, other - b) >= -1e-12)
+                          & (cross(a - c, other - c) >= -1e-12))
+                if not inside.any():
+                    ears.append((np.linalg.norm(c - a), i, (first, middle, last)))
+            if not ears:
+                break
+            _, i, face = min(ears)
+            faces.append(face)
+            loop.pop(i)
+        if len(loop) == 3 and cross(xy[loop[1]] - xy[loop[0]], xy[loop[2]] - xy[loop[0]]) > 1e-12:
+            faces.append(tuple(loop))
+            break
+    else:
+        # A documented scalar modifier should not abort the whole assembly.
+        # An unprojectable boundary gets a conservative convex-envelope pane,
+        # explicitly warned below, rather than an intersecting legacy fill.
+        normal = conn.normal
+        xy = conn.frame.to_local(vertices)[:, :2]
+        order = np.lexsort((xy[:, 1], xy[:, 0])).tolist()
+        halves = []
+        for sequence in (order, order[::-1]):
+            hull = []
+            for index in sequence:
+                while len(hull) > 1 and cross(xy[hull[-1]] - xy[hull[-2]], xy[index] - xy[hull[-1]]) <= 1e-12:
+                    hull.pop()
+                hull.append(index)
+            halves.append(hull[:-1])
+        hull = halves[0] + halves[1]
+        faces = [(hull[0], hull[i], hull[i + 1]) for i in range(1, len(hull) - 1)]
+        mesh = Mesh(vertices.copy(), faces, [material] * len(faces), name="lamp_fit")
+        mesh.prune_unused_vertices().translate(offset * normal)
+        mesh.meta["lamp_fit_warning"] = "Infeasible lamp aperture: conservative convex-envelope pane; exact boundary fit is unavailable."
+        mesh.meta["lamp_projection_normal"] = normal.tolist()
+        return mesh
+
+    # Preserve source curvature where its projection lies strictly inside the
+    # polygon. A sample on the boundary must not pull that boundary off its
+    # exact 3-D segment; projected duplicate/outer samples are not inserted.
+    for index in (i * cols + j for i in range(1, rows - 1) for j in range(1, cols - 1)):
+        point = xy[index]
+        used = np.unique(np.asarray(faces))
+        if np.linalg.norm(xy[used] - point, axis=1).min() < 1e-10:
+            continue
+        a, b, c = xy[np.asarray(faces)].transpose(1, 0, 2)
+        areas = np.column_stack([cross(b - a, point - a), cross(c - b, point - b), cross(a - c, point - c)])
+        hit = np.flatnonzero(np.all(areas > 1e-10, axis=1))
+        if len(hit) != 1:
+            continue  # Do not create sliver triangles on an existing edge.
+        first, middle, last = faces.pop(int(hit[0]))
+        faces.extend([(first, middle, index), (middle, last, index), (last, first, index)])
+    u, v = np.meshgrid(np.linspace(0, 1, rows), np.linspace(0, 1, cols), indexing="ij")
+    dome = (np.sin(np.pi * u) * np.sin(np.pi * v)).reshape(-1, 1)
+    mesh = Mesh(vertices + offset * conn.normal + bulge * dome * normal, faces, [material] * len(faces), name="lamp_fit")
+    mesh.prune_unused_vertices()
+    turn = np.degrees(np.arccos(np.clip(normal @ conn.normal, -1., 1.)))
+    mesh.meta["lamp_fit_warning"] = (f"Wrapped lamp aperture: embedded boundary-fit pane uses a {turn:.1f}-degree "
+                                     "local projection change; extreme-aperture optics are approximate.")
+    mesh.meta["lamp_projection_normal"] = normal.tolist()
+    return mesh
 
 
 def _lamp_fill(conn, material, offset, bulge=0.0, upsample=2):
@@ -342,7 +463,7 @@ def _lamp_fill(conn, material, offset, bulge=0.0, upsample=2):
     alternate = np.minimum(np.cross(b - a, d - a) @ conn.normal,
                            np.cross(c - b, d - b) @ conn.normal) > 1e-12
     if not np.all(default | alternate):
-        raise ValueError(f"{conn.name}: lamp cell exceeds aperture-seal fitting allowance")
+        return _lamp_wrapped_patch(conn, grid, material, offset, bulge)
     faces = []
     for keep, face in zip(default, mesh.faces):
         if keep:
@@ -487,11 +608,20 @@ class Headlight(CarComponent):
         uv = np.column_stack([np.linspace(.08, .84, 25), np.full(25, .85)])
         _part(m, surf.ribbon(uv, min(.008, surf.height * .065), "lamp_led"), "drl")
         _part(m, surf.patch(.86, .95, .18, .77, "indicator", -.010), "indicator")
-        _part(m, _lamp_fill(conn, "lens", offset=.001, bulge=.008, upsample=3).transform(inv), "lens")
-        _part(m, _pipe(conn.points + conn.normal * .001, .0025, "lamp_dark", closed=True,
+        pane = _lamp_fill(conn, "lens", offset=.001, bulge=.008, upsample=3)
+        _part(m, pane.transform(inv), "lens")
+        fitted = _lamp_grid(conn)
+        deviation = float(np.linalg.norm(fitted - conn.meta["grid_points"], axis=2).max()) if fitted is not None else 0.
+        seal_radius = max(.0025, (deviation + .0003) / np.cos(np.pi / 8))
+        _part(m, _pipe(conn.points + conn.normal * .001, seal_radius, "lamp_dark", closed=True,
                        sides=8).transform(inv), "aperture_seal")
         m.materials.update(mats)
-        return ComponentResult(m, [], {"projectors": 2 if opts["projector"] else 1})
+        info = {"projectors": 2 if opts["projector"] else 1}
+        if "lamp_fit_warning" in pane.meta:
+            info["fit_warnings"] = [pane.meta["lamp_fit_warning"]]
+        if deviation > .002:
+            info.setdefault("fit_warnings", []).append(f"Lamp boundary notch fitted by {deviation * 1000:.2f}mm under an adaptive seal.")
+        return ComponentResult(m, [], info)
 
 
 @register
@@ -523,9 +653,21 @@ class Taillight(CarComponent):
         # Small prismatic flutes are geometry, rather than a single red patch.
         for u in np.linspace(.14, .86, 19):
             _part(m, surf.ribbon([[u, .135], [u, .215]], .0025, "tail_reflector", -.007), f"reflex_flute_{u:.2f}")
-        _part(m, _lamp_fill(conn, "tail_lens", offset=.001, bulge=.006, upsample=3).transform(inv), "lens")
+        pane = _lamp_fill(conn, "tail_lens", offset=.001, bulge=.006, upsample=3)
+        _part(m, pane.transform(inv), "lens")
+        fitted = _lamp_grid(conn)
+        deviation = float(np.linalg.norm(fitted - conn.meta["grid_points"], axis=2).max()) if fitted is not None else 0.
+        if deviation > 0:
+            radius = max(.0025, (deviation + .0003) / np.cos(np.pi / 8))
+            _part(m, _pipe(conn.points + conn.normal * .001, radius, "lamp_dark", closed=True,
+                           sides=8).transform(inv), "aperture_seal")
         m.materials.update(mats)
-        return ComponentResult(m)
+        info = {}
+        if "lamp_fit_warning" in pane.meta:
+            info["fit_warnings"] = [pane.meta["lamp_fit_warning"]]
+        if deviation > .002:
+            info.setdefault("fit_warnings", []).append(f"Lamp boundary notch fitted by {deviation * 1000:.2f}mm under an adaptive seal.")
+        return ComponentResult(m, [], info)
 
 
 # =============================================================== GRILLE / INTAKE / PLATE / BADGE
