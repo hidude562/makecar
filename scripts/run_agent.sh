@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Run an autonomous modelling agent (GPT-6 Astra via the lanbox proxy) on a task brief,
-# inside its own git worktree/branch.  Usage: scripts/run_agent.sh <task-md> <branch> [model]
+# inside its own git worktree/branch, detached from the calling shell.
+# Usage: scripts/run_agent.sh <task-md> <branch> [model]
 set -euo pipefail
 TASK="$1"; BRANCH="$2"; MODEL="${3:-astra}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,6 +17,11 @@ Your task brief is the file $TASK (read it first, then docs/tasks/README.md whic
 Work through the brief completely and autonomously: do not ask questions, make reasonable decisions and record them in the report. \
 Commit your work on this branch in small commits as you go. Finish by writing the REPORT.md the brief asks for. \
 Use python3; the repo has no other dependencies than numpy and pyyaml (PIL/trimesh/cairosvg are available for verification only)."
-LOG="$ROOT/logs/$(basename "$BRANCH")-$(date +%Y%m%d-%H%M%S).log"
+NAME="$(basename "$BRANCH")"
+LOG="$ROOT/logs/$NAME.jsonl"
+PIDFILE="$ROOT/logs/$NAME.pid"
 echo "[run_agent] $BRANCH in $WT, model $MODEL, log $LOG"
-exec gpt "$MODEL" -p "$PROMPT" --dangerously-skip-permissions --output-format text > "$LOG" 2>&1
+setsid nohup gpt "$MODEL" -p "$PROMPT" --dangerously-skip-permissions --output-format stream-json --verbose \
+  > "$LOG" 2> "$ROOT/logs/$NAME.err" < /dev/null &
+echo $! > "$PIDFILE"
+echo "[run_agent] pid $(cat "$PIDFILE")"
