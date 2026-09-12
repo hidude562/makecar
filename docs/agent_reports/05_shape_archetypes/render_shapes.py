@@ -11,10 +11,14 @@
 
 Before automatically imports an archive of BASELINE_COMMIT, NOT the edited tree.
 --source can instead point to an already archived source tree. After/sweeps use
-current worktree code. Every car is built by build_car, with all default parts.
-Full renders contain the entire assembly. Clay renders contain the actual shell
-plus assembled glass ONLY, recolored with opaque glass: no grille, lamps, plates,
-wipers, interior or mirrors hiding the body. Holes in the shell are not filled.
+current worktree code. Every car is built by build_car. Full renders contain the
+entire default assembly. Clay renders contain the actual shell plus assembled
+glass ONLY, recolored with opaque glass: no grille, lamps, plates, wipers,
+interior or mirrors hiding the body. Holes in the shell are not filled.
+After/sweeps with --variants clay build only the shell and default glass, so
+unrelated component-fit failures cannot block body inspection. This is explicitly
+NOT a complete-assembly check. Any run requesting full still builds every part
+and propagates failures. Before always builds fully to preserve original framing.
 
 All cameras are orthographic, frozen in baseline.json before rasterization and
 reused for after and sedan sweeps (never refitted to the changed geometry). Side
@@ -96,8 +100,9 @@ def config_for(style, modifiers=None):
             "palette": {"paint": PAINT}, "components": {"defaults": True}}
 
 
-def capture(config):
-    cfg = CarConfig.from_dict(config)
+def capture(config, clay_only=False):
+    build_config = {**config, "components": {"defaults": False, "assign": {"glass": "glass.tinted"}}} if clay_only else config
+    cfg = CarConfig.from_dict(build_config)
     requested = cfg.body.get("modifiers") or {}
     unknown = set(requested) - set(car_body_for(cfg).library.modifiers)
     if unknown:
@@ -113,12 +118,13 @@ def capture(config):
             glass.set_material("diagnostic_glass")
             glass.materials = {"diagnostic_glass": Material("diagnostic_glass", (0.22, 0.29, 0.34), shininess=0.12)}
             clay.merge(glass)
-    metadata = {"config": config, "measurements": body.measurements,
+    metadata = {"config": build_config, "assembly_scope": "shell+glass only" if clay_only else "complete default assembly",
+                "measurements": body.measurements,
                 "effective_modifiers": body.modifier_values,
                 "bounds": [x.tolist() for x in full.bounds()],
                 "body_faces": body.mesh.n_faces, "assembly_faces": full.n_faces,
                 "clay_faces": clay.n_faces, "components": len(assembly.instances)}
-    return {"full": full, "clay": clay, "metadata": metadata}
+    return {"full": None if clay_only else full, "clay": clay, "metadata": metadata}
 
 
 def camera_dict(camera):
@@ -164,20 +170,41 @@ def font(size):
 def sheet(path, title, subtitle, cells, columns, size):
     """Contact sheet of labelled car renders; None pads a partial last row."""
     width, height = size
-    gap, label, header = 8, 28, 70
+    gap, label = 8, 28
+    sheet_width = columns * (width + gap) + gap
+    title_font, subtitle_font = font(21), font(13)
+    measure = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+
+    def wrapped(text, face):
+        lines, line = [], ""
+        for word in text.split():
+            candidate = (line + " " + word).strip()
+            if line and measure.textlength(candidate, font=face) > sheet_width - 24:
+                lines.append(line)
+                line = word
+            else:
+                line = candidate
+        return lines + [line]
+
+    title_lines, subtitle_lines = wrapped(title, title_font), wrapped(subtitle, subtitle_font)
+    header = max(70, 18 + 28 * len(title_lines) + 18 * len(subtitle_lines))
     rows = (len(cells) + columns - 1) // columns
-    result = Image.new("RGB", (columns * (width + gap) + gap,
-                               rows * (height + label + gap) + header + gap), "#f5f6f7")
+    result = Image.new("RGB", (sheet_width, rows * (height + label + gap) + header + gap), "#f5f6f7")
     draw = ImageDraw.Draw(result)
-    draw.text((12, 9), title, fill="#17212a", font=font(21))
-    draw.text((12, 39), subtitle, fill="#44525f", font=font(13))
+    for i, text in enumerate(title_lines):
+        draw.text((12, 9 + 28 * i), text, fill="#17212a", font=title_font)
+    for i, text in enumerate(subtitle_lines):
+        draw.text((12, 11 + 28 * len(title_lines) + 18 * i), text, fill="#44525f", font=subtitle_font)
     for index, cell in enumerate(cells):
         if cell is None:
             continue
         image, text = cell
         x = gap + (index % columns) * (width + gap)
         y = header + (index // columns) * (height + label + gap)
-        draw.text((x + 5, y + 4), text, fill="#17212a", font=font(15))
+        label_size = 15
+        while label_size > 9 and draw.textlength(text, font=font(label_size)) > width - 10:
+            label_size -= 1
+        draw.text((x + 5, y + 4), text, fill="#17212a", font=font(label_size))
         if isinstance(image, Path):
             with Image.open(image) as opened:
                 image = opened.convert("RGB")
@@ -208,7 +235,7 @@ def styles_run(args, state, fingerprint, size, supersample):
         if args.phase == "after" and style not in state["styles"]:
             raise ValueError(f"Capture the {style} baseline before rendering after")
         config = state["styles"].get(style, {}).get("config", config_for(style))
-        cars[style] = capture(config)
+        cars[style] = capture(config, clay_only=args.variants == ["clay"] and args.phase != "before")
         metadata[style] = cars[style]["metadata"]
         if args.phase == "before":
             old = state["styles"].get(style)
@@ -216,7 +243,7 @@ def styles_run(args, state, fingerprint, size, supersample):
             if old and old["cameras"] != item["cameras"]:
                 raise ValueError("Refusing to change existing baseline cameras")
             state["styles"][style] = item
-        print(f"Built {style}: {metadata[style]['assembly_faces']} full-assembly faces", flush=True)
+        print(f"Built {style}: {metadata[style]['assembly_faces']} faces ({metadata[style]['assembly_scope']})", flush=True)
     if args.phase == "before":
         state["source_sha256"] = fingerprint
         write_json(args.state, state)
@@ -233,7 +260,7 @@ def styles_run(args, state, fingerprint, size, supersample):
                 print(path.name, flush=True)
     for variant in args.variants:
         subtitle = ("Actual complete build_car assembly | orthographic | matched before/after cameras" if variant == "full" else
-                    "Actual shell + opaque assembled glass | no grille/lamps/accessories | matched cameras")
+                    "DIAGNOSTIC shell + opaque glass | no other components shown | not a complete-assembly check")
         for view in args.views:
             cells = [(cell_path(args.output, args.phase, style, variant, view), style) for style in args.styles]
             sheet(args.output / f"{args.phase}_{variant}_{view}.png", f"{args.phase.upper()} | {variant} | {view}", subtitle,
@@ -276,7 +303,7 @@ def sweeps_run(args, state, fingerprint, size, supersample):
     manifest = {"source_sha256": fingerprint, "size": size, "supersample": supersample,
                 "cameras": cameras, "views": args.views, "variants": args.variants, "groups": {}}
     for name, title, cases in groups:
-        cars = [(label, capture(config_for("sedan", modifiers))) for label, modifiers in cases]
+        cars = [(label, capture(config_for("sedan", modifiers), clay_only=args.variants == ["clay"])) for label, modifiers in cases]
         manifest["groups"][name] = [{"label": label, **data["metadata"]} for label, data in cars]
         for variant in args.variants:
             cells = []
@@ -285,9 +312,10 @@ def sweeps_run(args, state, fingerprint, size, supersample):
                     image = render(data, variant, cameras[view], size, supersample)
                     cells.append((image, f"{view.replace('three_quarter_front', 'front 3/4')} | {label}"))
             path = args.output / f"sweep_{name}_{variant}.png"
-            sheet(path, f"SEDAN | {title} | {variant}",
-                  "Same sedan baseline camera across each row | inputs shown; effective values in sweeps_manifest.json",
-                  cells, len(cases), size)
+            subtitle = "Same sedan baseline camera per row | effective values in sweeps_manifest.json"
+            if variant == "clay":
+                subtitle += " | shell + opaque glass ONLY, not a full-assembly check"
+            sheet(path, f"SEDAN | {title} | {variant}", subtitle, cells, len(cases), size)
             print(path.name, flush=True)
         write_json(args.output / "sweeps_manifest.json", manifest)
 
