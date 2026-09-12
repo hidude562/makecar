@@ -17,8 +17,11 @@ glass ONLY, recolored with opaque glass: no grille, lamps, plates, wipers,
 interior or mirrors hiding the body. Holes in the shell are not filled.
 After/sweeps with --variants clay build only the shell and default glass, so
 unrelated component-fit failures cannot block body inspection. This is explicitly
-NOT a complete-assembly check. Any run requesting full still builds every part
-and propagates failures. Before always builds fully to preserve original framing.
+NOT a complete-assembly check. --variants silhouette renders the actual morphed
+body.full_mesh (including the generator's aperture faces) in flat black with no
+seams or components. Use --views plan for a pure footprint diagnostic. Any run
+requesting full still builds every part and propagates failures. Before always
+builds fully to preserve original framing.
 
 All cameras are orthographic, frozen in baseline.json before rasterization and
 reused for after and sedan sweeps (never refitted to the changed geometry). Side
@@ -100,8 +103,11 @@ def config_for(style, modifiers=None):
             "palette": {"paint": PAINT}, "components": {"defaults": True}}
 
 
-def capture(config, clay_only=False):
-    build_config = {**config, "components": {"defaults": False, "assign": {"glass": "glass.tinted"}}} if clay_only else config
+def capture(config, clay_only=False, shell_only=False):
+    build_config = config
+    if clay_only or shell_only:
+        build_config = {**config, "components": {"defaults": False,
+                        "assign": {} if shell_only else {"glass": "glass.tinted"}}}
     cfg = CarConfig.from_dict(build_config)
     requested = cfg.body.get("modifiers") or {}
     unknown = set(requested) - set(car_body_for(cfg).library.modifiers)
@@ -118,13 +124,20 @@ def capture(config, clay_only=False):
             glass.set_material("diagnostic_glass")
             glass.materials = {"diagnostic_glass": Material("diagnostic_glass", (0.22, 0.29, 0.34), shininess=0.12)}
             clay.merge(glass)
-    metadata = {"config": build_config, "assembly_scope": "shell+glass only" if clay_only else "complete default assembly",
+    silhouette = body.full_mesh.copy()
+    silhouette.set_material("diagnostic_silhouette")
+    silhouette.materials = {"diagnostic_silhouette": Material("diagnostic_silhouette", (0, 0, 0), shininess=0)}
+    silhouette.lines = []
+    scope = "shell only" if shell_only else "shell+glass only" if clay_only else "complete default assembly"
+    metadata = {"config": build_config, "assembly_scope": scope,
                 "measurements": body.measurements,
                 "effective_modifiers": body.modifier_values,
                 "bounds": [x.tolist() for x in full.bounds()],
                 "body_faces": body.mesh.n_faces, "assembly_faces": full.n_faces,
-                "clay_faces": clay.n_faces, "components": len(assembly.instances)}
-    return {"full": None if clay_only else full, "clay": clay, "metadata": metadata}
+                "clay_faces": clay.n_faces, "silhouette_faces": silhouette.n_faces,
+                "components": len(assembly.instances)}
+    return {"full": None if clay_only or shell_only else full, "clay": clay,
+            "silhouette": silhouette, "metadata": metadata}
 
 
 def camera_dict(camera):
@@ -219,7 +232,7 @@ def render(data, variant, camera, size, supersample):
     # Light the nose itself; identical light directions in all phases/variants.
     renderer.light_dir = renderer._unit(np.array([0.6, -0.7, 1.0]))
     renderer.fill_dir = renderer._unit(np.array([-0.4, 0.5, 0.6]))
-    pixels = renderer.render(data[variant], Camera(**camera), ground=False, lines=True)
+    pixels = renderer.render(data[variant], Camera(**camera), ground=False, lines=variant != "silhouette")
     return Image.fromarray(np.clip(pixels, 0, 255).astype(np.uint8))
 
 
@@ -235,20 +248,25 @@ def styles_run(args, state, fingerprint, size, supersample):
         if args.phase == "after" and style not in state["styles"]:
             raise ValueError(f"Capture the {style} baseline before rendering after")
         config = state["styles"].get(style, {}).get("config", config_for(style))
-        cars[style] = capture(config, clay_only=args.variants == ["clay"] and args.phase != "before")
+        cars[style] = capture(config, clay_only=args.variants == ["clay"] and args.phase != "before",
+                              shell_only=args.variants == ["silhouette"] and args.phase != "before")
         metadata[style] = cars[style]["metadata"]
         if args.phase == "before":
             old = state["styles"].get(style)
             item = {**metadata[style], "cameras": cameras_for(metadata[style])}
-            if old and old["cameras"] != item["cameras"]:
+            # Cached target offsets are float32, freshly built offsets float64.
+            # Accept sub-micrometre refit noise, but retain the EXACT saved camera.
+            if old and any(not np.allclose(old["cameras"][view][key], value, rtol=0, atol=1e-6)
+                           for view, camera in item["cameras"].items() for key, value in camera.items()):
                 raise ValueError("Refusing to change existing baseline cameras")
-            state["styles"][style] = item
+            state["styles"][style] = old or item
         print(f"Built {style}: {metadata[style]['assembly_faces']} faces ({metadata[style]['assembly_scope']})", flush=True)
     if args.phase == "before":
         state["source_sha256"] = fingerprint
         write_json(args.state, state)
         print(f"Baseline cameras/configs saved safely: {args.state}", flush=True)
-    write_json(args.output / f"{args.phase}_manifest.json", {
+    manifest_name = f"{args.phase}_silhouette_manifest.json" if args.variants == ["silhouette"] else f"{args.phase}_manifest.json"
+    write_json(args.output / manifest_name, {
         "phase": args.phase, "source_sha256": fingerprint, "size": size,
         "supersample": supersample, "views": args.views, "variants": args.variants,
         "styles": metadata, "cameras": {s: state["styles"][s]["cameras"] for s in args.styles}})
@@ -259,8 +277,9 @@ def styles_run(args, state, fingerprint, size, supersample):
                 render(data, variant, state["styles"][style]["cameras"][view], size, supersample).save(path)
                 print(path.name, flush=True)
     for variant in args.variants:
-        subtitle = ("Actual complete build_car assembly | orthographic | matched before/after cameras" if variant == "full" else
-                    "DIAGNOSTIC shell + opaque glass | no other components shown | not a complete-assembly check")
+        subtitle = {"full": "Actual complete build_car assembly | orthographic | matched before/after cameras",
+                    "clay": "DIAGNOSTIC shell + opaque glass | no other components shown | not a complete-assembly check",
+                    "silhouette": "Actual morphed body mesh, all faces black | no seams, glass detail or components | matched cameras"}[variant]
         for view in args.views:
             cells = [(cell_path(args.output, args.phase, style, variant, view), style) for style in args.styles]
             sheet(args.output / f"{args.phase}_{variant}_{view}.png", f"{args.phase.upper()} | {variant} | {view}", subtitle,
@@ -297,13 +316,14 @@ def blend_cases(first, second):
 
 def sweeps_run(args, state, fingerprint, size, supersample):
     cameras = state["styles"]["sedan"]["cameras"]
-    groups = [(target.replace("/", "_"), target, sweep_cases(target)) for target in args.targets]
+    groups = [] if args.blends_only else [(target.replace("/", "_"), target, sweep_cases(target)) for target in args.targets]
     if not args.no_blends:
         groups += [("blend_" + a.split("/")[1] + "_" + b.split("/")[1], f"{a} + {b}", blend_cases(a, b)) for a, b in BLENDS]
     manifest = {"source_sha256": fingerprint, "size": size, "supersample": supersample,
                 "cameras": cameras, "views": args.views, "variants": args.variants, "groups": {}}
     for name, title, cases in groups:
-        cars = [(label, capture(config_for("sedan", modifiers), clay_only=args.variants == ["clay"])) for label, modifiers in cases]
+        cars = [(label, capture(config_for("sedan", modifiers), clay_only=args.variants == ["clay"],
+                                shell_only=args.variants == ["silhouette"])) for label, modifiers in cases]
         manifest["groups"][name] = [{"label": label, **data["metadata"]} for label, data in cars]
         for variant in args.variants:
             cells = []
@@ -344,11 +364,14 @@ def main():
     parser.add_argument("--styles", nargs="+", choices=STYLES, default=list(STYLES))
     parser.add_argument("--views", nargs="+", choices=VIEWS, default=list(VIEWS[:-1]))
     parser.add_argument("--nose", action="store_true", help="Also render a close-up of the front body")
-    parser.add_argument("--variants", nargs="+", choices=("full", "clay"), default=["full", "clay"])
+    parser.add_argument("--variants", nargs="+", choices=("full", "clay", "silhouette"), default=["full", "clay"])
     parser.add_argument("--targets", nargs="+", choices=TARGETS, default=list(TARGETS))
     parser.add_argument("--no-blends", action="store_true", help="Only individual archetype strips in sweeps mode")
+    parser.add_argument("--blends-only", action="store_true", help="Only the two face-family blend strips")
     parser.add_argument("--quick", action="store_true", help="240x160 cells, 1x sampling, separate output directory")
     args = parser.parse_args()
+    if args.blends_only and args.no_blends:
+        parser.error("--blends-only and --no-blends are mutually exclusive")
     if args.phase == "self-test":
         self_test()
         return
