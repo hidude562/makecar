@@ -473,7 +473,7 @@ class Grille(CarComponent):
                 cut = np.sqrt(max(0, (badge_r + .006) ** 2 - max(0, abs(y) - thick / 2) ** 2)) if badge_r else 0
                 spans = [(-iw / 2, -cut), (cut, iw / 2)] if cut else [(-iw / 2, iw / 2)]
                 for j, (lo, hi) in enumerate(spans):
-                    _part(m, P.box(hi - lo, thick, .030, material="chrome", bevel=.002,
+                    _part(m, P.box(hi - lo, thick, .030, material="chrome", bevel=min(.002, thick * .2),
                                    center=((lo + hi) / 2, y, -.001)), f"slat_{k}_{j}")
         elif pattern == "honeycomb":
             # Individual open hexagonal cells. Cell size is bounded to keep a
@@ -910,13 +910,30 @@ class ExhaustSystem(CarComponent):
                 axis = main[index + 1] - main[index]
                 can = P.cylinder(radius, length, 16, radius_top=radius * .90, material="exhaust_steel")
                 can.apply_frame(Frame.from_normal(point, axis))
-                # Low sports floors need an oval can, not a round muffler that
-                # almost scrapes the ground. Flatten only its vertical section.
+                # Fit an oval can between the road and the measured tunnel,
+                # not just above the road: a 118mm round silencer otherwise
+                # pokes through a crown only 33mm above the pipe centreline.
                 if conn.meta.get("paths_space") == "world":
                     up = conn.frame.rotation[2]
                     height = conn.frame.to_world(point)[0, 2]
                     vertical = (can.vertices - point) @ up
-                    factor = min(1., max(.020, height - .050) / max(-vertical.min(), 1e-6))
+                    factor = min(1., max(0., height - .050) / max(-vertical.min(), 1e-6))
+                    if "floor_grid" in conn.meta:
+                        grid = np.asarray(conn.meta["floor_grid"])
+                        world = conn.frame.to_world(can.vertices)
+                        lo, hi = world[:, 0].min(), world[:, 0].max()
+                        lateral = np.abs(world[:, 1]).max()
+                        # The lowest roof over the entire can footprint,
+                        # including station breaks between its end rings.
+                        xs = grid[:, 0, 0]
+                        samples = np.r_[lo, xs[(xs > lo) & (xs < hi)], hi]
+                        roof = []
+                        for x in samples:
+                            row = np.array([[np.interp(x, chain[:, 0], chain[:, k]) for k in (1, 2)]
+                                            for chain in grid.transpose(1, 0, 2)])
+                            roof.append(np.interp(lateral, row[:, 0], row[:, 1]))
+                        room = max(0., min(roof) - .008 - height)
+                        factor = min(factor, room / max(vertical.max(), 1e-6))
                     can.vertices += vertical[:, None] * (factor - 1) * up
                 _part(m, can, name)
         m.materials["exhaust_steel"] = ctx.material("exhaust_steel", "#787e83", metallic=.7, shininess=.45)
