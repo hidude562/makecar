@@ -529,6 +529,11 @@ class LicensePlate(CarComponent):
             m.merge(P.box(cw, h * 0.55, 0.002, material="plate_text", center=(x, 0, 0.007), name="char"))
         if opts.get("region", "eu") == "eu":
             m.merge(P.box(w * 0.08, h - 0.01, 0.002, material="plate_blue", center=(-w / 2 + w * 0.05, 0, 0.007), name="euband"))
+        if conn.meta.get("position") == "front":
+            # The lower intake and plate overlap in elevation on short fascias;
+            # a 25mm plinth puts the plate ahead of, not behind, the insert.
+            _part(m, P.box(w * .82, h * .72, .025, material="plate_text", center=(0, 0, -.0125)), "mounting_plinth")
+            m.translate([0, 0, .025])
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -713,4 +718,215 @@ class RoofRails(CarComponent):
                 foot = P.box(0.08, 0.05, float(opts["height"]), material="rail", center=(pts[k, 0], pts[k, 1], pts[k, 2] - float(opts["height"]) / 2 + 0.005))
                 m.merge(foot)
         m.materials.update(mats)
+        return ComponentResult(m)
+
+
+# =============================================================== FASCIA FURNITURE
+@register
+class FogLamp(CarComponent):
+    name = "light.fog"
+    accepts = (PointConnector,)
+    default_for = ("fog",)
+    options = {"color": "#e8eef3"}
+    description = "bumper-corner projector fog lamp in a recessed black plinth"
+
+    def build_local(self, conn, opts, ctx):
+        w, h = conn.meta.get("width", .14), conn.meta.get("height", .09)
+        r = min(h * .36, w * .28)
+        m = Mesh(name="fog")
+        _part(m, P.rounded_box(w, h, .018, min(.025, h * .24), material="fog_trim", center=(0, 0, .009)), "fog_plinth")
+        _part(m, P.tube(r + .005, r - .002, .018, 24, material="fog_chrome", center=(0, 0, .024)), "fog_bezel")
+        _part(m, P.cylinder(r * .90, .010, 24, radius_top=r * .8, material="fog_lens", center=(0, 0, .030)), "fog_projector")
+        m.materials.update({"fog_trim": ctx.material("fog_trim", "#15191e"),
+                            "fog_chrome": ctx.material("fog_chrome", ctx.palette.chrome, metallic=.8, shininess=.8),
+                            "fog_lens": ctx.material("fog_lens", opts["color"], shininess=.95)})
+        return ComponentResult(m)
+
+
+class _SmallLamp(CarComponent):
+    accepts = (PointConnector,)
+    color = "#d72732"
+
+    def build_local(self, conn, opts, ctx):
+        w, h, d = (conn.meta.get(k, v) for k, v in (("width", .13), ("height", .04), ("depth", .008)))
+        kind = conn.meta.get("kind", "")
+        col = "#e0e9ed" if kind == "reverse" else self.color
+        key = self.name.replace(".", "_") + kind
+        m = Mesh(name=key)
+        _part(m, P.rounded_box(w, h, d, min(.012, h * .23), material="aux_trim", center=(0, 0, d / 2)), "plinth")
+        _part(m, P.rounded_box(w - .009, h - .008, .004, min(.009, h * .18), material=key,
+                              center=(0, 0, d + .001)), "lens")
+        for k, x in enumerate(np.linspace(-w * .40, w * .40, max(3, int(w / .008)))):
+            _part(m, P.box(.0012, h - .012, .0015, material=key, center=(x, 0, d + .0035)), f"prism_{k}")
+        m.materials.update({"aux_trim": ctx.material("aux_trim", "#191b1e"),
+                            key: ctx.material(key, col, shininess=.85)})
+        return ComponentResult(m)
+
+
+@register
+class RearReflector(_SmallLamp):
+    name = "light.rear_reflector"
+    default_for = ("rear_reflector",)
+    description = "red prismatic reflex reflector on the rear bumper"
+
+
+@register
+class RearAuxLamp(_SmallLamp):
+    name = "light.rear_aux"
+    default_for = ("rear_aux",)
+    description = "rear fog or reversing lamp selected by connector kind"
+
+
+@register
+class SideMarker(_SmallLamp):
+    name = "light.side_marker"
+    default_for = ("side_marker",)
+    color = "#e99721"
+    description = "amber side marker with geometric lens flutes"
+
+
+@register
+class PlateLamp(_SmallLamp):
+    name = "light.plate"
+    default_for = ("plate_lamp",)
+    color = "#e5ecf0"
+    description = "licence plate lamp with a shielded downward-facing lens"
+
+    def build_local(self, conn, opts, ctx):
+        m = super().build_local(conn, opts, ctx).mesh
+        # Rotate the fixture down toward the plate; retain its mounting lip.
+        m.apply_frame(Frame.identity().rotated_about_x(np.radians(35)))
+        return ComponentResult(m)
+
+
+@register
+class TowHookCover(CarComponent):
+    name = "bumper.tow_cover"
+    accepts = (PointConnector,)
+    default_for = ("tow_hook_cover",)
+    description = "painted removable tow-hook cover with a narrow shutline"
+
+    def build_local(self, conn, opts, ctx):
+        w, h = conn.meta.get("width", .065), conn.meta.get("height", .055)
+        m = P.rounded_box(w, h, .003, .012, material="tow_gap", center=(0, 0, .0015))
+        _part(m, P.rounded_box(w - .004, h - .004, .004, .010, material="paint", center=(0, 0, .003)), "cover")
+        m.materials.update({"tow_gap": ctx.material("tow_gap", "#191b1e"), "paint": ctx.material("paint", shininess=.85)})
+        return ComponentResult(m)
+
+
+# =============================================================== WIPERS / UNDERSIDE
+@register
+class Wipers(CarComponent):
+    name = "wipers.parked"
+    accepts = (RectangleConnector,)
+    default_for = ("wipers",)
+    description = "two parked sprung blades and articulated arms following the windshield crown"
+
+    def build_local(self, conn, opts, ctx):
+        paths = conn.meta.get("paths")
+        if paths is None:
+            paths = [conn.frame.to_world([[s * conn.width * .05, 0, .01], [s * conn.width * .43, .025, .01]])
+                     for s in (1, -1)]
+        pivots = conn.meta.get("pivots", [p[0] for p in paths])
+        normals = conn.meta.get("blade_normals")
+        m = Mesh(name="wipers")
+        for k, (path, pivot) in enumerate(zip(paths, pivots)):
+            pts = conn.frame.to_local(path)
+            p = conn.frame.to_local(pivot)[0]
+            n = np.asarray(normals[k]) @ conn.frame.rotation if normals is not None else np.tile([0, 0, 1], (len(pts), 1))
+            _part(m, _pipe(pts, .0035, "wiper_rubber", sides=6), f"blade_{k}")
+            _part(m, _pipe(pts + .005 * n, .004, "wiper_arm", sides=6), f"blade_spine_{k}")
+            attach = pts[len(pts) // 2] + .011 * n[len(pts) // 2]
+            elbow = p * .40 + attach * .60 + [.0, .0, .014]
+            _part(m, _pipe([p, elbow, attach], .005, "wiper_arm", sides=6), f"arm_{k}")
+            _part(m, P.cylinder(.014, .009, 16, material="wiper_arm", center=p), f"pivot_{k}")
+        m.materials.update({"wiper_rubber": ctx.material("wiper_rubber", "#080a0c"),
+                            "wiper_arm": ctx.material("wiper_arm", "#292d33", shininess=.5)})
+        return ComponentResult(m)
+
+
+@register
+class ExhaustSystem(CarComponent):
+    name = "exhaust.system"
+    accepts = (PointConnector,)
+    default_for = ("exhaust_system",)
+    options = {"muffler": True}
+    description = "underfloor tunnel pipe, catalyst and rear branches terminating at the exhaust tips"
+
+    def build_local(self, conn, opts, ctx):
+        paths = conn.meta.get("paths")
+        if paths is None:
+            length = ctx.measurements.get("wheelbase", 2.7)
+            paths = [conn.frame.to_world([[length / 2, 0, 0], [-length / 2, 0, 0]])]
+        r = float(conn.meta.get("pipe_radius", .025))
+        m = Mesh(name="exhaust_system")
+        local = [conn.frame.to_local(path) for path in paths]
+        for k, path in enumerate(local):
+            _part(m, _pipe(path, r, "exhaust_steel", sides=10), f"pipe_run_{k}")
+        main = local[0]
+        if opts["muffler"]:
+            for name, t, length, radius in (("catalyst", .20, .25, .047), ("silencer", .77, .34, .059)):
+                index = min(len(main) - 2, max(0, int(t * (len(main) - 1))))
+                point = main[index]
+                axis = main[index + 1] - main[index]
+                can = P.cylinder(radius, length, 16, radius_top=radius * .90, material="exhaust_steel")
+                _part(m, can.apply_frame(Frame.from_normal(point, axis)), name)
+        m.materials["exhaust_steel"] = ctx.material("exhaust_steel", "#787e83", metallic=.7, shininess=.45)
+        return ComponentResult(m)
+
+
+@register
+class Diffuser(CarComponent):
+    name = "bumper.diffuser"
+    accepts = (RectangleConnector,)
+    default_for = ("diffuser",)
+    options = {"fins": 5}
+    description = "rear undertray with tapered longitudinal diffuser strakes"
+
+    def build_local(self, conn, opts, ctx):
+        w, h = conn.width, conn.height
+        depth = float(conn.meta.get("depth", .045))
+        m = P.box(w, h, .007, material="diffuser", center=(0, 0, .0035))
+        for k, x in enumerate(np.linspace(-w * .42, w * .42, int(np.clip(opts["fins"], 2, 9)))):
+            rings = [np.array([[x - .004, y, .006], [x + .004, y, .006],
+                               [x + .004, y, z], [x - .004, y, z]])
+                     for y, z in ((-h / 2, depth), (0, depth * .76), (h / 2, .013))]
+            fin = P.loft(rings, cap_start=True, cap_end=True, material="diffuser")
+            if P.signed_volume(fin) < 0:
+                fin.flip_normals()
+            _part(m, fin, f"fin_{k}")
+        m.materials["diffuser"] = ctx.material("diffuser", "#252930", shininess=.35)
+        return ComponentResult(m)
+
+
+@register
+class MudFlap(CarComponent):
+    name = "mud_flap.standard"
+    accepts = (RectangleConnector,)
+    default_for = ("mud_flap",)
+    description = "optional rubber mud flap with mounting rivets (body.hints.mud_flaps)"
+
+    def build_local(self, conn, opts, ctx):
+        w, h = conn.width, conn.height
+        m = P.rounded_box(w, h, .006, min(.025, h * .18), material="mud_rubber", center=(0, 0, .003))
+        for k, x in enumerate((-.36 * w, .36 * w)):
+            _part(m, P.cylinder(.004, .003, 8, material="mud_fastener", center=(x, h / 2 - .017, .007)), f"rivet_{k}")
+        m.materials.update({"mud_rubber": ctx.material("mud_rubber", "#1c1d20"),
+                            "mud_fastener": ctx.material("mud_fastener", "#92989d", metallic=.7)})
+        return ComponentResult(m)
+
+
+@register
+class TowEye(CarComponent):
+    name = "bumper.tow_eye"
+    accepts = (PointConnector,)
+    default_for = ("tow_eye",)
+    description = "small forged towing eye below the rear valance"
+
+    def build_local(self, conn, opts, ctx):
+        m = P.cylinder(.010, .040, 12, material="tow_steel", center=(0, 0, .020))
+        eye = P.torus(.024, .006, 20, 8, material="tow_steel")
+        eye.apply_frame(Frame.from_normal([0, 0, .065], [0, 1, 0], [1, 0, 0]))
+        _part(m, eye, "eye")
+        m.materials["tow_steel"] = ctx.material("tow_steel", "#505761", metallic=.8)
         return ComponentResult(m)
