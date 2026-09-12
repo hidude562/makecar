@@ -1,0 +1,98 @@
+name: lamborghini_aventador_lp700_4_2012
+description: Config approximation in the style of a 2012 Lamborghini Aventador LP 700-4, not a licensed model.
+seed: 12
+body:
+  style: sedan
+  base_params:
+    wheelbase: 2.700
+    front_overhang: 0.998
+    rear_overhang: 0.997
+    width: 1.987
+    ground_clearance: 0.125
+    wheel_diameter: 0.709
+    tire_width: 0.335
+    arch_gap: 0.035
+    fender_flare: 0.050
+    arch_lip_width: 0.018
+    sill_height: 0.285
+    rocker_height: 0.120
+    belt_height: 0.700
+    belt_rake: 0.095
+    side_bulge: 0.030
+    front_bumper_bottom: 0.155
+    hood_front_height: 0.515
+    cowl_height: 0.745
+    cowl_offset: 0.900
+    hood_crown: 0.018
+    hood_straightness: 1.000
+    fender_crown_height: 0.045
+    fascia_slope: 0.135
+    nose_width_ratio: 0.560
+    front_corner_length: 0.180
+    front_fascia_rake: 0.090
+    bumper_projection: 0.025
+    bumper_crease_height: 0.420
+    hood_overhang: 0.020
+    front_splitter: 0.070
+    windshield_length: 0.670
+    roof_height: 1.124
+    roof_drop: 0.050
+    roof_rear_offset: 0.950
+    rear_window_length: 0.950
+    roof_crown: 0.020
+    roof_width_ratio: 0.590
+    shoulder_inset: 0.075
+    shoulder_rise: 0.040
+    shoulder_radius: 0.012
+    fender_crease: 0.025
+    a_pillar_lean: 1.000
+    a_pillar_width: 0.050
+    c_pillar_lean: 0.500
+    front_door_length: 1.350
+    quarter_window_length: 0.000
+    c_pillar_width: 0.080
+    deck_height: 0.750
+    deck_rear_height: 0.700
+    rear_bumper_bottom: 0.180
+    tail_width_ratio: 0.670
+    rear_corner_length: 0.180
+    nose_taper_length: 0.500
+    tail_taper_length: 0.460
+    nose_taper_exponent: 1.050
+    tail_taper_exponent: 1.250
+    waist_depth: 0.090
+    tumblehome: 0.065
+    rear_fascia_rake: 0.080
+    deck_crown: 0.010
+    diffuser_step: 0.080
+    rear_valance_height: 0.060
+    rear_bumper_crease_height: 0.455
+  modifiers:
+    face/wedge: 0.800
+    face/shark: 0.250
+    plan/pointed: 0.850
+    plan/cokebottle: 0.700
+    section/tumblehome: 0.700
+  sculpt:
+    haunches: 0.850
+    side_crease: 0.700
+    wedge: 0.500
+  hints: {door_count: 2, seat_rows: 1, drive: left, transmission: automatic, fuel_side: left}
+palette:
+  paint: "#d77a15"
+  interior: "#171416"
+  seat: "#201b1b"
+  rim: "#17191c"
+components:
+  defaults: true
+  disable: [antenna, roof_rail*, fog, mud_flap*, rear_reflector, rear_aux, wipers]
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 5, spoke_width: 0.27, dish: 0.065, caliper_color: "#cc9b24"}}
+    seat_front: {component: seat.sport, options: {bolster: 0.075, headrest: true}}
+    exhaust: {component: exhaust.tip, options: {dual: true, length: 0.11}}
+    grille: {component: grille.honeycomb, options: {cell_size: 0.028, frame: false}}
+output:
+  formats: [obj, svg, png, json]
+  views: [three_quarter_front, three_quarter_rear, side, top, front, rear]
+  image_size: [1400, 900]
+  blueprint_theme: paper
