@@ -143,6 +143,19 @@ def fascia_mount(mesh: Mesh, end: str, z: float, width: float, height: float,
     return np.array([x + sign * ahead, 0, z])
 
 
+def exhaust_mount(mesh: Mesh, meas: Dict[str, float], side: float, radius=0.038) -> np.ndarray:
+    """Seat a rearward tip immediately below the measured lower valance edge.
+
+    A 76mm outlet cannot fit inside the shallow skirt band. Sample its real
+    bottom boundary, not an out-of-range fascia ray or the old painted-bumper
+    offset, and leave 4mm above the complete tube's outer radius.
+    """
+    edge = mesh.vertices[mesh.groups["fascia/rear_face"]][:J["B"] + 1]
+    y = side * (meas["tail_half_width"] - 0.32)
+    x, z = (np.interp(abs(y), edge[:, 1], edge[:, k]) for k in (0, 2))
+    return np.array([x - 0.004, y, z - radius - 0.004])
+
+
 # ------------------------------------------------------------ measurements
 def measure(mesh: Mesh) -> Dict[str, float]:
     V = mesh.vertices
@@ -350,10 +363,9 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     for end, z, normal in (("front", z_nose_top - 0.035, nose_n), ("rear", z_tail_top - 0.16, tail_n)):
         point = fascia_mount(mesh, end, z, 0.06, 0.05, 0.012, fascia[end])
         out.append(PointConnector(f"badge_{end}", Frame.from_normal(point, normal, x_hint=-Y if end == "front" else Y), tags=["badge"]))
-    # Exhaust mounts sample their actual lateral position, outside the plate pocket.
+    # Fit complete exhaust outlets below the actual lower valance edge.
     for side, ys in (("L", 1.0), ("R", -1.0)):
-        p = fascia_point(mesh, "rear", z_tail_bot + 0.10,
-                         ys * (meas["tail_half_width"] - 0.32), fascia["rear"])
+        p = exhaust_mount(mesh, meas, ys)
         out.append(CircleConnector(f"exhaust_{side}", Frame.from_normal(p, tail_n, x_hint=Y), 0.038, tags=["exhaust"],
                                    meta={"side": "left" if ys > 0 else "right"}))
     # side mirrors at the front-bottom corner of the front door glass

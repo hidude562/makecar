@@ -362,9 +362,9 @@ def test_exhaust_geometry_is_continuous_and_meets_tips(detailed_assembly):
     assert np.linalg.norm(mesh.vertices.mean(axis=0) - conn.origin) < .5
 
 
-def underbody_clearance(body, points):
+def underbody_clearance(body, points, *, whole_shell=False):
     """Vertical clearance to actual pan triangles, independent of route metadata."""
-    shell = body.full_mesh.subset(body.full_mesh.zones["underbody"])
+    shell = body.full_mesh if whole_shell else body.full_mesh.subset(body.full_mesh.zones["underbody"])
     triangles, _ = shell.triangulated()
     a, b, c = shell.vertices[triangles].transpose(1, 0, 2)
     ab, ac = b[:, :2] - a[:, :2], c[:, :2] - a[:, :2]
@@ -376,6 +376,10 @@ def underbody_clearance(body, points):
         u = (q[:, 0] * ac[:, 1] - q[:, 1] * ac[:, 0]) / den
         v = (ab[:, 0] * q[:, 1] - ab[:, 1] * q[:, 0]) / den
         valid = (abs(det) > 1e-12) & (u >= -1e-9) & (v >= -1e-9) & (u + v <= 1 + 1e-9)
+        if whole_shell and not valid.any():
+            # Exterior tip mouths extend aft of the shell's XY footprint.
+            clearances.append(np.inf)
+            continue
         assert valid.any(), ("no floor above exhaust", p)
         heights = a[:, 2] + u * (b[:, 2] - a[:, 2]) + v * (c[:, 2] - a[:, 2])
         clearances.append(heights[valid].min() - p[2])
@@ -406,6 +410,37 @@ def assert_exhaust_pan_fit(body):
         samples = np.vstack([rings[:last + 1].reshape(-1, 3),
                              ((rings[:last] + rings[1:last + 1]) / 2).reshape(-1, 3)])
         assert underbody_clearance(body, samples).min() >= .004 - 1e-8, k
+        # Below-valance outlets no longer need to punch through the rear floor:
+        # extend the same clearance requirement through the complete terminal.
+        whole_branch = np.vstack([rings.reshape(-1, 3),
+                                  ((rings[:-1] + rings[1:]) / 2).reshape(-1, 3)])
+        assert underbody_clearance(body, whole_branch, whole_shell=True).min() >= .004 - 1e-8, k
+
+
+@pytest.mark.parametrize("dual,length", [(False, .08), (True, .08), (True, .14)])
+def test_exhaust_outlets_fit_below_actual_valance(detailed_body, dual, length):
+    body = detailed_body
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    for side in ("L", "R"):
+        conn = body.connector("exhaust_" + side)
+        mesh = get_component("exhaust.tip").build(conn, {"dual": dual, "length": length}, ctx).mesh
+        # A full-shell downward-ray envelope catches buried upper rims and
+        # wrongly stacked twins, including the inlet portions inside the skirt.
+        clearance = underbody_clearance(body, mesh.vertices, whole_shell=True)
+        assert np.isfinite(clearance).any(), "tip inlet must remain beneath the car"
+        assert clearance.min() >= .001 - 1e-8
+        assert mesh.vertices[:, 2].min() >= .05
+        local = conn.frame.to_local(mesh.vertices)
+        assert np.ptp(local[:, 1]) == pytest.approx(2 * conn.radius)
+        assert np.ptp(local[:, 0]) == pytest.approx(2 * conn.radius * (2.2 if dual else 1))
+        assert local[:, 2].max() == pytest.approx(length - .03)
+        inlet = mesh.subset(mesh.zones["collector" if dual else "inlet"])
+        assert_closed_solid(inlet, "outlet inlet connection")
+        if dual:
+            # Its wider shared inlet spans the original central system endpoint.
+            lp = conn.frame.to_local(inlet.vertices)
+            assert lp[:, 2].min() < -.03 < 0 < lp[:, 2].max()
+            assert lp[:, 1].min() < -.025 and lp[:, 1].max() > .025
 
 
 def test_exhaust_cans_and_branch_turn_clear_current_pan(detailed_body):

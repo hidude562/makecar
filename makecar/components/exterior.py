@@ -709,13 +709,27 @@ class ExhaustTip(CarComponent):
         L = float(opts["length"])
         mats = {"chrome": ctx.material("chrome", ctx.palette.chrome, shininess=0.85, metallic=0.9),
                 "exhaust_dark": ctx.material("exhaust_dark", "#151517", shininess=0.2)}
-        def tip(cy):
-            t = P.tube(r, r - 0.006, L, 20, material="chrome", center=(0, cy, L / 2 - 0.03), name="tip")
-            inner = P.cylinder(r - 0.006, 0.004, 20, material="exhaust_dark", center=(0, cy, L - 0.03 - 0.01), name="tip_inner")
+        def tip(cx):
+            t = P.tube(r, r - 0.006, L, 20, material="chrome", center=(cx, 0, L / 2 - 0.03), name="tip")
+            inner = P.cylinder(r - 0.006, 0.004, 20, material="exhaust_dark", center=(cx, 0, L - 0.03 - 0.01), name="tip_inner")
             return t.merge(inner)
         m = tip(0.0)
-        if opts.get("dual"):
+        dual = bool(opts.get("dual"))
+        if dual:
+            # Rear local X is lateral; local Y points down. Stacking along Y
+            # buries the upper twin in the skirt even when the single tip fits.
             m = tip(-r * 1.2).merge(tip(r * 1.2))
+        # Join the unchanged central pipe inlet to the sleeve(s): a circular
+        # ferrule for one outlet, an oval collector for two separate mouths.
+        # Twice the circumference budget for twins retains the public 2:1
+        # single/dual topology contract, including these inlet connections.
+        n = 20 if dual else 10
+        circle = circle_points(1., n)
+        rings = [np.column_stack([circle[:, 0] * rx, circle[:, 1] * ry, np.full(n, z)])
+                 for z, rx, ry in ((-.045, r * .78, r * .78),
+                                   (.005, r * (1.95 if dual else .84), r * .84))]
+        _part(m, P.loft(rings, cap_start=True, cap_end=True, material="exhaust_dark"),
+              "collector" if dual else "inlet")
         m.materials.update(mats)
         return ComponentResult(m)
 
