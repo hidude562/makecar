@@ -8,7 +8,10 @@ From any working directory:
 All PNGs are 800x600. Four overview views include EVERY assembled component;
 nose and A-pillar closeups show only the unchanged shell plus assembled glass
 (no mirrors, wipers, grille or plates hiding the geometry). Underbody is a
-full-assembly view without a ground shadow. No charts or synthetic car shapes.
+full-assembly view without a ground shadow. The additional underbody_diagnostic
+uses neutral clay materials and lights below the car to expose the floor tunnel;
+this is explicitly a geometry diagnostic, not a beauty render. No charts or
+synthetic car shapes.
 
 The original baseline dimensions are embedded as JSON so an `after` run stays
 reproducible even if /tmp has been cleaned. A `before` run saves exact cameras,
@@ -39,7 +42,7 @@ from makecar.pipeline import build_car
 
 STYLES = ("sedan", "hatchback", "suv", "pickup", "sports")
 VIEWS = ("three_quarter_front", "three_quarter_rear", "side", "front",
-         "nose_closeup", "a_pillar_closeup", "underbody")
+         "nose_closeup", "a_pillar_closeup", "underbody", "underbody_diagnostic")
 DEFAULT_STATE = Path("/tmp/makecar-body-surfacing-baseline/cameras.json")
 PAINT = "#91acc1"  # light silver-blue; deliberately identical across styles/phases
 
@@ -114,6 +117,8 @@ def cameras_for(bounds, m):
                                          ortho_height=1.05),
         "underbody": Camera.orbit(center, 4 * length, 40, -18, ortho=True,
                                   ortho_height=length * 0.74),
+        "underbody_diagnostic": Camera.orbit(center, 4 * length, 40, -32, ortho=True,
+                                             ortho_height=length * 0.74),
     }
 
 
@@ -180,11 +185,23 @@ def main():
     print(f"All {args.phase} meshes captured; fixed cameras: {args.state}", flush=True)
     renderer = Renderer(*state["size"], supersample=state["supersample"])
     for style, data in snapshots.items():
+        item = state["styles"][style]
+        # Older saved camera sets predate the diagnostic underside view.
+        for view, cam in cameras_for(item["bounds"], item["measurements"]).items():
+            item["cameras"].setdefault(view, camera_dict(cam))
         for view in args.views:
-            cam = Camera(**state["styles"][style]["cameras"][view])
+            cam = Camera(**item["cameras"][view])
             detail = view.endswith("closeup")
-            image = renderer.render(data["detail"] if detail else data["full"], cam,
-                                    ground=not detail and view != "underbody")
+            render_mesh = data["detail"] if detail else data["full"]
+            view_renderer = renderer
+            if view == "underbody_diagnostic":
+                render_mesh = render_mesh.copy()
+                render_mesh.materials = {name: mat.with_color("#a5adb5") for name, mat in render_mesh.materials.items()}
+                view_renderer = Renderer(*state["size"], supersample=state["supersample"])
+                view_renderer.light_dir = np.array([0.3, 0.6, -1.0]) / np.linalg.norm([0.3, 0.6, -1.0])
+                view_renderer.fill_dir = np.array([-0.4, -0.6, -0.7]) / np.linalg.norm([-0.4, -0.6, -0.7])
+            image = view_renderer.render(render_mesh, cam,
+                                         ground=not detail and not view.startswith("underbody"))
             path = args.output / f"{args.phase}_{style}_{view}.png"
             renderer.save(image, path)
             print(path, flush=True)
