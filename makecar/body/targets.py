@@ -179,7 +179,7 @@ class BodyMorphableMesh(MorphableMesh):
         return super().displacement(resolve_shape_values(values))
 
 
-LIBRARY_VERSION = 12
+LIBRARY_VERSION = 13
 
 
 def _cache_dir():

@@ -34,7 +34,7 @@ STYLE_OVERRIDES: Dict[str, dict] = {
         tail_width_ratio=0.80, rear_fascia_rake=0.0, rear_corner_length=0.27, c_pillar_lean=0.2,
         front_bumper_bottom=0.36, rear_bumper_bottom=0.39, bumper_crease_height=0.63,
         rear_bumper_crease_height=0.67, tailgate_panel=0.030, shoulder_radius=0.025,
-        fender_crease=0.012, front_splitter=0.020,
+        fender_crease=0.012, front_splitter=0.020, nose_width_ratio=0.64,
     ),
     "suv": dict(  # 2024 Toyota RAV4 LE FWD
         wheelbase=2.690, front_overhang=0.915, rear_overhang=0.990, width=1.854, ground_clearance=0.21,
@@ -85,6 +85,7 @@ STYLE_OVERRIDES: Dict[str, dict] = {
         bumper_crease_height=0.55, rear_bumper_crease_height=0.57, hood_overhang=0.025,
         front_splitter=0.055, diffuser_step=0.045, shoulder_radius=0.018, fender_crease=0.018,
         a_pillar_width=0.06, rocker_height=0.14, air_dam_height=0.025, rear_valance_height=0.035,
+        tunnel_width=0.30,
     ),
     "van": dict(  # 2024 Toyota Sienna LE FWD, without roof rails
         wheelbase=3.061, front_overhang=0.970, rear_overhang=1.143, width=1.994, ground_clearance=0.16,
@@ -93,7 +94,7 @@ STYLE_OVERRIDES: Dict[str, dict] = {
         roof_height=1.74, roof_drop=0.02, roof_rear_offset=-0.63, rear_window_length=0.37,
         deck_height=1.10, deck_rear_height=1.04, roof_width_ratio=0.79,
         front_door_length=1.28, quarter_window_length=0.50, c_pillar_width=0.12, tail_width_ratio=0.82,
-        rear_corner_length=0.27, nose_width_ratio=0.77, front_corner_length=0.29, front_fascia_rake=0.03,
+        rear_corner_length=0.27, nose_width_ratio=0.62, front_corner_length=0.40, front_fascia_rake=0.03,
         front_bumper_bottom=0.34, rear_bumper_bottom=0.37, rear_fascia_rake=0.0, c_pillar_lean=0.15,
         bumper_crease_height=0.62, rear_bumper_crease_height=0.65, tailgate_panel=0.030,
         shoulder_radius=0.030, fender_crease=0.010, a_pillar_width=0.080, front_splitter=0.015,
