@@ -1,12 +1,15 @@
 """The body's modifier library (MakeHuman analogue of the targets folder).
 
-Three kinds of targets are used:
+Four kinds of targets are used:
 
 * **differential targets** – one bipolar modifier per generator parameter,
   computed by re-running the fixed-topology generator with the parameter moved
   by a physically meaningful amount (e.g. wheelbase ± 0.4 m);
+* **archetype targets** – unipolar differential face, plan and section shapes,
+  normalized within each family at morph time;
 * **macro targets** – one unipolar modifier per body style (hatchback, wagon,
-  suv, ...) computed as `generate(style) - generate(sedan)`;
+  suv, ...), with its inherited archetype displacement factored out so explicit
+  shape values can override those defaults without double-applying them;
 * **sculpt targets** – hand-authored procedural displacement fields that are not
   expressible through the generator parameters (rear haunches, side crease,
   wedge stance, roof bubble).
@@ -23,7 +26,8 @@ from ..morph.target import Target, Modifier
 from ..geometry.curves import smoothstep
 from .params import BodyParams
 from .generator import BodyGenerator, RING, RING_N, mirror_index
-from .styles import STYLE_OVERRIDES, style_params
+from .styles import STYLE_OVERRIDES, STYLE_SHAPE_DEFAULTS, style_params
+from .shapes import SHAPE_DELTAS, SHAPE_DESCRIPTIONS, normalize_shape_values, resolve_shape_values, shape_params
 
 # (param, delta-, delta+, group, description)
 BODY_MODIFIER_SPECS: List[ModifierSpec] = [
@@ -161,7 +165,21 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 11
+class BodyMorphableMesh(MorphableMesh):
+    """Resolve body archetypes without changing the generic morph engine.
+
+    Resolution is deliberately at displacement time: both direct library users
+    and CarBody builds inherit style defaults and normalize family blends. The
+    caller's dictionary is never mutated. CarBody.resolve_values and exported
+    BodyResult.modifier_values still describe the *requested* values, not this
+    effective mix; use resolve_shape_values to inspect the effective weights.
+    """
+
+    def displacement(self, values: Dict[str, float]) -> np.ndarray:
+        return super().displacement(resolve_shape_values(values))
+
+
+LIBRARY_VERSION = 14
 
 
 def _cache_dir():
@@ -176,7 +194,8 @@ def _cache_key(params: BodyParams) -> str:
     import hashlib, json
     from .generator import SEGMENTS, UPPER_COUNTS, LOWER_COUNTS
     payload = json.dumps([LIBRARY_VERSION, params.to_dict(), SEGMENTS, UPPER_COUNTS, LOWER_COUNTS,
-                          [(m.param, m.delta_minus, m.delta_plus) for m in BODY_MODIFIER_SPECS], sorted(STYLE_OVERRIDES.items())],
+                          [(m.param, m.delta_minus, m.delta_plus) for m in BODY_MODIFIER_SPECS],
+                          STYLE_OVERRIDES, SHAPE_DELTAS, STYLE_SHAPE_DEFAULTS],
                          sort_keys=True, default=str)
     return hashlib.sha1(payload.encode()).hexdigest()[:16]
 
@@ -201,10 +220,10 @@ def _load_library(mm_skeleton: MorphableMesh, path) -> bool:
     return True
 
 
-def _skeleton(params: BodyParams) -> MorphableMesh:
-    """Modifier structure with zero targets (filled from cache or by generation)."""
+def _skeleton(params: BodyParams) -> BodyMorphableMesh:
+    """Modifier structure shared by freshly generated and cached libraries."""
     base = _generate(params)
-    mm = MorphableMesh(base, "car_body")
+    mm = BodyMorphableMesh(base, "car_body")
     zeros = np.zeros_like(base.vertices)
     for spec in BODY_MODIFIER_SPECS:
         name = spec.name or spec.param
@@ -212,6 +231,10 @@ def _skeleton(params: BodyParams) -> MorphableMesh:
         decr = Target(f"{name}-decr", zeros.copy()) if spec.delta_minus else None
         mm.add_modifier(Modifier(name, incr, decr, -1.0 if decr is not None else 0.0, 1.0, 0.0, spec.group,
                                  spec.description, unit_scale=spec.delta_plus))
+    for name in SHAPE_DELTAS:
+        group, shape = name.split("/", 1)
+        mm.add_modifier(Modifier(name, Target(f"{group}-{shape}", zeros.copy()), None,
+                                 0.0, 1.0, 0.0, group, SHAPE_DESCRIPTIONS[name]))
     for style in STYLE_OVERRIDES:
         if style == "sedan":
             continue
@@ -222,18 +245,30 @@ def _skeleton(params: BodyParams) -> MorphableMesh:
 
 
 @lru_cache(maxsize=4)
-def _cached_library(params_key: tuple) -> MorphableMesh:
+def _cached_library(params_key: tuple) -> BodyMorphableMesh:
     params = BodyParams(**dict(params_key))
     cache_file = _cache_dir() / f"body_targets_{_cache_key(params)}.npz"
-    skel = _skeleton(params)
-    if cache_file.exists() and _load_library(skel, cache_file):
-        return skel
+    mm = _skeleton(params)
+    if cache_file.exists() and _load_library(mm, cache_file):
+        return mm
     builder = DifferentialTargetBuilder(_generate, params, name="car_body")
     macros = {name: style_params(name, params) for name in STYLE_OVERRIDES if name != "sedan"}
-    mm = builder.build(BODY_MODIFIER_SPECS, macros=macros, macro_group="style")
+    generated = builder.build(BODY_MODIFIER_SPECS, macros=macros, macro_group="style")
+    for name, target in generated.targets.items():
+        mm.targets[name].offsets = target.offsets
+    for name in SHAPE_DELTAS:
+        variant = _generate(shape_params(params, {name: 1.0}))
+        target = mm.modifiers[name].incr
+        target.offsets = Target.from_difference(target.name, mm.base.vertices, variant.vertices).offsets
+    for style in macros:
+        # Preserve the exact generated style at its defaults, including nonlinear
+        # interactions with that style's dimensions. At runtime defaults enter
+        # through the ordinary archetype targets, so subtract their canonical
+        # displacement from the stored macro rather than applying them twice.
+        defaults = normalize_shape_values(STYLE_SHAPE_DEFAULTS[style])
+        mm.modifiers[f"style/{style}"].incr.offsets -= MorphableMesh.displacement(mm, defaults)
     for name, fn in SCULPTS.items():
-        t = fn(mm.base, params)
-        mm.add_modifier(Modifier(f"sculpt/{name}", t, None, -1.0, 1.0, 0.0, "sculpt", t.description))
+        mm.modifiers[f"sculpt/{name}"].incr.offsets = fn(mm.base, params).offsets
     try:
         _save_library(mm, cache_file)
     except OSError:
@@ -241,7 +276,7 @@ def _cached_library(params_key: tuple) -> MorphableMesh:
     return mm
 
 
-def body_library(params: BodyParams | None = None) -> MorphableMesh:
+def body_library(params: BodyParams | None = None) -> BodyMorphableMesh:
     """Morphable body for the given base parameters (cached)."""
     params = params or BodyParams()
     key = tuple(sorted(params.to_dict().items()))

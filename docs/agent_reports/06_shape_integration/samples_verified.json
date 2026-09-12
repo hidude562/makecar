@@ -1,0 +1,209 @@
+{
+  "source_commit": "4255c21",
+  "samples": 15,
+  "nonempty_files_per_sample": 11,
+  "valid_pngs": 30,
+  "valid_svgs": 30,
+  "valid_json_files": 30,
+  "valid_objs": 30,
+  "all_obj_face_and_line_indices_valid": true,
+  "all_face_budgets_pass": true,
+  "note": "OBJ appends separate seam-line vertices after the mesh vertices recorded in assembly.json. Both index ranges are verified.",
+  "records": [
+    {
+      "sample": "blend_sedan_wagon",
+      "car": {
+        "mesh_vertices": 68399,
+        "seam_vertices": 331,
+        "faces": 62201
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5588
+      }
+    },
+    {
+      "sample": "blend_suv_coupe",
+      "car": {
+        "mesh_vertices": 67499,
+        "seam_vertices": 331,
+        "faces": 61397
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5588
+      }
+    },
+    {
+      "sample": "city_hatchback",
+      "car": {
+        "mesh_vertices": 66991,
+        "seam_vertices": 331,
+        "faces": 60937
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "crew_cab_pickup",
+      "car": {
+        "mesh_vertices": 69845,
+        "seam_vertices": 331,
+        "faces": 64083
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "estate_wagon",
+      "car": {
+        "mesh_vertices": 68529,
+        "seam_vertices": 331,
+        "faces": 62427
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5588
+      }
+    },
+    {
+      "sample": "family_minivan",
+      "car": {
+        "mesh_vertices": 69239,
+        "seam_vertices": 331,
+        "faces": 63083
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5588
+      }
+    },
+    {
+      "sample": "family_sedan",
+      "car": {
+        "mesh_vertices": 67253,
+        "seam_vertices": 331,
+        "faces": 61089
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "family_suv",
+      "car": {
+        "mesh_vertices": 67799,
+        "seam_vertices": 331,
+        "faces": 61813
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5588
+      }
+    },
+    {
+      "sample": "gt_coupe",
+      "car": {
+        "mesh_vertices": 63967,
+        "seam_vertices": 291,
+        "faces": 58431
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 291,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "random_hatch_a",
+      "car": {
+        "mesh_vertices": 67219,
+        "seam_vertices": 331,
+        "faces": 61153
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "random_hatch_b",
+      "car": {
+        "mesh_vertices": 66805,
+        "seam_vertices": 331,
+        "faces": 60721
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "random_sedan_c",
+      "car": {
+        "mesh_vertices": 67897,
+        "seam_vertices": 331,
+        "faces": 61685
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "rhd_manual_sedan",
+      "car": {
+        "mesh_vertices": 67335,
+        "seam_vertices": 331,
+        "faces": 61165
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "roadster_sports",
+      "car": {
+        "mesh_vertices": 62537,
+        "seam_vertices": 291,
+        "faces": 56905
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 291,
+        "faces": 5620
+      }
+    },
+    {
+      "sample": "stretched_limousine",
+      "car": {
+        "mesh_vertices": 68009,
+        "seam_vertices": 331,
+        "faces": 61849
+      },
+      "body": {
+        "mesh_vertices": 6108,
+        "seam_vertices": 331,
+        "faces": 5620
+      }
+    }
+  ]
+}

@@ -34,7 +34,8 @@ STYLE_OVERRIDES: Dict[str, dict] = {
         tail_width_ratio=0.80, rear_fascia_rake=0.0, rear_corner_length=0.27, c_pillar_lean=0.2,
         front_bumper_bottom=0.36, rear_bumper_bottom=0.39, bumper_crease_height=0.63,
         rear_bumper_crease_height=0.67, tailgate_panel=0.030, shoulder_radius=0.025,
-        fender_crease=0.012, front_splitter=0.020,
+        fender_crease=0.012, front_splitter=0.020, nose_width_ratio=0.64,
+        nose_taper_length=0.70, nose_taper_exponent=0.85,
     ),
     "suv": dict(  # 2024 Toyota RAV4 LE FWD
         wheelbase=2.690, front_overhang=0.915, rear_overhang=0.990, width=1.854, ground_clearance=0.21,
@@ -83,8 +84,9 @@ STYLE_OVERRIDES: Dict[str, dict] = {
         rear_bumper_bottom=0.28, nose_width_ratio=0.73, front_corner_length=0.27, front_fascia_rake=0.025,
         fender_flare=0.035, shoulder_inset=0.07, tail_width_ratio=0.76, c_pillar_lean=0.35,
         bumper_crease_height=0.55, rear_bumper_crease_height=0.57, hood_overhang=0.025,
-        front_splitter=0.055, diffuser_step=0.075, shoulder_radius=0.018, fender_crease=0.018,
+        front_splitter=0.055, diffuser_step=0.045, shoulder_radius=0.018, fender_crease=0.018,
         a_pillar_width=0.06, rocker_height=0.14, air_dam_height=0.025, rear_valance_height=0.035,
+        tunnel_width=0.30,
     ),
     "van": dict(  # 2024 Toyota Sienna LE FWD, without roof rails
         wheelbase=3.061, front_overhang=0.970, rear_overhang=1.143, width=1.994, ground_clearance=0.16,
@@ -92,12 +94,26 @@ STYLE_OVERRIDES: Dict[str, dict] = {
         hood_front_height=0.91, cowl_height=1.15, cowl_offset=-0.05, windshield_length=0.98,
         roof_height=1.74, roof_drop=0.02, roof_rear_offset=-0.63, rear_window_length=0.37,
         deck_height=1.10, deck_rear_height=1.04, roof_width_ratio=0.79,
-        front_door_length=1.28, quarter_window_length=0.50, c_pillar_width=0.12, tail_width_ratio=0.82,
-        rear_corner_length=0.27, nose_width_ratio=0.77, front_corner_length=0.29, front_fascia_rake=0.03,
+        front_door_length=1.28, quarter_window_length=0.50, c_pillar_width=0.12, tail_width_ratio=0.94,
+        rear_corner_length=0.27, nose_width_ratio=0.77, front_corner_length=0.40, front_fascia_rake=0.03,
+        nose_taper_length=0.65, nose_taper_exponent=1.2,
         front_bumper_bottom=0.34, rear_bumper_bottom=0.37, rear_fascia_rake=0.0, c_pillar_lean=0.15,
         bumper_crease_height=0.62, rear_bumper_crease_height=0.65, tailgate_panel=0.030,
         shoulder_radius=0.030, fender_crease=0.010, a_pillar_width=0.080, front_splitter=0.015,
     ),
+}
+
+# Archetype defaults are inherited by style macros at morph time. Explicit
+# face/plan/section config values replace individual defaults, including zero.
+STYLE_SHAPE_DEFAULTS: Dict[str, Dict[str, float]] = {
+    "sedan": {},
+    "hatchback": {"face/snub": 0.65, "section/domed": 0.5, "plan/pointed": 0.15},
+    "wagon": {"face/upright": 0.3, "plan/square": 0.3, "plan/pointed": 0.35},
+    "suv": {"face/upright": 0.85, "plan/square": 0.55, "plan/cokebottle": 0.45, "section/slabside": 0.6},
+    "pickup": {"face/upright": 1.0, "plan/square": 1.0, "section/slabside": 0.8},
+    "coupe": {"face/longhood": 0.65, "plan/cokebottle": 0.8, "section/tumblehome": 0.5},
+    "sports": {"face/wedge": 0.8, "plan/pointed": 0.85, "section/tumblehome": 0.7},
+    "van": {"face/cabforward": 0.85, "plan/square": 0.4, "plan/pointed": 0.3, "section/slabside": 0.5},
 }
 
 STYLE_DESCRIPTIONS = {
@@ -117,7 +133,10 @@ def style_names():
 
 
 def style_params(name: str, base: BodyParams | None = None) -> BodyParams:
+    """Dimensional preset including its default face, plan and section mix."""
+    from .shapes import shape_params
+
     if name not in STYLE_OVERRIDES:
         raise KeyError(f"unknown style {name!r}; choose from {style_names()}")
     base = base or BodyParams()
-    return dataclasses.replace(base, **STYLE_OVERRIDES[name])
+    return shape_params(dataclasses.replace(base, **STYLE_OVERRIDES[name]), STYLE_SHAPE_DEFAULTS[name])

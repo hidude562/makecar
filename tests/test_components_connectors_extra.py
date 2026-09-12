@@ -1,5 +1,6 @@
 """Exterior detail connector contracts, including world-space routed parts."""
 import json
+from itertools import product
 
 import numpy as np
 import pytest
@@ -8,6 +9,7 @@ from makecar.assembly import assemble
 from makecar.body import style_names
 from makecar.body.connectors import aperture_loop, measure
 from makecar.body.connectors_extra import extra_exterior_connectors
+from makecar.body.shapes import SHAPE_DELTAS
 from makecar.components import BuildContext, Palette, default_component_for, get_component
 from makecar.connectors import PointConnector, RectangleConnector
 
@@ -467,6 +469,104 @@ def test_exhaust_pan_and_tip_fit_follow_morphs(car_body, style, modifiers):
     pipe_only = get_component("exhaust.system").build(conn, {"muffler": False}, ctx).mesh
     assert not {"catalyst", "silencer"} & pipe_only.groups.keys()
     assert {"pipe_run_0", "pipe_run_1", "pipe_run_2"} <= pipe_only.groups.keys()
+
+
+def test_exhaust_bends_do_not_fold_between_close_rings(detailed_body):
+    conn = detailed_body.connector("exhaust_system")
+    ctx = BuildContext(detailed_body.measurements, detailed_body.hints, Palette(), np.random.default_rng(0))
+    mesh = get_component("exhaust.system").build(conn, {"muffler": False}, ctx).mesh
+    for k, path in enumerate(conn.meta["paths"]):
+        path = np.asarray(path)
+        rings = swept_rings(mesh, f"pipe_run_{k}", path, 10)
+        advance = np.einsum("nki,ni->nk", rings[1:] - rings[:-1], np.diff(path, axis=0))
+        assert advance.min() > 0, (detailed_body.hints["style"], k, "folded sweep faces")
+
+
+@pytest.mark.parametrize("style", style_names())
+@pytest.mark.parametrize("shape,weight", product(SHAPE_DELTAS, (0., 1.)))
+def test_exhaust_fits_inherited_archetype_endpoints(car_body, style, shape, weight):
+    assert_exhaust_pan_fit(car_body.build(style=style, modifiers={shape: weight}))
+
+
+_SHAPE_CORNERS = list(product(*[[name for name in SHAPE_DELTAS if name.startswith(family + "/")]
+                               for family in ("face", "plan", "section")]))
+
+
+@pytest.mark.parametrize("style", style_names())
+@pytest.mark.parametrize("shapes", _SHAPE_CORNERS, ids=lambda names: "+".join(names))
+def test_exhaust_fits_full_strength_archetype_corners(car_body, style, shapes):
+    # Explicitly remove inherited weights: setting a single new member to one
+    # would normalize against a style's defaults and miss the true endpoints.
+    modifiers = {name: float(name in shapes) for name in SHAPE_DELTAS}
+    body = car_body.build(style=style, modifiers=modifiers)
+    assert_exhaust_pan_fit(body)
+    conn = body.connector("exhaust_system")
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    mesh = get_component("exhaust.system").build(conn, {"muffler": False}, ctx).mesh
+    for k, path in enumerate(conn.meta["paths"]):
+        path = np.asarray(path)
+        rings = swept_rings(mesh, f"pipe_run_{k}", path, 10)
+        np.testing.assert_allclose(np.linalg.norm(rings - path[:, None], axis=2), .025, atol=1e-9)
+        advance = np.einsum("nki,ni->nk", rings[1:] - rings[:-1], np.diff(path, axis=0))
+        assert advance.min() > 0, (style, shapes, k, "folded sweep faces")
+        assert_closed_solid(mesh.subset(mesh.zones[f"pipe_run_{k}"]), (style, shapes, k))
+        assert rings[:, :, 2].min() > 0
+        if k:
+            tip = body.connector("exhaust_" + ("L" if k == 1 else "R"))
+            np.testing.assert_allclose(path[0], conn.meta["paths"][0][-1], atol=1e-9)
+            np.testing.assert_allclose(path[-1], tip.origin, atol=1e-9)
+            np.testing.assert_allclose((rings[-1] - tip.origin) @ tip.normal, 0, atol=1e-9)
+
+
+def test_exhaust_floor_envelope_catches_dips_between_rings():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    # Neither endpoint nor the midpoint sees this narrow low floor station.
+    grid = np.array([[[x, y, z] for y in (0., .4)] for x, z in
+                     ((0., .2), (.21, .2), (.23, .15), (.25, .2), (1., .2))])
+    floor = _ExhaustFloor(grid)
+    path = np.array([[.9, .1, .167], [.1, .1, .167]])
+    assert floor.clearance(*path, .025) == pytest.approx(-.042)
+    fitted, = floor.fit_paths([path], .025)
+    assert floor.clearance(*np.asarray(fitted), .025) >= .004
+    np.testing.assert_allclose(np.asarray(fitted)[:, :2], path[:, :2])
+
+
+def test_exhaust_floor_envelope_checks_lateral_radius_and_slopes():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    # The centreline fits; the outboard edge clips the tunnel shoulder.
+    grid = np.array([[[x, y, z + .1 * x] for y, z in
+                      ((0., .2), (.08, .2), (.12, .14), (.4, .14))] for x in (0., 1.)])
+    floor = _ExhaustFloor(grid)
+    path = np.array([[.9, .075, .257], [.1, .075, .177]])
+    assert floor.clearance(*path, .025) < 0
+    fitted, = floor.fit_paths([path], .025)
+    assert floor.clearance(*np.asarray(fitted), .025) >= .004
+    mirrored = path * MIRROR
+    np.testing.assert_allclose(floor.fit_paths([mirrored], .025)[0], np.asarray(fitted) * MIRROR)
+
+
+def test_exhaust_floor_checks_lateral_segments_and_reuses_xy_clipping():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    grid = np.array([[[x, y, .2] for y in (0., .4)] for x in (0., 1.)])
+    floor = _ExhaustFloor(grid)
+    path = np.array([[.5, .1, .195], [.5, .2, .195]])
+    assert floor.clearance(*path, .025) == pytest.approx(-.02)
+    fitted, = floor.fit_paths([path], .025)
+    assert floor.clearance(*np.asarray(fitted), .025) >= .004
+    assert len(floor._footprints) == 1, "height fitting must reuse its invariant XY footprint"
+
+
+def test_exhaust_floor_does_not_accept_a_blocked_fixed_collar():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    grid = np.array([[[x, y, .2] for y in (0., .4)] for x in (0., 1.)])
+    paths = [[[.9, 0., .167], [.6, 0., .167]],
+             [[.6, 0., .167], [.3, .1, .195], [.2, .1, .195]]]
+    with pytest.raises(ValueError, match="fixed tip collar"):
+        _ExhaustFloor(grid).fit_paths(paths, .025)
 
 
 def test_diffuser_has_real_tapered_fins_only_on_sporty_styles(detailed_assembly):

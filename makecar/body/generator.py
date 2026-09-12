@@ -95,13 +95,21 @@ def station_index(name: str, chain: str = "upper") -> int:
     return int(sum(counts[:k]))
 
 
-def _fascia_outline(width, lo, hi, shoulder, step=None):
+def _fascia_outline(width, lo, hi, shoulder, step=None, roundness=0.0):
     """Corresponding rounded-rectangle samples for the end ring and its cap."""
-    radius = min(0.045, width * 0.12, (hi - lo) * 0.18)
+    if roundness:
+        # Leave room between the corner and the fixed one-third top samples,
+        # even when a pointed target is added to an already rounded style.
+        radius = min(0.045 + roundness, width * 0.15, (hi - lo) * 0.35)
+    else:
+        radius = min(0.045, width * 0.12, (hi - lo) * 0.18)
+    bottom_radius = radius
     if hi > shoulder:
         radius = min(radius, (hi - shoulder) / 2)
-    pts = np.array([(0, lo), (width - radius, lo), (width, lo + radius),
-                    (width, lo + 2 * radius), (width, np.clip(shoulder, lo + 2.5 * radius, hi - radius)),
+    if not roundness:
+        bottom_radius = radius
+    pts = np.array([(0, lo), (width - bottom_radius, lo), (width, lo + bottom_radius),
+                    (width, lo + 2 * bottom_radius), (width, np.clip(shoulder, lo + 2.5 * bottom_radius, hi - radius)),
                     (width - radius * 0.3, hi - radius * 0.3), (width - radius, hi),
                     (width * 2 / 3, hi), (width / 3, hi), (0, hi)])
     if step is not None:
@@ -197,7 +205,7 @@ class BodyGenerator:
             ]
         )
         # roof rail / top-corner half width
-        roof_y = half_w * p.roof_width_ratio
+        roof_y = half_w * p.roof_width_ratio - p.tumblehome
         hood_y = half_w - p.shoulder_inset - 0.10
         self.roof_edge = Profile(
             [
@@ -242,15 +250,30 @@ class BodyGenerator:
         y = np.full_like(x, hw)
         # gentle mid-body taper towards the ends (2%)
         xf, xr = L["x_front"], L["x_rear"]
-        tf = np.clip((x - (xf - p.front_corner_length)) / max(p.front_corner_length, 1e-6), 0, 1)
-        tr = np.clip(((xr + p.rear_corner_length) - x) / max(p.rear_corner_length, 1e-6), 0, 1)
-        ell_f = np.sqrt(np.clip(1 - tf ** 2.2, 0, 1))
-        ell_r = np.sqrt(np.clip(1 - tr ** 2.2, 0, 1))
+        front_run = p.front_corner_length + p.nose_taper_length
+        rear_run = p.rear_corner_length + p.tail_taper_length
+        tf = np.clip((x - (xf - front_run)) / max(front_run, 1e-6), 0, 1)
+        tr = np.clip(((xr + rear_run) - x) / max(rear_run, 1e-6), 0, 1)
+        ell_f = np.sqrt(np.clip(1 - tf ** max(p.nose_taper_exponent, 0.1), 0, 1))
+        ell_r = np.sqrt(np.clip(1 - tr ** max(p.tail_taper_exponent, 0.1), 0, 1))
         y = hw * (p.nose_width_ratio + (1 - p.nose_width_ratio) * ell_f)
         y = np.minimum(y, hw * (p.tail_width_ratio + (1 - p.tail_width_ratio) * ell_r))
         mid = 0.5 * (xf + xr)
         y = y * (1 - 0.02 * np.abs((x - mid) / ((xf - xr) / 2)) ** 2)
+        # A real door waist, not a uniform narrowing: both axle shoulders retain
+        # their width and the wheel-circle landmarks retain their x/z positions.
+        waist = np.clip((x - L["x_ra"]) / p.wheelbase, 0, 1)
+        y -= p.waist_depth * np.sin(np.pi * waist) ** 2
         return y
+
+    def center_height(self, x):
+        """Original silhouette with an independently straightened hood plane."""
+        p, L = self.p, self.L
+        x = np.asarray(x, dtype=float)
+        t = np.clip((x - L["u_cowl"]) / max(L["x_front"] - L["u_cowl"], 0.02), 0, 1)
+        plane = p.cowl_height * (1 - t) + p.hood_front_height * t
+        blend = np.where(x >= L["u_cowl"], p.hood_straightness, 0.0)
+        return self.z_center(x) * (1 - blend) + plane * blend
 
     def arch(self, x_lo: float) -> Tuple[float, float]:
         """(weight, z of arch lip) for the lower-chain position x_lo."""
@@ -281,12 +304,16 @@ class BodyGenerator:
         y_fe = max(0.30, y_sill - well_w)
         w_arch, z_arch, arch_prof = self.arch(xl)
 
-        zc = float(self.z_center(xh))
+        zc = float(self.center_height(xh))
         cr = float(self.crown(xh))
         z_belt = min(float(self.belt(xm)), zc - cr - 0.02)
         z_shoulder = min(z_belt + max(p.shoulder_rise, p.shoulder_radius), zc - cr - 0.005)
         y_belt = yb_mid + (p.side_bulge if w_arch == 0 else 0.0) * 0.5
-        y_F = yb_hi - p.shoulder_inset
+        rear_corner = 1 - smoothstep(self.L["x_rear"], self.L["x_rear"] + 2 * p.rear_corner_length, xh)
+        # Let the rear shoulder open out into the lamp roll instead of hooking
+        # sharply inboard where the deck and arch chains separate.
+        y_F = (yb_hi * (1 - rear_corner) + yb_mid * rear_corner
+               - p.shoulder_inset * (1 - 0.70 * rear_corner))
         y_G = min(float(self.roof_edge(xh)), yb_hi - p.shoulder_inset - 0.04)
         z_G = zc - cr
         lean = float(self.lean(xh))
@@ -407,7 +434,8 @@ class BodyGenerator:
         on_hood = xh >= self.L["u_cowl"]
         on_deck = xh <= self.L["u_deck"] and self.bed is None
         if on_hood or on_deck:
-            ring[jF, 2] += p.fender_crease
+            crease_fade = min(1.0, (N_STATIONS - 1 - i) / 2) if on_hood else 1.0
+            ring[jF, 2] += p.fender_crease * crease_fade
             # A 6 mm-wide fold, followed by a smooth hood/deck crown.
             root = F.copy()
             root[1] -= 0.006
@@ -495,6 +523,7 @@ class BodyGenerator:
         all_rings = rear_fascia[::-1] + rings + front_fascia
         n_rings = len(all_rings)
         verts = np.vstack(all_rings + [rear_apex[None, :], front_apex[None, :]])
+        self._shape_nose(verts)
         rear_apex_i, front_apex_i = n_rings * RING_N, n_rings * RING_N + 1
         off = len(rear_fascia)  # index offset of main ring 0 inside all_rings
 
@@ -540,6 +569,33 @@ class BodyGenerator:
         return mesh
 
     # ------------------------------------------------------------ details
+    def _shape_nose(self, vertices):
+        """Independent centre tip and proud fenders, continuous across the cap.
+
+        A transverse field is needed here: a single centreline loft profile
+        cannot put a shark's tip below its fenders. Wheel-circle vertices and
+        the cabin remain untouched, and the same field shapes the lamp grids.
+        """
+        p, L = self.p, self.L
+        if not (p.nose_center_drop or p.nose_center_extension or p.fender_crown_height):
+            return
+        x, y, z = vertices.T.copy()
+        front = smoothstep(L["u_cowl"], L["x_front"] - p.front_corner_length, x)
+        lateral = np.clip(np.abs(y) / np.maximum(self.plan_half_width(x), 0.1), 0, 1)
+        center = (1 - lateral ** 2) ** 2
+        shoulder = np.sin(np.pi * lateral / 2) ** 4
+        height = smoothstep(p.bumper_crease_height, p.hood_front_height, z)
+        # The main loft's lower section contains the wheel-circle landmarks.
+        # Blend from the door skin up; do not deform an arch when the hood is low.
+        cols = np.arange(RING_N)
+        half = np.minimum(cols, RING_N - cols)
+        upper = smoothstep(RING["D"] + 2, RING["F"], half)
+        start = N_FASCIA * RING_N
+        stop = start + N_STATIONS * RING_N
+        height[start:stop] *= np.tile(upper, N_STATIONS)
+        vertices[:, 2] += front * height * (p.fender_crown_height * shoulder - p.nose_center_drop * center)
+        vertices[:, 0] += p.nose_center_extension * front * height * center
+
     def _apply_rake(self, rings: List[np.ndarray]) -> List[np.ndarray]:
         """Keep the bumper upright; rake only the upper nose and tail panels.
 
@@ -557,7 +613,15 @@ class BodyGenerator:
                 bottom = p.front_bumper_bottom - p.air_dam_height if forward else p.rear_bumper_bottom - p.rear_valance_height
                 top = p.hood_front_height if forward else p.deck_rear_height
                 crease = p.bumper_crease_height if forward else p.rear_bumper_crease_height
-                outline = _fascia_outline(np.abs(r[:, 1]).max(), bottom, top, crease, 0.025 if forward else None)
+                outline = _fascia_outline(np.abs(r[:, 1]).max(), bottom, top, crease,
+                                          0.025 if forward else None,
+                                          p.fascia_roundness if forward else 0.0)
+                if forward:
+                    # Preserve the planar hood right to its lip instead of
+                    # bending the last four stations down to a common height.
+                    lift = max(0.0, float(self.center_height(self.x_hi[i])) - top)
+                    upper = smoothstep(crease, top, outline[:, 1])
+                    outline[:, 1] += p.hood_straightness * lift * upper
                 r[:, 1:] = r[:, 1:] * (1 - weight) + outline * weight
             # Each vertex follows its own longitudinal chain (important at arches).
             for forward, end, run in ((True, L["x_front"], p.front_corner_length),
@@ -571,8 +635,31 @@ class BodyGenerator:
                 top = p.hood_front_height if forward else p.deck_rear_height
                 rake = p.front_fascia_rake if forward else -p.rear_fascia_rake
                 upper = np.clip((r[:, 2] - crease) / max(top - crease, 0.08), 0, 1)
-                r[:, 0] -= sign * rake * w * upper
+                if forward:
+                    cols = np.arange(RING_N)
+                    upper *= smoothstep(RING["D"] + 2, RING["F"], np.minimum(cols, RING_N - cols))
+                    # A steep upper face needs a longer transition than the
+                    # bumper corner. Otherwise dx/dstation reverses at the lip.
+                    rake_run = min(max(run, 2.5 * (reserve + abs(rake) + abs(p.fascia_slope))),
+                                   max(run, end - L["u_cowl"]))
+                    original_x = r[:, 0] + reserve * w
+                    rake_w = np.clip(1 - (end - original_x) / max(rake_run, 1e-6), 0, 1) ** 2
+                    r[:, 0] -= (rake + p.fascia_slope) * rake_w * upper
+                else:
+                    r[:, 0] -= sign * rake * w * upper
             out.append(r)
+        if p.hood_straightness:
+            # Rake changes x as well as z. Straighten in the *finished* x/z
+            # frame, otherwise a mathematically planar profile grows a kink
+            # where the upper fascia is set back.
+            tip_x = out[-1][RING["H"], 0]
+            cols = np.arange(RING_N)
+            upper = smoothstep(RING["D"] + 2, RING["F"], np.minimum(cols, RING_N - cols))
+            for i in range(station_index("cowl"), N_STATIONS):
+                r = out[i]
+                t = np.clip((r[RING["H"], 0] - L["u_cowl"]) / max(tip_x - L["u_cowl"], 0.02), 0, 1)
+                plane = p.cowl_height * (1 - t) + p.hood_front_height * t
+                r[:, 2] += p.hood_straightness * (plane - r[RING["H"], 2]) * upper
         return out
 
     def _fascia_x(self, y, z, forward: bool):
@@ -584,8 +671,10 @@ class BodyGenerator:
             upper = smoothstep(crease, crease + 0.025, z)
             hood = smoothstep(top - 0.035, top - 0.008, z)
             lip = 1 - smoothstep(bottom + 0.012, bottom + 0.045, z)
+            slope = np.clip((z - crease) / max(top - crease, 0.08), 0, 1)
             return (L["x_front"] - p.front_splitter + p.front_splitter * lip
-                    - (p.front_fascia_rake + p.hood_overhang) * upper + p.hood_overhang * hood)
+                    - (p.front_fascia_rake + p.hood_overhang) * upper + p.hood_overhang * hood
+                    - p.fascia_slope * slope)
         bottom, crease = p.rear_bumper_bottom, p.rear_bumper_crease_height
         valance = 1 - smoothstep(bottom + 0.04, bottom + 0.10, z)
         panel = smoothstep(crease, crease + 0.035, z)
@@ -607,7 +696,8 @@ class BodyGenerator:
         hw = max(abs(ring[:, 1]))
         zmid = (bottom + top) / 2
 
-        face_yz = _fascia_outline(hw * 0.985, bottom, top, crease, 0.025 if forward else None)
+        face_yz = _fascia_outline(hw * 0.985, bottom, top, crease, 0.025 if forward else None,
+                                  p.fascia_roundness if forward else 0.0)
         face = np.column_stack([self._fascia_x(face_yz[:, 0], face_yz[:, 1], forward), face_yz])
         # The first roll carries wraparound lamps into the face. The next roll
         # gives the bumper a rounded edge without a pillow-shaped central cap.
@@ -627,9 +717,14 @@ class BodyGenerator:
                      (0.20, zmid - 0.06, zmid + 0.06, p.plate_recess)]
         for k, (width, lo, hi, depth) in enumerate(specs):
             yz = _fascia_outline(width, lo, hi, crease if forward or k == 0 else zmid,
-                                 0.025 if forward else None)
+                                 0.025 if forward else None,
+                                 p.fascia_roundness * width / hw if forward else 0.0)
             x = (np.full(len(yz), self.L["x_rear"] + depth) if not forward and k > 0
                  else self._fascia_x(yz[:, 0], yz[:, 1], forward))
+            if forward and k == 0:
+                inner_lip = 1 - smoothstep(p.front_bumper_bottom + 0.012, p.front_bumper_bottom + 0.045, yz[:, 1])
+                outer_lip = 1 - smoothstep(p.front_bumper_bottom + 0.012, p.front_bumper_bottom + 0.045, face_yz[:, 1])
+                x += p.front_splitter * (outer_lip * 0.5 - inner_lip)
             out.append(np.column_stack([x, yz]))
         if forward:
             zmid = float((out[-1][:, 2].min() + out[-1][:, 2].max()) / 2)

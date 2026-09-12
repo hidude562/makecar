@@ -1,0 +1,5598 @@
+{
+  "phase": "before",
+  "baseline_revision": "2a4a5e786783ad5d3440029297f6b082d41fa209",
+  "source_head": "2a4a5e786783ad5d3440029297f6b082d41fa209",
+  "source_kind": "git archive",
+  "source_sha256": {
+    "makecar/__init__.py": "3419c3889b3245eb1780180f03bcd35e9304fc550dcf5efc1ff23229d796aa9a",
+    "makecar/__main__.py": "6d8b7d7846a845059d7a3107143f11131f63c5511d669b44085b15ec5e3d2279",
+    "makecar/assembly.py": "325b06bf16ea681a9e0cda796b4d6f34f4726dbe31e93156ffeba4e17ba91df9",
+    "makecar/body/__init__.py": "291be73e93b52b953b0c370c1029459134b123c851c827b44e9c175dbacfa635",
+    "makecar/body/body.py": "47272f0299ccf5da23efd2d39b6374e2dbe68dc49d028e895bfa4bfd2f404645",
+    "makecar/body/connectors.py": "1400ed261a1285a299928126813721f74675a73d5dc2ae2a79dae3e0ea8e09d9",
+    "makecar/body/connectors_extra.py": "fb19b71b76dc2dabd22f3f3fb23ccf30be611299cf28e7ed8df10908af7713be",
+    "makecar/body/generator.py": "796d7fe56de4a0fc32c829d76cfaf2e852b1c8493f49359c6f3ee363c1394cbd",
+    "makecar/body/params.py": "f4cbbcb6efaa9ed7312804edb35cfd895f28285b3e336f7c470348518ddf92e6",
+    "makecar/body/shapes.py": "97fc69aa57cf2f82be15f9cc42ed3d52ae455551fcacd548b4d5191ad5fc5379",
+    "makecar/body/styles.py": "3eb4a7b98b3dfa1c6b1f00dfeeef006f181acd71a6b36b2a67c69d25a84aba85",
+    "makecar/body/targets.py": "677967bf3973a5937f6a176222223f9670cc70b456c97d694b0d4c216367786b",
+    "makecar/cli.py": "603883f79294eefb329690fe39041752c8c07b1f584398f561272e223196d27e",
+    "makecar/components/__init__.py": "e53a8f2a690086196172bbd8a2616106a94ce17bb665ba005b96e9de6bb08d67",
+    "makecar/components/base.py": "d8de15bdee9359fb1f1ac90c799bd8d2b6801c8bafa55615deef595f9838a6de",
+    "makecar/components/exterior.py": "4eb1c5427cbf1f7033f965875e7a738c5ff2806cd3fecd33a675bb43dd82cc9a",
+    "makecar/components/fills.py": "402c64ee70cecea693440637a58a5f363e8415233a6bb0381193777176a1a429",
+    "makecar/components/interior.py": "9214089209a1ce9627f303aab98f83604902dcff10da07b6c50275fe300ae2b2",
+    "makecar/components/interior_helpers.py": "38c6e2d5e88a53b06f2e8658bcceade0a21cb8339129063c5bc8a40ae527c5ae",
+    "makecar/config.py": "5df2e2b09e12b5f17e8c66a66c03701296adda5de354ecaee144b3e6c4380079",
+    "makecar/connectors.py": "c157fdaaec0180bfa3f25566a8e27fb2b7d3ce48194343ebbb67174bf0acfe64",
+    "makecar/export/__init__.py": "991659e960512de95854a83057c3c5987a82aac2f7dd72bd9653403b08d3ebe1",
+    "makecar/export/obj.py": "45f8351a7a49d73a2e46f2e426d3ae6509ab404706a7f1f4e6336c1eabb0148a",
+    "makecar/export/png.py": "6accf471fb2e0537c006d4c83ad8351a02582b92c9ac9c6501cfc9ad117a033a",
+    "makecar/export/render.py": "6e3e859054b3aa69c10d96de4450ecb284b6ce5ad3aa6200b6cb526e397d511d",
+    "makecar/export/svg.py": "5d35ae6895240e9ffa42731963de84a4df0b7359468893ef26dcfd32215e1cf4",
+    "makecar/geometry/__init__.py": "c76a89741aeab57e857dcfe5e5d6d8081a410739753ebf6dc58c925e3935c2cf",
+    "makecar/geometry/curves.py": "28e1b479fc945a1c384d40ba4f2155cdfd6375e2b23fd2961a5e4f3a7c94bef7",
+    "makecar/geometry/frame.py": "917861c5ac5d2d8d8e5a565155ec7617b042ef0cf1f7f7563302967ab44a0711",
+    "makecar/geometry/mesh.py": "c1a95bfc2f23b259635795bf2556abfda64b12de2e291af80233749979ce128c",
+    "makecar/geometry/primitives.py": "738f0f8a8d243838fb3d738576f923523af06ad27428ca1fd4921ec0f0454845",
+    "makecar/morph/__init__.py": "5521eb59a81772d1274863b283a9dc02f3fde75060c5d9851b16aeaa972ef663",
+    "makecar/morph/morphable.py": "3a8eeb32d4dd89f32ef986aa0278c818228d384491e6f51ba666d9777396886b",
+    "makecar/morph/target.py": "979590c9ea79b6c11826e5ea546f2cb02c0492de365867d94ec2f1cb9d4b800f",
+    "makecar/pipeline.py": "c974819c0442d36c05f1bc23a787fa5333924797c4377c17a1d2a6f0d4ae3ff7"
+  },
+  "imported_modules": {
+    "makecar": "makecar/__init__.py",
+    "makecar.assembly": "makecar/assembly.py",
+    "makecar.body": "makecar/body/__init__.py",
+    "makecar.body.body": "makecar/body/body.py",
+    "makecar.body.connectors": "makecar/body/connectors.py",
+    "makecar.body.connectors_extra": "makecar/body/connectors_extra.py",
+    "makecar.body.generator": "makecar/body/generator.py",
+    "makecar.body.params": "makecar/body/params.py",
+    "makecar.body.shapes": "makecar/body/shapes.py",
+    "makecar.body.styles": "makecar/body/styles.py",
+    "makecar.body.targets": "makecar/body/targets.py",
+    "makecar.components": "makecar/components/__init__.py",
+    "makecar.components.base": "makecar/components/base.py",
+    "makecar.components.exterior": "makecar/components/exterior.py",
+    "makecar.components.fills": "makecar/components/fills.py",
+    "makecar.components.interior": "makecar/components/interior.py",
+    "makecar.components.interior_helpers": "makecar/components/interior_helpers.py",
+    "makecar.connectors": "makecar/connectors.py",
+    "makecar.export": "makecar/export/__init__.py",
+    "makecar.export.obj": "makecar/export/obj.py",
+    "makecar.export.png": "makecar/export/png.py",
+    "makecar.export.render": "makecar/export/render.py",
+    "makecar.export.svg": "makecar/export/svg.py",
+    "makecar.geometry": "makecar/geometry/__init__.py",
+    "makecar.geometry.curves": "makecar/geometry/curves.py",
+    "makecar.geometry.frame": "makecar/geometry/frame.py",
+    "makecar.geometry.mesh": "makecar/geometry/mesh.py",
+    "makecar.geometry.primitives": "makecar/geometry/primitives.py",
+    "makecar.morph": "makecar/morph/__init__.py",
+    "makecar.morph.morphable": "makecar/morph/morphable.py",
+    "makecar.morph.target": "makecar/morph/target.py"
+  },
+  "script_sha256": "c3d01bfcfe87c8132c0207f5a23ed3fff221b597e68ad6cc06c31a5fb1dc098b",
+  "cameras_sha256": "ff6f05a8a14dd66cc227d6fe765701caf02d41aeb4a812080e1fab778c4f2ffc",
+  "python": "3.12.3",
+  "numpy": "1.26.4",
+  "captured_at": "2026-09-12T07:27:50Z",
+  "settings": {
+    "baseline_revision": "2a4a5e786783ad5d3440029297f6b082d41fa209",
+    "width": 800,
+    "height": 600,
+    "supersample": 2,
+    "palette": {
+      "paint": "#426b88"
+    },
+    "seed": 0,
+    "background": [
+      [
+        0.93,
+        0.95,
+        0.98
+      ],
+      [
+        0.78,
+        0.82,
+        0.87
+      ]
+    ],
+    "pan_material_override": {
+      "name": "underbody",
+      "color": [
+        0.4,
+        0.42,
+        0.44
+      ],
+      "alpha": 1.0,
+      "shininess": 0.2
+    },
+    "styles": {
+      "sports": {
+        "underbody": {
+          "camera": {
+            "eye": [
+              -6.742600716628345,
+              4.698463103929541,
+              -5.113262859333697
+            ],
+            "target": [
+              -0.03249999999999997,
+              0.0,
+              0.6225015041767635
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 3.159388319929114
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "side": {
+          "camera": {
+            "eye": [
+              -0.03249999999999937,
+              9.902680687415703,
+              -0.7692295054238908
+            ],
+            "target": [
+              -0.03249999999999997,
+              0.0,
+              0.6225015041767635
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 3.304560000000001
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_closeup": {
+          "camera": {
+            "eye": [
+              -10.651362389010561,
+              3.3036608954935227,
+              -2.263966466848444
+            ],
+            "target": [
+              -1.574628677106877,
+              0.0,
+              0.32422398417676346
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 1.5237724912646715
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_three_quarter": {
+          "camera": {
+            "eye": [
+              -7.8402698577586785,
+              5.455036073850145,
+              3.7347735120752104
+            ],
+            "target": [
+              -0.04967096218325928,
+              0.0,
+              0.6446035683257363
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 2.6304008785578437
+          },
+          "scene": "full",
+          "ground": true,
+          "lines": true,
+          "light_dir": [
+            -0.5,
+            0.6,
+            1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            0.4
+          ]
+        }
+      },
+      "sedan": {
+        "underbody": {
+          "camera": {
+            "eye": [
+              -6.783600716628345,
+              4.698463103929541,
+              -5.013257651296952
+            ],
+            "target": [
+              -0.0734999999999999,
+              0.0,
+              0.7225067122135087
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 3.8871778941081345
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "side": {
+          "camera": {
+            "eye": [
+              -0.07349999999999929,
+              9.902680687415703,
+              -0.6692242973871456
+            ],
+            "target": [
+              -0.0734999999999999,
+              0.0,
+              0.7225067122135087
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 4.13364
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_closeup": {
+          "camera": {
+            "eye": [
+              -11.175800813540915,
+              3.3036608954935227,
+              -2.2174681972154944
+            ],
+            "target": [
+              -2.0990671016372295,
+              0.0,
+              0.37072225380971296
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 1.6333781975774495
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        }
+      },
+      "pickup": {
+        "underbody": {
+          "camera": {
+            "eye": [
+              -6.872100716628345,
+              4.698463103929541,
+              -4.775738416077141
+            ],
+            "target": [
+              -0.16199999999999992,
+              0.0,
+              0.9600259474333193
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 4.796880309782633
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "side": {
+          "camera": {
+            "eye": [
+              -0.1619999999999993,
+              9.902680687415703,
+              -0.43170506216733506
+            ],
+            "target": [
+              -0.16199999999999992,
+              0.0,
+              0.9600259474333193
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 4.97868
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_closeup": {
+          "camera": {
+            "eye": [
+              -11.756342107798751,
+              3.3036608954935227,
+              -2.1841071548702105
+            ],
+            "target": [
+              -2.679608395895065,
+              0.0,
+              0.4040832961549968
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 1.7706995278940914
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        }
+      }
+    }
+  },
+  "styles": {
+    "sports": {
+      "configuration": {
+        "body": {
+          "style": "sports",
+          "modifiers": {}
+        },
+        "components": {
+          "defaults": true
+        },
+        "seed": 0,
+        "palette": {
+          "paint": "#426b88"
+        }
+      },
+      "requested_modifiers": {
+        "style/sports": 1.0
+      },
+      "effective_shape_values": {
+        "face/wedge": 0.8,
+        "plan/pointed": 0.85,
+        "section/tumblehome": 0.7,
+        "style/sports": 1.0
+      },
+      "measurements": {
+        "x_front": 1.9345,
+        "x_rear": -1.9995,
+        "length": 3.934,
+        "width": 1.7549907339978512,
+        "height": 1.245,
+        "x_cowl": 0.6745000000000001,
+        "z_cowl": 0.86,
+        "x_roof_front": 0.08450000000000013,
+        "z_roof_front": 1.245,
+        "x_roof_rear": -0.7245000000000001,
+        "z_roof_rear": 1.225,
+        "x_deck": -1.0245000000000002,
+        "z_deck": 0.87,
+        "x_bpillar": -0.5254999999999999,
+        "roof_half_width": 0.5112250000000002,
+        "z_belt": 0.8168272760646915,
+        "y_belt": 0.8769863138419756,
+        "y_shoulder": 0.796114622626114,
+        "z_sill": 0.30815,
+        "y_sill": 0.8145361664662563,
+        "z_floor": 0.12000000000000001,
+        "y_floor_edge": 0.49227991202740323,
+        "wheel_front_x": 1.1544999999999999,
+        "wheel_front_z": 0.3081500000000002,
+        "arch_front_r": 0.3681499999999993,
+        "wheel_front_y": 0.8040053079194476,
+        "wheel_rear_x": -1.1545000000000019,
+        "wheel_rear_z": 0.3081499999999963,
+        "arch_rear_r": 0.3681500000000045,
+        "wheel_rear_y": 0.8223028190631927,
+        "wheelbase": 2.309000000000002,
+        "track": 1.6080106158388952,
+        "nose_z_top": 0.532,
+        "nose_z_bottom": 0.163,
+        "nose_half_width": 0.37046360515968463,
+        "nose_top_half_width": 0.33946360515968466,
+        "tail_z_top": 0.83,
+        "tail_z_bottom": 0.24500000000000002,
+        "tail_half_width": 0.4682308500000001,
+        "tail_top_half_width": 0.4232308500000001,
+        "bed": 0.02734375000000011,
+        "has_bed": 0.0
+      },
+      "components": [
+        {
+          "id": "wheel_front_L:wheel.alloy",
+          "connector": "wheel_front_L",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": -0.21850000000000702,
+              "width": -0.2500000000000002,
+              "rim_ratio": -0.08740000000000267,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.18672669999999944
+          }
+        },
+        {
+          "id": "wheel_front_R:wheel.alloy",
+          "connector": "wheel_front_R",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": -0.21850000000000702,
+              "width": -0.2500000000000002,
+              "rim_ratio": -0.08740000000000267,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.18672669999999944
+          }
+        },
+        {
+          "id": "wheel_rear_L:wheel.alloy",
+          "connector": "wheel_rear_L",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": -0.2184999999999554,
+              "width": -0.2500000000000002,
+              "rim_ratio": -0.08739999999998194,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.1867267000000037
+          }
+        },
+        {
+          "id": "wheel_rear_R:wheel.alloy",
+          "connector": "wheel_rear_R",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": -0.2184999999999554,
+              "width": -0.2500000000000002,
+              "rim_ratio": -0.08739999999998194,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.1867267000000037
+          }
+        },
+        {
+          "id": "windshield:glass.tinted",
+          "connector": "windshield",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 576,
+          "info": {
+            "area": 0.7485620022203806
+          }
+        },
+        {
+          "id": "rear_window:glass.tinted",
+          "connector": "rear_window",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 432,
+          "info": {
+            "area": 0.4587720210030184
+          }
+        },
+        {
+          "id": "glass_front_L:glass.tinted",
+          "connector": "glass_front_L",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.3204518045542709
+          }
+        },
+        {
+          "id": "glass_front_R:glass.tinted",
+          "connector": "glass_front_R",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.3204518045542709
+          }
+        },
+        {
+          "id": "glass_rear_L:glass.tinted",
+          "connector": "glass_rear_L",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.013907851602791316
+          }
+        },
+        {
+          "id": "glass_rear_R:glass.tinted",
+          "connector": "glass_rear_R",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.013907851602791316
+          }
+        },
+        {
+          "id": "headlight_L:light.headlight",
+          "connector": "headlight_L",
+          "connector_kind": "polygon",
+          "component": "light.headlight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1644,
+          "info": {
+            "projectors": 2
+          }
+        },
+        {
+          "id": "headlight_R:light.headlight",
+          "connector": "headlight_R",
+          "connector_kind": "polygon",
+          "component": "light.headlight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1644,
+          "info": {
+            "projectors": 2
+          }
+        },
+        {
+          "id": "taillight_L:light.taillight",
+          "connector": "taillight_L",
+          "connector_kind": "polygon",
+          "component": "light.taillight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2832,
+          "info": {}
+        },
+        {
+          "id": "taillight_R:light.taillight",
+          "connector": "taillight_R",
+          "connector_kind": "polygon",
+          "component": "light.taillight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2832,
+          "info": {}
+        },
+        {
+          "id": "grille:grille.slats",
+          "connector": "grille",
+          "connector_kind": "rectangle",
+          "component": "grille.slats",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 140,
+          "info": {}
+        },
+        {
+          "id": "intake:grille.intake",
+          "connector": "intake",
+          "connector_kind": "rectangle",
+          "component": "grille.intake",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 580,
+          "info": {}
+        },
+        {
+          "id": "plate_front:plate.standard",
+          "connector": "plate_front",
+          "connector_kind": "rectangle",
+          "component": "plate.standard",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 60,
+          "info": {}
+        },
+        {
+          "id": "plate_rear:plate.standard",
+          "connector": "plate_rear",
+          "connector_kind": "rectangle",
+          "component": "plate.standard",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 54,
+          "info": {}
+        },
+        {
+          "id": "badge_front:badge.roundel",
+          "connector": "badge_front",
+          "connector_kind": "point",
+          "component": "badge.roundel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {}
+        },
+        {
+          "id": "badge_rear:badge.roundel",
+          "connector": "badge_rear",
+          "connector_kind": "point",
+          "component": "badge.roundel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {}
+        },
+        {
+          "id": "exhaust_L:exhaust.tip",
+          "connector": "exhaust_L",
+          "connector_kind": "circle",
+          "component": "exhaust.tip",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 170,
+          "info": {}
+        },
+        {
+          "id": "exhaust_R:exhaust.tip",
+          "connector": "exhaust_R",
+          "connector_kind": "circle",
+          "component": "exhaust.tip",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 170,
+          "info": {}
+        },
+        {
+          "id": "mirror_L:mirror.side",
+          "connector": "mirror_L",
+          "connector_kind": "point",
+          "component": "mirror.side",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {}
+        },
+        {
+          "id": "handle_front_L:handle.pull",
+          "connector": "handle_front_L",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "mirror_R:mirror.side",
+          "connector": "mirror_R",
+          "connector_kind": "point",
+          "component": "mirror.side",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {}
+        },
+        {
+          "id": "handle_front_R:handle.pull",
+          "connector": "handle_front_R",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "fuel_cap:fuel.cap",
+          "connector": "fuel_cap",
+          "connector_kind": "circle",
+          "component": "fuel.cap",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 144,
+          "info": {}
+        },
+        {
+          "id": "antenna:antenna.sharkfin",
+          "connector": "antenna",
+          "connector_kind": "point",
+          "component": "antenna.sharkfin",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 66,
+          "info": {}
+        },
+        {
+          "id": "seat_front_driver:seat.bucket",
+          "connector": "seat_front_driver",
+          "connector_kind": "rectangle",
+          "component": "seat.bucket",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 522,
+          "info": {
+            "modifier_values": {
+              "cushion_width": 0.0,
+              "cushion_depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": -0.6833333333333328,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "bolster": 0.0
+            },
+            "h_point_local": [
+              -0.16,
+              0.0,
+              0.18800000000000006
+            ],
+            "backrest_length": 0.62,
+            "buckle_local": [
+              -0.09500000000000003,
+              -0.275,
+              0.18300000000000005
+            ],
+            "headroom_clearance": 0.03714601016859187
+          }
+        },
+        {
+          "id": "seat_front_passenger:seat.bucket",
+          "connector": "seat_front_passenger",
+          "connector_kind": "rectangle",
+          "component": "seat.bucket",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 522,
+          "info": {
+            "modifier_values": {
+              "cushion_width": 0.0,
+              "cushion_depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": -0.6833333333333328,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "bolster": 0.0
+            },
+            "h_point_local": [
+              -0.16,
+              0.0,
+              0.18800000000000006
+            ],
+            "backrest_length": 0.62,
+            "buckle_local": [
+              -0.09500000000000003,
+              0.275,
+              0.18300000000000005
+            ],
+            "headroom_clearance": 0.03714601016859187
+          }
+        },
+        {
+          "id": "steering_wheel:steering.wheel",
+          "connector": "steering_wheel",
+          "connector_kind": "circle",
+          "component": "steering.wheel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 948,
+          "info": {
+            "radius": 0.185,
+            "flat_bottom": true
+          }
+        },
+        {
+          "id": "dashboard:dashboard.sculpted",
+          "connector": "dashboard",
+          "connector_kind": "polygon",
+          "component": "dashboard.sculpted",
+          "options": {},
+          "parent": null,
+          "children": [
+            "dashboard/cluster:cluster.analog",
+            "dashboard/screen:screen.infotainment",
+            "dashboard/hvac:hvac.knobs",
+            "dashboard/glovebox:glovebox.lid",
+            "dashboard/vent_L:vent.round",
+            "dashboard/vent_R:vent.round",
+            "dashboard/vent_center_L:vent.round",
+            "dashboard/vent_center_R:vent.round"
+          ],
+          "faces": 362,
+          "info": {
+            "modifier_values": {
+              "width": -0.30738689651994056,
+              "height": -0.7500000000000002,
+              "depth": 0.0
+            }
+          }
+        },
+        {
+          "id": "pedals:pedals.hinged",
+          "connector": "pedals",
+          "connector_kind": "rectangle",
+          "component": "pedals.hinged",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {
+            "heel_local": [
+              -0.025,
+              -0.09,
+              0.0
+            ]
+          }
+        },
+        {
+          "id": "console:console.center",
+          "connector": "console",
+          "connector_kind": "rectangle",
+          "component": "console.center",
+          "options": {},
+          "parent": null,
+          "children": [
+            "console/shifter:shifter.lever",
+            "console/cupholder_1:cupholder.round",
+            "console/cupholder_2:cupholder.round"
+          ],
+          "faces": 342,
+          "info": {
+            "height": 0.24800000000000008
+          }
+        },
+        {
+          "id": "floor:floor.carpet",
+          "connector": "floor",
+          "connector_kind": "rectangle",
+          "component": "floor.carpet",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1528,
+          "info": {}
+        },
+        {
+          "id": "firewall:bulkhead.trim",
+          "connector": "firewall",
+          "connector_kind": "rectangle",
+          "component": "bulkhead.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 216,
+          "info": {}
+        },
+        {
+          "id": "rear_bulkhead:bulkhead.trim",
+          "connector": "rear_bulkhead",
+          "connector_kind": "rectangle",
+          "component": "bulkhead.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 36,
+          "info": {}
+        },
+        {
+          "id": "parcel_shelf:shelf.parcel",
+          "connector": "parcel_shelf",
+          "connector_kind": "rectangle",
+          "component": "shelf.parcel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 918,
+          "info": {}
+        },
+        {
+          "id": "trunk_floor:floor.cargo",
+          "connector": "trunk_floor",
+          "connector_kind": "rectangle",
+          "component": "floor.cargo",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 24,
+          "info": {}
+        },
+        {
+          "id": "headliner:headliner.fabric",
+          "connector": "headliner",
+          "connector_kind": "polygon",
+          "component": "headliner.fabric",
+          "options": {},
+          "parent": null,
+          "children": [
+            "headliner/dome_light:light.dome",
+            "headliner/grab_handle_L:handle.grab",
+            "headliner/grab_handle_R:handle.grab"
+          ],
+          "faces": 306,
+          "info": {}
+        },
+        {
+          "id": "rearview_mirror:mirror.rearview",
+          "connector": "rearview_mirror",
+          "connector_kind": "point",
+          "component": "mirror.rearview",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 120,
+          "info": {
+            "header_mount_world": [
+              0.09950000000000013,
+              0.0,
+              1.1900000000000002
+            ],
+            "fitted_header": true
+          }
+        },
+        {
+          "id": "door_card_front_L:door.card",
+          "connector": "door_card_front_L",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_front_L/speaker:speaker.round"
+          ],
+          "faces": 400,
+          "info": {
+            "span": 1.2204295334908517
+          }
+        },
+        {
+          "id": "door_card_front_R:door.card",
+          "connector": "door_card_front_R",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_front_R/speaker:speaker.round"
+          ],
+          "faces": 400,
+          "info": {
+            "span": 1.2204295334908517
+          }
+        },
+        {
+          "id": "cowl_trim:cowl.trim",
+          "connector": "cowl_trim",
+          "connector_kind": "point",
+          "component": "cowl.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 182,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_A_L:pillar.trim",
+          "connector": "pillar_trim_A_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 390,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_B_L:pillar.trim",
+          "connector": "pillar_trim_B_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 166,
+          "info": {}
+        },
+        {
+          "id": "cabin_side_liner_L:pillar.trim",
+          "connector": "cabin_side_liner_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1062,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_C_L:pillar.trim",
+          "connector": "pillar_trim_C_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 62,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_rear_L:pillar.trim",
+          "connector": "pillar_trim_rear_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 286,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_belt_L:pillar.trim",
+          "connector": "pillar_trim_belt_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 274,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_quarter_L:pillar.trim",
+          "connector": "pillar_trim_quarter_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "belt_anchor_L:belt.shoulder",
+          "connector": "belt_anchor_L",
+          "connector_kind": "point",
+          "component": "belt.shoulder",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 88,
+          "info": {
+            "buckle_world": [
+              -0.2504999999999999,
+              0.08111462262611396,
+              0.3530000000000001
+            ]
+          }
+        },
+        {
+          "id": "pillar_trim_A_R:pillar.trim",
+          "connector": "pillar_trim_A_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 390,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_B_R:pillar.trim",
+          "connector": "pillar_trim_B_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 166,
+          "info": {}
+        },
+        {
+          "id": "cabin_side_liner_R:pillar.trim",
+          "connector": "cabin_side_liner_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1062,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_C_R:pillar.trim",
+          "connector": "pillar_trim_C_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 62,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_rear_R:pillar.trim",
+          "connector": "pillar_trim_rear_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 286,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_belt_R:pillar.trim",
+          "connector": "pillar_trim_belt_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 274,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_quarter_R:pillar.trim",
+          "connector": "pillar_trim_quarter_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "belt_anchor_R:belt.shoulder",
+          "connector": "belt_anchor_R",
+          "connector_kind": "point",
+          "component": "belt.shoulder",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 88,
+          "info": {
+            "buckle_world": [
+              -0.2504999999999999,
+              -0.08111462262611396,
+              0.3530000000000001
+            ]
+          }
+        },
+        {
+          "id": "cargo_wheelhouse_L:cargo.wheelhouse",
+          "connector": "cargo_wheelhouse_L",
+          "connector_kind": "point",
+          "component": "cargo.wheelhouse",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 68,
+          "info": {}
+        },
+        {
+          "id": "cargo_wheelhouse_R:cargo.wheelhouse",
+          "connector": "cargo_wheelhouse_R",
+          "connector_kind": "point",
+          "component": "cargo.wheelhouse",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 68,
+          "info": {}
+        },
+        {
+          "id": "fog_front_L:light.fog",
+          "connector": "fog_front_L",
+          "connector_kind": "point",
+          "component": "light.fog",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 204,
+          "info": {}
+        },
+        {
+          "id": "rear_reflector_L:light.rear_reflector",
+          "connector": "rear_reflector_L",
+          "connector_kind": "point",
+          "component": "light.rear_reflector",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 174,
+          "info": {}
+        },
+        {
+          "id": "rear_fog_L:light.rear_aux",
+          "connector": "rear_fog_L",
+          "connector_kind": "point",
+          "component": "light.rear_aux",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "plate_lamp_L:light.plate",
+          "connector": "plate_lamp_L",
+          "connector_kind": "point",
+          "component": "light.plate",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "fog_front_R:light.fog",
+          "connector": "fog_front_R",
+          "connector_kind": "point",
+          "component": "light.fog",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 204,
+          "info": {}
+        },
+        {
+          "id": "rear_reflector_R:light.rear_reflector",
+          "connector": "rear_reflector_R",
+          "connector_kind": "point",
+          "component": "light.rear_reflector",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 174,
+          "info": {}
+        },
+        {
+          "id": "rear_reverse_R:light.rear_aux",
+          "connector": "rear_reverse_R",
+          "connector_kind": "point",
+          "component": "light.rear_aux",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "plate_lamp_R:light.plate",
+          "connector": "plate_lamp_R",
+          "connector_kind": "point",
+          "component": "light.plate",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "tow_hook_cover_front:bumper.tow_cover",
+          "connector": "tow_hook_cover_front",
+          "connector_kind": "point",
+          "component": "bumper.tow_cover",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 72,
+          "info": {}
+        },
+        {
+          "id": "tow_hook_cover_rear:bumper.tow_cover",
+          "connector": "tow_hook_cover_rear",
+          "connector_kind": "point",
+          "component": "bumper.tow_cover",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 72,
+          "info": {}
+        },
+        {
+          "id": "tow_eye:bumper.tow_eye",
+          "connector": "tow_eye",
+          "connector_kind": "point",
+          "component": "bumper.tow_eye",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 196,
+          "info": {}
+        },
+        {
+          "id": "side_marker_L:light.side_marker",
+          "connector": "side_marker_L",
+          "connector_kind": "point",
+          "component": "light.side_marker",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 138,
+          "info": {}
+        },
+        {
+          "id": "side_marker_R:light.side_marker",
+          "connector": "side_marker_R",
+          "connector_kind": "point",
+          "component": "light.side_marker",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 138,
+          "info": {}
+        },
+        {
+          "id": "wipers:wipers.parked",
+          "connector": "wipers",
+          "connector_kind": "rectangle",
+          "component": "wipers.parked",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 480,
+          "info": {}
+        },
+        {
+          "id": "exhaust_system:exhaust.system",
+          "connector": "exhaust_system",
+          "connector_kind": "point",
+          "component": "exhaust.system",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2336,
+          "info": {}
+        },
+        {
+          "id": "diffuser:bumper.diffuser",
+          "connector": "diffuser",
+          "connector_kind": "rectangle",
+          "component": "bumper.diffuser",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 86,
+          "info": {}
+        },
+        {
+          "id": "dashboard/cluster:cluster.analog",
+          "connector": "dashboard/cluster",
+          "connector_kind": "rectangle",
+          "component": "cluster.analog",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 1579,
+          "info": {}
+        },
+        {
+          "id": "dashboard/screen:screen.infotainment",
+          "connector": "dashboard/screen",
+          "connector_kind": "rectangle",
+          "component": "screen.infotainment",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 54,
+          "info": {}
+        },
+        {
+          "id": "dashboard/hvac:hvac.knobs",
+          "connector": "dashboard/hvac",
+          "connector_kind": "rectangle",
+          "component": "hvac.knobs",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 486,
+          "info": {}
+        },
+        {
+          "id": "dashboard/glovebox:glovebox.lid",
+          "connector": "dashboard/glovebox",
+          "connector_kind": "rectangle",
+          "component": "glovebox.lid",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 78,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_L:vent.round",
+          "connector": "dashboard/vent_L",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_R:vent.round",
+          "connector": "dashboard/vent_R",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_center_L:vent.round",
+          "connector": "dashboard/vent_center_L",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_center_R:vent.round",
+          "connector": "dashboard/vent_center_R",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "console/shifter:shifter.lever",
+          "connector": "console/shifter",
+          "connector_kind": "point",
+          "component": "shifter.lever",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 206,
+          "info": {}
+        },
+        {
+          "id": "console/cupholder_1:cupholder.round",
+          "connector": "console/cupholder_1",
+          "connector_kind": "circle",
+          "component": "cupholder.round",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "console/cupholder_2:cupholder.round",
+          "connector": "console/cupholder_2",
+          "connector_kind": "circle",
+          "component": "cupholder.round",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "headliner/dome_light:light.dome",
+          "connector": "headliner/dome_light",
+          "connector_kind": "circle",
+          "component": "light.dome",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 180,
+          "info": {}
+        },
+        {
+          "id": "headliner/grab_handle_L:handle.grab",
+          "connector": "headliner/grab_handle_L",
+          "connector_kind": "point",
+          "component": "handle.grab",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 120,
+          "info": {}
+        },
+        {
+          "id": "headliner/grab_handle_R:handle.grab",
+          "connector": "headliner/grab_handle_R",
+          "connector_kind": "point",
+          "component": "handle.grab",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 120,
+          "info": {}
+        },
+        {
+          "id": "door_card_front_L/speaker:speaker.round",
+          "connector": "door_card_front_L/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_front_L:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_front_R/speaker:speaker.round",
+          "connector": "door_card_front_R/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_front_R:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        }
+      ],
+      "scenes": {
+        "full": {
+          "stats": {
+            "vertices": 62409,
+            "faces": 56775,
+            "bounds_min": [
+              -2.0371,
+              -1.0454,
+              0.0
+            ],
+            "bounds_max": [
+              1.9378,
+              1.0454,
+              1.2892
+            ],
+            "materials": [
+              "antenna_gasket",
+              "aperture",
+              "aux_trim",
+              "badge_dark",
+              "bed",
+              "bezel",
+              "brake_disc",
+              "caliper",
+              "chrome",
+              "diffuser",
+              "exhaust_dark",
+              "exhaust_steel",
+              "fog_chrome",
+              "fog_lens",
+              "fog_trim",
+              "glass",
+              "glass_frame",
+              "grille_dark",
+              "indicator",
+              "int_accent",
+              "int_belt",
+              "int_carpet",
+              "int_chrome",
+              "int_fabric",
+              "int_gauge",
+              "int_grille",
+              "int_leather",
+              "int_lens",
+              "int_metal",
+              "int_mirror",
+              "int_needle",
+              "int_plastic",
+              "int_rubber",
+              "int_screen",
+              "int_soft",
+              "int_stitch",
+              "int_trim",
+              "int_ui",
+              "int_wood",
+              "lamp_dark",
+              "lamp_led",
+              "lens",
+              "light_plate",
+              "light_rear_auxfog",
+              "light_rear_auxreverse",
+              "light_rear_reflector",
+              "light_side_marker",
+              "mesh_dark",
+              "mirror_glass",
+              "mirror_housing",
+              "mirror_signal",
+              "paint",
+              "plate",
+              "plate_blue",
+              "plate_text",
+              "projector_glass",
+              "rim",
+              "rim_dark",
+              "tail_bezel",
+              "tail_guide",
+              "tail_lens",
+              "tail_reflector",
+              "tail_reverse",
+              "tow_gap",
+              "tow_steel",
+              "trim",
+              "trim_dark",
+              "tyre",
+              "underbody",
+              "wiper_arm",
+              "wiper_rubber"
+            ]
+          },
+          "selection": "complete default assembly",
+          "omitted_instances": [],
+          "faces_removed": 0,
+          "geometry_displaced": false,
+          "geometry_clipped": false,
+          "material_overrides": {}
+        },
+        "diagnostic": {
+          "stats": {
+            "vertices": 26056,
+            "faces": 23024,
+            "bounds_min": [
+              -1.9995,
+              -0.8775,
+              0.0
+            ],
+            "bounds_max": [
+              1.9345,
+              0.8775,
+              1.245
+            ],
+            "materials": [
+              "aperture",
+              "bed",
+              "brake_disc",
+              "caliper",
+              "chrome",
+              "exhaust_dark",
+              "exhaust_steel",
+              "paint",
+              "rim",
+              "rim_dark",
+              "trim",
+              "tyre",
+              "underbody"
+            ]
+          },
+          "selection": "actual body shell + selected assembled components",
+          "selected_instances": [
+            "wheel_front_L:wheel.alloy",
+            "wheel_front_R:wheel.alloy",
+            "wheel_rear_L:wheel.alloy",
+            "wheel_rear_R:wheel.alloy",
+            "exhaust_L:exhaust.tip",
+            "exhaust_R:exhaust.tip",
+            "exhaust_system:exhaust.system"
+          ],
+          "omitted_instances": [
+            "windshield:glass.tinted",
+            "rear_window:glass.tinted",
+            "glass_front_L:glass.tinted",
+            "glass_front_R:glass.tinted",
+            "glass_rear_L:glass.tinted",
+            "glass_rear_R:glass.tinted",
+            "headlight_L:light.headlight",
+            "headlight_R:light.headlight",
+            "taillight_L:light.taillight",
+            "taillight_R:light.taillight",
+            "grille:grille.slats",
+            "intake:grille.intake",
+            "plate_front:plate.standard",
+            "plate_rear:plate.standard",
+            "badge_front:badge.roundel",
+            "badge_rear:badge.roundel",
+            "mirror_L:mirror.side",
+            "handle_front_L:handle.pull",
+            "mirror_R:mirror.side",
+            "handle_front_R:handle.pull",
+            "fuel_cap:fuel.cap",
+            "antenna:antenna.sharkfin",
+            "seat_front_driver:seat.bucket",
+            "seat_front_passenger:seat.bucket",
+            "steering_wheel:steering.wheel",
+            "dashboard:dashboard.sculpted",
+            "pedals:pedals.hinged",
+            "console:console.center",
+            "floor:floor.carpet",
+            "firewall:bulkhead.trim",
+            "rear_bulkhead:bulkhead.trim",
+            "parcel_shelf:shelf.parcel",
+            "trunk_floor:floor.cargo",
+            "headliner:headliner.fabric",
+            "rearview_mirror:mirror.rearview",
+            "door_card_front_L:door.card",
+            "door_card_front_R:door.card",
+            "cowl_trim:cowl.trim",
+            "pillar_trim_A_L:pillar.trim",
+            "pillar_trim_B_L:pillar.trim",
+            "cabin_side_liner_L:pillar.trim",
+            "pillar_trim_C_L:pillar.trim",
+            "pillar_trim_rear_L:pillar.trim",
+            "pillar_trim_belt_L:pillar.trim",
+            "pillar_trim_quarter_L:pillar.trim",
+            "belt_anchor_L:belt.shoulder",
+            "pillar_trim_A_R:pillar.trim",
+            "pillar_trim_B_R:pillar.trim",
+            "cabin_side_liner_R:pillar.trim",
+            "pillar_trim_C_R:pillar.trim",
+            "pillar_trim_rear_R:pillar.trim",
+            "pillar_trim_belt_R:pillar.trim",
+            "pillar_trim_quarter_R:pillar.trim",
+            "belt_anchor_R:belt.shoulder",
+            "cargo_wheelhouse_L:cargo.wheelhouse",
+            "cargo_wheelhouse_R:cargo.wheelhouse",
+            "fog_front_L:light.fog",
+            "rear_reflector_L:light.rear_reflector",
+            "rear_fog_L:light.rear_aux",
+            "plate_lamp_L:light.plate",
+            "fog_front_R:light.fog",
+            "rear_reflector_R:light.rear_reflector",
+            "rear_reverse_R:light.rear_aux",
+            "plate_lamp_R:light.plate",
+            "tow_hook_cover_front:bumper.tow_cover",
+            "tow_hook_cover_rear:bumper.tow_cover",
+            "tow_eye:bumper.tow_eye",
+            "side_marker_L:light.side_marker",
+            "side_marker_R:light.side_marker",
+            "wipers:wipers.parked",
+            "diffuser:bumper.diffuser",
+            "dashboard/cluster:cluster.analog",
+            "dashboard/screen:screen.infotainment",
+            "dashboard/hvac:hvac.knobs",
+            "dashboard/glovebox:glovebox.lid",
+            "dashboard/vent_L:vent.round",
+            "dashboard/vent_R:vent.round",
+            "dashboard/vent_center_L:vent.round",
+            "dashboard/vent_center_R:vent.round",
+            "console/shifter:shifter.lever",
+            "console/cupholder_1:cupholder.round",
+            "console/cupholder_2:cupholder.round",
+            "headliner/dome_light:light.dome",
+            "headliner/grab_handle_L:handle.grab",
+            "headliner/grab_handle_R:handle.grab",
+            "door_card_front_L/speaker:speaker.round",
+            "door_card_front_R/speaker:speaker.round"
+          ],
+          "faces_omitted_from_full_assembly": 33751,
+          "faces_removed_from_selected_parts": 0,
+          "geometry_displaced": false,
+          "geometry_clipped": false,
+          "material_overrides": {
+            "underbody": {
+              "original": {
+                "name": "underbody",
+                "color": [
+                  0.1,
+                  0.1,
+                  0.11
+                ],
+                "alpha": 1.0,
+                "shininess": 0.05,
+                "emissive": 0.0,
+                "metallic": 0.0
+              },
+              "rendered": {
+                "name": "underbody",
+                "color": [
+                  0.4,
+                  0.42,
+                  0.44
+                ],
+                "alpha": 1.0,
+                "shininess": 0.2
+              }
+            }
+          }
+        }
+      },
+      "images": {
+        "underbody": {
+          "path": "before/sports/underbody.png",
+          "sha256": "b8fd2becce01ffe11b5a90cf5c4ea549edc6539bd965a2cffc705c9fe7b89151",
+          "faces_rendered": 23024,
+          "seconds": 2.805,
+          "camera": {
+            "eye": [
+              -6.742600716628345,
+              4.698463103929541,
+              -5.113262859333697
+            ],
+            "target": [
+              -0.03249999999999997,
+              0.0,
+              0.6225015041767635
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 3.159388319929114
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "side": {
+          "path": "before/sports/side.png",
+          "sha256": "032a303d4cae6ff0af227c22835a8b1e6c566248c5b2ad58ca29adfda7982613",
+          "faces_rendered": 23024,
+          "seconds": 2.065,
+          "camera": {
+            "eye": [
+              -0.03249999999999937,
+              9.902680687415703,
+              -0.7692295054238908
+            ],
+            "target": [
+              -0.03249999999999997,
+              0.0,
+              0.6225015041767635
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 3.304560000000001
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_closeup": {
+          "path": "before/sports/rear_closeup.png",
+          "sha256": "542c6dc00f5e30536ad08491cedfc851959ede0bb3a99348657ce523a5b632cd",
+          "faces_rendered": 23024,
+          "seconds": 1.708,
+          "camera": {
+            "eye": [
+              -10.651362389010561,
+              3.3036608954935227,
+              -2.263966466848444
+            ],
+            "target": [
+              -1.574628677106877,
+              0.0,
+              0.32422398417676346
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 1.5237724912646715
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_three_quarter": {
+          "path": "before/sports/rear_three_quarter.png",
+          "sha256": "f820e5a815238ca270fa4d4b6dd6000d13ff9362c2f80736011e1079843bfab8",
+          "faces_rendered": 56775,
+          "seconds": 5.117,
+          "camera": {
+            "eye": [
+              -7.8402698577586785,
+              5.455036073850145,
+              3.7347735120752104
+            ],
+            "target": [
+              -0.04967096218325928,
+              0.0,
+              0.6446035683257363
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 2.6304008785578437
+          },
+          "scene": "full",
+          "ground": true,
+          "lines": true,
+          "light_dir": [
+            -0.5,
+            0.6,
+            1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            0.4
+          ]
+        }
+      }
+    },
+    "sedan": {
+      "configuration": {
+        "body": {
+          "style": "sedan",
+          "modifiers": {}
+        },
+        "components": {
+          "defaults": true
+        },
+        "seed": 0,
+        "palette": {
+          "paint": "#426b88"
+        }
+      },
+      "requested_modifiers": {},
+      "effective_shape_values": {},
+      "measurements": {
+        "x_front": 2.387,
+        "x_rear": -2.512,
+        "length": 4.899,
+        "width": 1.8589989332655013,
+        "height": 1.445,
+        "x_cowl": 1.012,
+        "z_cowl": 1.0,
+        "x_roof_front": 0.16200000000000003,
+        "z_roof_front": 1.445,
+        "x_roof_rear": -0.9119999999999999,
+        "z_roof_rear": 1.425,
+        "x_deck": -1.5619999999999998,
+        "z_deck": 0.98,
+        "x_bpillar": -0.30800000000000005,
+        "roof_half_width": 0.62526,
+        "z_belt": 0.9602506719643344,
+        "y_belt": 0.9293516456210927,
+        "y_shoulder": 0.8592115951805364,
+        "z_sill": 0.3600000000000007,
+        "y_sill": 0.8659541527531944,
+        "z_floor": 0.15000000000000002,
+        "y_floor_edge": 0.5342688868445834,
+        "wheel_front_x": 1.412000000000001,
+        "wheel_front_z": 0.33415,
+        "arch_front_r": 0.394150000000002,
+        "wheel_front_y": 0.8803517575966112,
+        "wheel_rear_x": -1.4120000000000024,
+        "wheel_rear_z": 0.33414999999999584,
+        "arch_rear_r": 0.39415000000000777,
+        "wheel_rear_y": 0.8812680499784205,
+        "wheelbase": 2.8240000000000034,
+        "track": 1.7607035151932224,
+        "nose_z_top": 0.78,
+        "nose_z_bottom": 0.265,
+        "nose_half_width": 0.6768214095609688,
+        "nose_top_half_width": 0.6318214095609688,
+        "tail_z_top": 0.94,
+        "tail_z_bottom": 0.275,
+        "tail_half_width": 0.7038546999999999,
+        "tail_top_half_width": 0.6588546999999999,
+        "bed": 0.02734375,
+        "has_bed": 0.0
+      },
+      "components": [
+        {
+          "id": "wheel_front_L:wheel.alloy",
+          "connector": "wheel_front_L",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.02964285714287132,
+              "width": -0.1250000000000001,
+              "rim_ratio": 0.012450000000006067,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.20799470000000164
+          }
+        },
+        {
+          "id": "wheel_front_R:wheel.alloy",
+          "connector": "wheel_front_R",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.02964285714287132,
+              "width": -0.1250000000000001,
+              "rim_ratio": 0.012450000000006067,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.20799470000000164
+          }
+        },
+        {
+          "id": "wheel_rear_L:wheel.alloy",
+          "connector": "wheel_rear_L",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.02964285714291256,
+              "width": -0.1250000000000001,
+              "rim_ratio": 0.012450000000023276,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.20799470000000636
+          }
+        },
+        {
+          "id": "wheel_rear_R:wheel.alloy",
+          "connector": "wheel_rear_R",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.02964285714291256,
+              "width": -0.1250000000000001,
+              "rim_ratio": 0.012450000000023276,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.20799470000000636
+          }
+        },
+        {
+          "id": "windshield:glass.tinted",
+          "connector": "windshield",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 576,
+          "info": {
+            "area": 1.1911604540621767
+          }
+        },
+        {
+          "id": "rear_window:glass.tinted",
+          "connector": "rear_window",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 432,
+          "info": {
+            "area": 0.9606843599911176
+          }
+        },
+        {
+          "id": "glass_front_L:glass.tinted",
+          "connector": "glass_front_L",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.31504988279593765
+          }
+        },
+        {
+          "id": "glass_front_R:glass.tinted",
+          "connector": "glass_front_R",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.31504988279593765
+          }
+        },
+        {
+          "id": "glass_rear_L:glass.tinted",
+          "connector": "glass_rear_L",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.19715974076377898
+          }
+        },
+        {
+          "id": "glass_rear_R:glass.tinted",
+          "connector": "glass_rear_R",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.197159740763779
+          }
+        },
+        {
+          "id": "headlight_L:light.headlight",
+          "connector": "headlight_L",
+          "connector_kind": "polygon",
+          "component": "light.headlight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2172,
+          "info": {
+            "projectors": 2
+          }
+        },
+        {
+          "id": "headlight_R:light.headlight",
+          "connector": "headlight_R",
+          "connector_kind": "polygon",
+          "component": "light.headlight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2172,
+          "info": {
+            "projectors": 2
+          }
+        },
+        {
+          "id": "taillight_L:light.taillight",
+          "connector": "taillight_L",
+          "connector_kind": "polygon",
+          "component": "light.taillight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2976,
+          "info": {}
+        },
+        {
+          "id": "taillight_R:light.taillight",
+          "connector": "taillight_R",
+          "connector_kind": "polygon",
+          "component": "light.taillight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2976,
+          "info": {}
+        },
+        {
+          "id": "grille:grille.slats",
+          "connector": "grille",
+          "connector_kind": "rectangle",
+          "component": "grille.slats",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 200,
+          "info": {}
+        },
+        {
+          "id": "intake:grille.intake",
+          "connector": "intake",
+          "connector_kind": "rectangle",
+          "component": "grille.intake",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1300,
+          "info": {}
+        },
+        {
+          "id": "plate_front:plate.standard",
+          "connector": "plate_front",
+          "connector_kind": "rectangle",
+          "component": "plate.standard",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 60,
+          "info": {}
+        },
+        {
+          "id": "plate_rear:plate.standard",
+          "connector": "plate_rear",
+          "connector_kind": "rectangle",
+          "component": "plate.standard",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 54,
+          "info": {}
+        },
+        {
+          "id": "badge_front:badge.roundel",
+          "connector": "badge_front",
+          "connector_kind": "point",
+          "component": "badge.roundel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {}
+        },
+        {
+          "id": "badge_rear:badge.roundel",
+          "connector": "badge_rear",
+          "connector_kind": "point",
+          "component": "badge.roundel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {}
+        },
+        {
+          "id": "exhaust_L:exhaust.tip",
+          "connector": "exhaust_L",
+          "connector_kind": "circle",
+          "component": "exhaust.tip",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 170,
+          "info": {}
+        },
+        {
+          "id": "exhaust_R:exhaust.tip",
+          "connector": "exhaust_R",
+          "connector_kind": "circle",
+          "component": "exhaust.tip",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 170,
+          "info": {}
+        },
+        {
+          "id": "mirror_L:mirror.side",
+          "connector": "mirror_L",
+          "connector_kind": "point",
+          "component": "mirror.side",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {}
+        },
+        {
+          "id": "handle_front_L:handle.pull",
+          "connector": "handle_front_L",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "handle_rear_L:handle.pull",
+          "connector": "handle_rear_L",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "mirror_R:mirror.side",
+          "connector": "mirror_R",
+          "connector_kind": "point",
+          "component": "mirror.side",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {}
+        },
+        {
+          "id": "handle_front_R:handle.pull",
+          "connector": "handle_front_R",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "handle_rear_R:handle.pull",
+          "connector": "handle_rear_R",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "fuel_cap:fuel.cap",
+          "connector": "fuel_cap",
+          "connector_kind": "circle",
+          "component": "fuel.cap",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 144,
+          "info": {}
+        },
+        {
+          "id": "antenna:antenna.sharkfin",
+          "connector": "antenna",
+          "connector_kind": "point",
+          "component": "antenna.sharkfin",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 66,
+          "info": {}
+        },
+        {
+          "id": "seat_front_driver:seat.bucket",
+          "connector": "seat_front_driver",
+          "connector_kind": "rectangle",
+          "component": "seat.bucket",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 522,
+          "info": {
+            "modifier_values": {
+              "cushion_width": 0.0,
+              "cushion_depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": -0.01666666666666599,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "bolster": 0.0
+            },
+            "h_point_local": [
+              -0.16,
+              0.0,
+              0.26800000000000007
+            ],
+            "backrest_length": 0.62,
+            "buckle_local": [
+              -0.09500000000000003,
+              -0.275,
+              0.26300000000000007
+            ],
+            "headroom_clearance": 0.12714601016859173
+          }
+        },
+        {
+          "id": "seat_front_passenger:seat.bucket",
+          "connector": "seat_front_passenger",
+          "connector_kind": "rectangle",
+          "component": "seat.bucket",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 522,
+          "info": {
+            "modifier_values": {
+              "cushion_width": 0.0,
+              "cushion_depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": -0.01666666666666599,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "bolster": 0.0
+            },
+            "h_point_local": [
+              -0.16,
+              0.0,
+              0.26800000000000007
+            ],
+            "backrest_length": 0.62,
+            "buckle_local": [
+              -0.09500000000000003,
+              0.275,
+              0.26300000000000007
+            ],
+            "headroom_clearance": 0.12714601016859173
+          }
+        },
+        {
+          "id": "seat_row2:seat.bench",
+          "connector": "seat_row2",
+          "connector_kind": "rectangle",
+          "component": "seat.bench",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 456,
+          "info": {
+            "modifier_values": {
+              "width": -0.15394202409731772,
+              "depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": -0.02499999999999933,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "split": 0.0
+            },
+            "headrests": 3
+          }
+        },
+        {
+          "id": "steering_wheel:steering.wheel",
+          "connector": "steering_wheel",
+          "connector_kind": "circle",
+          "component": "steering.wheel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 948,
+          "info": {
+            "radius": 0.185,
+            "flat_bottom": false
+          }
+        },
+        {
+          "id": "dashboard:dashboard.sculpted",
+          "connector": "dashboard",
+          "connector_kind": "polygon",
+          "component": "dashboard.sculpted",
+          "options": {},
+          "parent": null,
+          "children": [
+            "dashboard/cluster:cluster.analog",
+            "dashboard/screen:screen.infotainment",
+            "dashboard/hvac:hvac.knobs",
+            "dashboard/glovebox:glovebox.lid",
+            "dashboard/vent_L:vent.round",
+            "dashboard/vent_R:vent.round",
+            "dashboard/vent_center_L:vent.round",
+            "dashboard/vent_center_R:vent.round"
+          ],
+          "faces": 362,
+          "info": {
+            "modifier_values": {
+              "width": -0.05220516484369553,
+              "height": 0.09999999999999981,
+              "depth": 0.0
+            }
+          }
+        },
+        {
+          "id": "pedals:pedals.hinged",
+          "connector": "pedals",
+          "connector_kind": "rectangle",
+          "component": "pedals.hinged",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {
+            "heel_local": [
+              -0.025,
+              -0.09,
+              0.0
+            ]
+          }
+        },
+        {
+          "id": "console:console.center",
+          "connector": "console",
+          "connector_kind": "rectangle",
+          "component": "console.center",
+          "options": {},
+          "parent": null,
+          "children": [
+            "console/shifter:shifter.lever",
+            "console/cupholder_1:cupholder.round",
+            "console/cupholder_2:cupholder.round"
+          ],
+          "faces": 342,
+          "info": {
+            "height": 0.32800000000000007
+          }
+        },
+        {
+          "id": "floor:floor.carpet",
+          "connector": "floor",
+          "connector_kind": "rectangle",
+          "component": "floor.carpet",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1528,
+          "info": {}
+        },
+        {
+          "id": "firewall:bulkhead.trim",
+          "connector": "firewall",
+          "connector_kind": "rectangle",
+          "component": "bulkhead.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 216,
+          "info": {}
+        },
+        {
+          "id": "rear_bulkhead:bulkhead.trim",
+          "connector": "rear_bulkhead",
+          "connector_kind": "rectangle",
+          "component": "bulkhead.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 36,
+          "info": {}
+        },
+        {
+          "id": "parcel_shelf:shelf.parcel",
+          "connector": "parcel_shelf",
+          "connector_kind": "rectangle",
+          "component": "shelf.parcel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 918,
+          "info": {}
+        },
+        {
+          "id": "trunk_floor:floor.cargo",
+          "connector": "trunk_floor",
+          "connector_kind": "rectangle",
+          "component": "floor.cargo",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 24,
+          "info": {}
+        },
+        {
+          "id": "headliner:headliner.fabric",
+          "connector": "headliner",
+          "connector_kind": "polygon",
+          "component": "headliner.fabric",
+          "options": {},
+          "parent": null,
+          "children": [
+            "headliner/dome_light:light.dome",
+            "headliner/grab_handle_L:handle.grab",
+            "headliner/grab_handle_R:handle.grab"
+          ],
+          "faces": 338,
+          "info": {}
+        },
+        {
+          "id": "rearview_mirror:mirror.rearview",
+          "connector": "rearview_mirror",
+          "connector_kind": "point",
+          "component": "mirror.rearview",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 120,
+          "info": {
+            "header_mount_world": [
+              0.17700000000000005,
+              0.0,
+              1.3900000000000001
+            ],
+            "fitted_header": true
+          }
+        },
+        {
+          "id": "door_card_front_L:door.card",
+          "connector": "door_card_front_L",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_front_L/speaker:speaker.round"
+          ],
+          "faces": 424,
+          "info": {
+            "span": 1.2663299287535672
+          }
+        },
+        {
+          "id": "door_card_rear_L:door.card",
+          "connector": "door_card_rear_L",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_rear_L/speaker:speaker.round"
+          ],
+          "faces": 356,
+          "info": {
+            "span": 0.690788000137813
+          }
+        },
+        {
+          "id": "door_card_front_R:door.card",
+          "connector": "door_card_front_R",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_front_R/speaker:speaker.round"
+          ],
+          "faces": 424,
+          "info": {
+            "span": 1.2663299287535672
+          }
+        },
+        {
+          "id": "door_card_rear_R:door.card",
+          "connector": "door_card_rear_R",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_rear_R/speaker:speaker.round"
+          ],
+          "faces": 356,
+          "info": {
+            "span": 0.690788000137813
+          }
+        },
+        {
+          "id": "cowl_trim:cowl.trim",
+          "connector": "cowl_trim",
+          "connector_kind": "point",
+          "component": "cowl.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 182,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_A_L:pillar.trim",
+          "connector": "pillar_trim_A_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 390,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_B_L:pillar.trim",
+          "connector": "pillar_trim_B_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 166,
+          "info": {}
+        },
+        {
+          "id": "cabin_side_liner_L:pillar.trim",
+          "connector": "cabin_side_liner_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1090,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_C_L:pillar.trim",
+          "connector": "pillar_trim_C_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 62,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_rear_L:pillar.trim",
+          "connector": "pillar_trim_rear_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 286,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_belt_L:pillar.trim",
+          "connector": "pillar_trim_belt_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 274,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_quarter_L:pillar.trim",
+          "connector": "pillar_trim_quarter_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "belt_anchor_L:belt.shoulder",
+          "connector": "belt_anchor_L",
+          "connector_kind": "point",
+          "component": "belt.shoulder",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 88,
+          "info": {
+            "buckle_world": [
+              0.08700000000000002,
+              0.14421159518053633,
+              0.4630000000000001
+            ]
+          }
+        },
+        {
+          "id": "pillar_trim_A_R:pillar.trim",
+          "connector": "pillar_trim_A_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 390,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_B_R:pillar.trim",
+          "connector": "pillar_trim_B_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 166,
+          "info": {}
+        },
+        {
+          "id": "cabin_side_liner_R:pillar.trim",
+          "connector": "cabin_side_liner_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1090,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_C_R:pillar.trim",
+          "connector": "pillar_trim_C_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 62,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_rear_R:pillar.trim",
+          "connector": "pillar_trim_rear_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 286,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_belt_R:pillar.trim",
+          "connector": "pillar_trim_belt_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 274,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_quarter_R:pillar.trim",
+          "connector": "pillar_trim_quarter_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "belt_anchor_R:belt.shoulder",
+          "connector": "belt_anchor_R",
+          "connector_kind": "point",
+          "component": "belt.shoulder",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 88,
+          "info": {
+            "buckle_world": [
+              0.08700000000000002,
+              -0.14421159518053633,
+              0.4630000000000001
+            ]
+          }
+        },
+        {
+          "id": "cargo_wheelhouse_L:cargo.wheelhouse",
+          "connector": "cargo_wheelhouse_L",
+          "connector_kind": "point",
+          "component": "cargo.wheelhouse",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 68,
+          "info": {}
+        },
+        {
+          "id": "cargo_wheelhouse_R:cargo.wheelhouse",
+          "connector": "cargo_wheelhouse_R",
+          "connector_kind": "point",
+          "component": "cargo.wheelhouse",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 68,
+          "info": {}
+        },
+        {
+          "id": "fog_front_L:light.fog",
+          "connector": "fog_front_L",
+          "connector_kind": "point",
+          "component": "light.fog",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 204,
+          "info": {}
+        },
+        {
+          "id": "rear_reflector_L:light.rear_reflector",
+          "connector": "rear_reflector_L",
+          "connector_kind": "point",
+          "component": "light.rear_reflector",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 174,
+          "info": {}
+        },
+        {
+          "id": "rear_fog_L:light.rear_aux",
+          "connector": "rear_fog_L",
+          "connector_kind": "point",
+          "component": "light.rear_aux",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "plate_lamp_L:light.plate",
+          "connector": "plate_lamp_L",
+          "connector_kind": "point",
+          "component": "light.plate",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "fog_front_R:light.fog",
+          "connector": "fog_front_R",
+          "connector_kind": "point",
+          "component": "light.fog",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 204,
+          "info": {}
+        },
+        {
+          "id": "rear_reflector_R:light.rear_reflector",
+          "connector": "rear_reflector_R",
+          "connector_kind": "point",
+          "component": "light.rear_reflector",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 174,
+          "info": {}
+        },
+        {
+          "id": "rear_reverse_R:light.rear_aux",
+          "connector": "rear_reverse_R",
+          "connector_kind": "point",
+          "component": "light.rear_aux",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "plate_lamp_R:light.plate",
+          "connector": "plate_lamp_R",
+          "connector_kind": "point",
+          "component": "light.plate",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "tow_hook_cover_front:bumper.tow_cover",
+          "connector": "tow_hook_cover_front",
+          "connector_kind": "point",
+          "component": "bumper.tow_cover",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 72,
+          "info": {}
+        },
+        {
+          "id": "tow_hook_cover_rear:bumper.tow_cover",
+          "connector": "tow_hook_cover_rear",
+          "connector_kind": "point",
+          "component": "bumper.tow_cover",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 72,
+          "info": {}
+        },
+        {
+          "id": "tow_eye:bumper.tow_eye",
+          "connector": "tow_eye",
+          "connector_kind": "point",
+          "component": "bumper.tow_eye",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 196,
+          "info": {}
+        },
+        {
+          "id": "side_marker_L:light.side_marker",
+          "connector": "side_marker_L",
+          "connector_kind": "point",
+          "component": "light.side_marker",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 138,
+          "info": {}
+        },
+        {
+          "id": "side_marker_R:light.side_marker",
+          "connector": "side_marker_R",
+          "connector_kind": "point",
+          "component": "light.side_marker",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 138,
+          "info": {}
+        },
+        {
+          "id": "wipers:wipers.parked",
+          "connector": "wipers",
+          "connector_kind": "rectangle",
+          "component": "wipers.parked",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 480,
+          "info": {}
+        },
+        {
+          "id": "exhaust_system:exhaust.system",
+          "connector": "exhaust_system",
+          "connector_kind": "point",
+          "component": "exhaust.system",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2156,
+          "info": {}
+        },
+        {
+          "id": "dashboard/cluster:cluster.analog",
+          "connector": "dashboard/cluster",
+          "connector_kind": "rectangle",
+          "component": "cluster.analog",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 1579,
+          "info": {}
+        },
+        {
+          "id": "dashboard/screen:screen.infotainment",
+          "connector": "dashboard/screen",
+          "connector_kind": "rectangle",
+          "component": "screen.infotainment",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 54,
+          "info": {}
+        },
+        {
+          "id": "dashboard/hvac:hvac.knobs",
+          "connector": "dashboard/hvac",
+          "connector_kind": "rectangle",
+          "component": "hvac.knobs",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 486,
+          "info": {}
+        },
+        {
+          "id": "dashboard/glovebox:glovebox.lid",
+          "connector": "dashboard/glovebox",
+          "connector_kind": "rectangle",
+          "component": "glovebox.lid",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 78,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_L:vent.round",
+          "connector": "dashboard/vent_L",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_R:vent.round",
+          "connector": "dashboard/vent_R",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_center_L:vent.round",
+          "connector": "dashboard/vent_center_L",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_center_R:vent.round",
+          "connector": "dashboard/vent_center_R",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "console/shifter:shifter.lever",
+          "connector": "console/shifter",
+          "connector_kind": "point",
+          "component": "shifter.lever",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 206,
+          "info": {}
+        },
+        {
+          "id": "console/cupholder_1:cupholder.round",
+          "connector": "console/cupholder_1",
+          "connector_kind": "circle",
+          "component": "cupholder.round",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "console/cupholder_2:cupholder.round",
+          "connector": "console/cupholder_2",
+          "connector_kind": "circle",
+          "component": "cupholder.round",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "headliner/dome_light:light.dome",
+          "connector": "headliner/dome_light",
+          "connector_kind": "circle",
+          "component": "light.dome",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 180,
+          "info": {}
+        },
+        {
+          "id": "headliner/grab_handle_L:handle.grab",
+          "connector": "headliner/grab_handle_L",
+          "connector_kind": "point",
+          "component": "handle.grab",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 120,
+          "info": {}
+        },
+        {
+          "id": "headliner/grab_handle_R:handle.grab",
+          "connector": "headliner/grab_handle_R",
+          "connector_kind": "point",
+          "component": "handle.grab",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 120,
+          "info": {}
+        },
+        {
+          "id": "door_card_front_L/speaker:speaker.round",
+          "connector": "door_card_front_L/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_front_L:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_rear_L/speaker:speaker.round",
+          "connector": "door_card_rear_L/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_rear_L:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_front_R/speaker:speaker.round",
+          "connector": "door_card_front_R/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_front_R:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_rear_R/speaker:speaker.round",
+          "connector": "door_card_rear_R/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_rear_R:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        }
+      ],
+      "scenes": {
+        "full": {
+          "stats": {
+            "vertices": 67333,
+            "faces": 61169,
+            "bounds_min": [
+              -2.5821,
+              -1.1074,
+              0.0
+            ],
+            "bounds_max": [
+              2.4155,
+              1.1074,
+              1.4875
+            ],
+            "materials": [
+              "antenna_gasket",
+              "aperture",
+              "aux_trim",
+              "badge_dark",
+              "bed",
+              "bezel",
+              "brake_disc",
+              "caliper",
+              "chrome",
+              "exhaust_dark",
+              "exhaust_steel",
+              "fog_chrome",
+              "fog_lens",
+              "fog_trim",
+              "glass",
+              "glass_frame",
+              "grille_dark",
+              "indicator",
+              "int_accent",
+              "int_belt",
+              "int_carpet",
+              "int_chrome",
+              "int_fabric",
+              "int_gauge",
+              "int_grille",
+              "int_leather",
+              "int_lens",
+              "int_metal",
+              "int_mirror",
+              "int_needle",
+              "int_plastic",
+              "int_rubber",
+              "int_screen",
+              "int_soft",
+              "int_stitch",
+              "int_trim",
+              "int_ui",
+              "int_wood",
+              "lamp_dark",
+              "lamp_led",
+              "lens",
+              "light_plate",
+              "light_rear_auxfog",
+              "light_rear_auxreverse",
+              "light_rear_reflector",
+              "light_side_marker",
+              "mesh_dark",
+              "mirror_glass",
+              "mirror_housing",
+              "mirror_signal",
+              "paint",
+              "plate",
+              "plate_blue",
+              "plate_text",
+              "projector_glass",
+              "rim",
+              "rim_dark",
+              "tail_bezel",
+              "tail_guide",
+              "tail_lens",
+              "tail_reflector",
+              "tail_reverse",
+              "tow_gap",
+              "tow_steel",
+              "trim",
+              "trim_dark",
+              "tyre",
+              "underbody",
+              "wiper_arm",
+              "wiper_rubber"
+            ]
+          },
+          "selection": "complete default assembly",
+          "omitted_instances": [],
+          "faces_removed": 0,
+          "geometry_displaced": false,
+          "geometry_clipped": false,
+          "material_overrides": {}
+        },
+        "diagnostic": {
+          "stats": {
+            "vertices": 25876,
+            "faces": 22844,
+            "bounds_min": [
+              -2.534,
+              -0.9295,
+              0.0
+            ],
+            "bounds_max": [
+              2.387,
+              0.9295,
+              1.445
+            ],
+            "materials": [
+              "aperture",
+              "bed",
+              "brake_disc",
+              "caliper",
+              "chrome",
+              "exhaust_dark",
+              "exhaust_steel",
+              "paint",
+              "rim",
+              "rim_dark",
+              "trim",
+              "tyre",
+              "underbody"
+            ]
+          },
+          "selection": "actual body shell + selected assembled components",
+          "selected_instances": [
+            "wheel_front_L:wheel.alloy",
+            "wheel_front_R:wheel.alloy",
+            "wheel_rear_L:wheel.alloy",
+            "wheel_rear_R:wheel.alloy",
+            "exhaust_L:exhaust.tip",
+            "exhaust_R:exhaust.tip",
+            "exhaust_system:exhaust.system"
+          ],
+          "omitted_instances": [
+            "windshield:glass.tinted",
+            "rear_window:glass.tinted",
+            "glass_front_L:glass.tinted",
+            "glass_front_R:glass.tinted",
+            "glass_rear_L:glass.tinted",
+            "glass_rear_R:glass.tinted",
+            "headlight_L:light.headlight",
+            "headlight_R:light.headlight",
+            "taillight_L:light.taillight",
+            "taillight_R:light.taillight",
+            "grille:grille.slats",
+            "intake:grille.intake",
+            "plate_front:plate.standard",
+            "plate_rear:plate.standard",
+            "badge_front:badge.roundel",
+            "badge_rear:badge.roundel",
+            "mirror_L:mirror.side",
+            "handle_front_L:handle.pull",
+            "handle_rear_L:handle.pull",
+            "mirror_R:mirror.side",
+            "handle_front_R:handle.pull",
+            "handle_rear_R:handle.pull",
+            "fuel_cap:fuel.cap",
+            "antenna:antenna.sharkfin",
+            "seat_front_driver:seat.bucket",
+            "seat_front_passenger:seat.bucket",
+            "seat_row2:seat.bench",
+            "steering_wheel:steering.wheel",
+            "dashboard:dashboard.sculpted",
+            "pedals:pedals.hinged",
+            "console:console.center",
+            "floor:floor.carpet",
+            "firewall:bulkhead.trim",
+            "rear_bulkhead:bulkhead.trim",
+            "parcel_shelf:shelf.parcel",
+            "trunk_floor:floor.cargo",
+            "headliner:headliner.fabric",
+            "rearview_mirror:mirror.rearview",
+            "door_card_front_L:door.card",
+            "door_card_rear_L:door.card",
+            "door_card_front_R:door.card",
+            "door_card_rear_R:door.card",
+            "cowl_trim:cowl.trim",
+            "pillar_trim_A_L:pillar.trim",
+            "pillar_trim_B_L:pillar.trim",
+            "cabin_side_liner_L:pillar.trim",
+            "pillar_trim_C_L:pillar.trim",
+            "pillar_trim_rear_L:pillar.trim",
+            "pillar_trim_belt_L:pillar.trim",
+            "pillar_trim_quarter_L:pillar.trim",
+            "belt_anchor_L:belt.shoulder",
+            "pillar_trim_A_R:pillar.trim",
+            "pillar_trim_B_R:pillar.trim",
+            "cabin_side_liner_R:pillar.trim",
+            "pillar_trim_C_R:pillar.trim",
+            "pillar_trim_rear_R:pillar.trim",
+            "pillar_trim_belt_R:pillar.trim",
+            "pillar_trim_quarter_R:pillar.trim",
+            "belt_anchor_R:belt.shoulder",
+            "cargo_wheelhouse_L:cargo.wheelhouse",
+            "cargo_wheelhouse_R:cargo.wheelhouse",
+            "fog_front_L:light.fog",
+            "rear_reflector_L:light.rear_reflector",
+            "rear_fog_L:light.rear_aux",
+            "plate_lamp_L:light.plate",
+            "fog_front_R:light.fog",
+            "rear_reflector_R:light.rear_reflector",
+            "rear_reverse_R:light.rear_aux",
+            "plate_lamp_R:light.plate",
+            "tow_hook_cover_front:bumper.tow_cover",
+            "tow_hook_cover_rear:bumper.tow_cover",
+            "tow_eye:bumper.tow_eye",
+            "side_marker_L:light.side_marker",
+            "side_marker_R:light.side_marker",
+            "wipers:wipers.parked",
+            "dashboard/cluster:cluster.analog",
+            "dashboard/screen:screen.infotainment",
+            "dashboard/hvac:hvac.knobs",
+            "dashboard/glovebox:glovebox.lid",
+            "dashboard/vent_L:vent.round",
+            "dashboard/vent_R:vent.round",
+            "dashboard/vent_center_L:vent.round",
+            "dashboard/vent_center_R:vent.round",
+            "console/shifter:shifter.lever",
+            "console/cupholder_1:cupholder.round",
+            "console/cupholder_2:cupholder.round",
+            "headliner/dome_light:light.dome",
+            "headliner/grab_handle_L:handle.grab",
+            "headliner/grab_handle_R:handle.grab",
+            "door_card_front_L/speaker:speaker.round",
+            "door_card_rear_L/speaker:speaker.round",
+            "door_card_front_R/speaker:speaker.round",
+            "door_card_rear_R/speaker:speaker.round"
+          ],
+          "faces_omitted_from_full_assembly": 38325,
+          "faces_removed_from_selected_parts": 0,
+          "geometry_displaced": false,
+          "geometry_clipped": false,
+          "material_overrides": {
+            "underbody": {
+              "original": {
+                "name": "underbody",
+                "color": [
+                  0.1,
+                  0.1,
+                  0.11
+                ],
+                "alpha": 1.0,
+                "shininess": 0.05,
+                "emissive": 0.0,
+                "metallic": 0.0
+              },
+              "rendered": {
+                "name": "underbody",
+                "color": [
+                  0.4,
+                  0.42,
+                  0.44
+                ],
+                "alpha": 1.0,
+                "shininess": 0.2
+              }
+            }
+          }
+        }
+      },
+      "images": {
+        "underbody": {
+          "path": "before/sedan/underbody.png",
+          "sha256": "84fc578d9d561442eef6fcfdd46b6e37a8afa307cf3550cff7bb48d7e09b8ee5",
+          "faces_rendered": 22844,
+          "seconds": 2.412,
+          "camera": {
+            "eye": [
+              -6.783600716628345,
+              4.698463103929541,
+              -5.013257651296952
+            ],
+            "target": [
+              -0.0734999999999999,
+              0.0,
+              0.7225067122135087
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 3.8871778941081345
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "side": {
+          "path": "before/sedan/side.png",
+          "sha256": "6167faafff7fbda9803d036374072e9a3d75c753e5b0b6d154afc957d4fa4a72",
+          "faces_rendered": 22844,
+          "seconds": 1.92,
+          "camera": {
+            "eye": [
+              -0.07349999999999929,
+              9.902680687415703,
+              -0.6692242973871456
+            ],
+            "target": [
+              -0.0734999999999999,
+              0.0,
+              0.7225067122135087
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 4.13364
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_closeup": {
+          "path": "before/sedan/rear_closeup.png",
+          "sha256": "96be2f9414870cdd2cfb9dd37daf1d1fcc3c55b9b25efdfc9018b89adf062da7",
+          "faces_rendered": 22844,
+          "seconds": 1.544,
+          "camera": {
+            "eye": [
+              -11.175800813540915,
+              3.3036608954935227,
+              -2.2174681972154944
+            ],
+            "target": [
+              -2.0990671016372295,
+              0.0,
+              0.37072225380971296
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 1.6333781975774495
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        }
+      }
+    },
+    "pickup": {
+      "configuration": {
+        "body": {
+          "style": "pickup",
+          "modifiers": {}
+        },
+        "components": {
+          "defaults": true
+        },
+        "seed": 0,
+        "palette": {
+          "paint": "#426b88"
+        }
+      },
+      "requested_modifiers": {
+        "style/pickup": 1.0
+      },
+      "effective_shape_values": {
+        "face/upright": 1.0,
+        "plan/square": 1.0,
+        "section/slabside": 0.8,
+        "style/pickup": 1.0
+      },
+      "measurements": {
+        "x_front": 2.8015,
+        "x_rear": -3.0835,
+        "length": 5.885,
+        "width": 2.0393926254570327,
+        "height": 1.92,
+        "x_cowl": 1.6865,
+        "z_cowl": 1.38,
+        "x_roof_front": 1.0265,
+        "z_roof_front": 1.92,
+        "x_roof_rear": -1.0465,
+        "z_roof_rear": 1.9,
+        "x_deck": -1.1565,
+        "z_deck": 1.238888888888889,
+        "x_bpillar": 0.4265000000000001,
+        "roof_half_width": 0.921166,
+        "z_belt": 1.31,
+        "y_belt": 1.0196055591781656,
+        "y_shoulder": 0.9778724189632932,
+        "z_sill": 0.5000000000000001,
+        "y_sill": 0.9588372008007371,
+        "z_floor": 0.22000000000000003,
+        "y_floor_edge": 0.599210499510882,
+        "wheel_front_x": 1.8464999999999996,
+        "wheel_front_z": 0.38739999999999664,
+        "arch_front_r": 0.4474000000000042,
+        "wheel_front_y": 0.9798036851339086,
+        "wheel_rear_x": -1.8465000000000005,
+        "wheel_rear_z": 0.3874000000000001,
+        "arch_rear_r": 0.4474000000000007,
+        "wheel_rear_y": 0.9822441778734672,
+        "wheelbase": 3.693,
+        "track": 1.9596073702678172,
+        "nose_z_top": 1.3599999999999999,
+        "nose_z_bottom": 0.41500000000000004,
+        "nose_half_width": 0.9795257999999999,
+        "nose_top_half_width": 0.9345257999999999,
+        "tail_z_top": 1.3,
+        "tail_z_bottom": 0.405,
+        "tail_half_width": 0.9894679011086442,
+        "tail_top_half_width": 0.9444679011086442,
+        "bed": 0.40295138888888893,
+        "has_bed": 1.0
+      },
+      "components": [
+        {
+          "id": "wheel_front_L:wheel.alloy",
+          "connector": "wheel_front_L",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.41000000000002973,
+              "width": 0.1666666666666666,
+              "rim_ratio": 0.17220000000001234,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.2515532000000034
+          }
+        },
+        {
+          "id": "wheel_front_R:wheel.alloy",
+          "connector": "wheel_front_R",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.41000000000002973,
+              "width": 0.1666666666666666,
+              "rim_ratio": 0.17220000000001234,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.2515532000000034
+          }
+        },
+        {
+          "id": "wheel_rear_L:wheel.alloy",
+          "connector": "wheel_rear_L",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.41000000000000475,
+              "width": 0.1666666666666666,
+              "rim_ratio": 0.1722000000000018,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.25155320000000053
+          }
+        },
+        {
+          "id": "wheel_rear_R:wheel.alloy",
+          "connector": "wheel_rear_R",
+          "connector_kind": "circle",
+          "component": "wheel.alloy",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 3682,
+          "info": {
+            "modifier_values": {
+              "radius": 0.41000000000000475,
+              "width": 0.1666666666666666,
+              "rim_ratio": 0.1722000000000018,
+              "dish": 0.0
+            },
+            "tread_blocks": 40,
+            "spokes": 5,
+            "rim_radius": 0.25155320000000053
+          }
+        },
+        {
+          "id": "windshield:glass.tinted",
+          "connector": "windshield",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 576,
+          "info": {
+            "area": 1.3610620573772179
+          }
+        },
+        {
+          "id": "rear_window:glass.tinted",
+          "connector": "rear_window",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 432,
+          "info": {
+            "area": 0.7478357393540029
+          }
+        },
+        {
+          "id": "glass_front_L:glass.tinted",
+          "connector": "glass_front_L",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.39159810950929896
+          }
+        },
+        {
+          "id": "glass_front_R:glass.tinted",
+          "connector": "glass_front_R",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.39159810950929896
+          }
+        },
+        {
+          "id": "glass_rear_L:glass.tinted",
+          "connector": "glass_rear_L",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.6020465918773921
+          }
+        },
+        {
+          "id": "glass_rear_R:glass.tinted",
+          "connector": "glass_rear_R",
+          "connector_kind": "polygon",
+          "component": "glass.tinted",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {
+            "area": 0.6020465918773923
+          }
+        },
+        {
+          "id": "headlight_L:light.headlight",
+          "connector": "headlight_L",
+          "connector_kind": "polygon",
+          "component": "light.headlight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2412,
+          "info": {
+            "projectors": 2
+          }
+        },
+        {
+          "id": "headlight_R:light.headlight",
+          "connector": "headlight_R",
+          "connector_kind": "polygon",
+          "component": "light.headlight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2412,
+          "info": {
+            "projectors": 2
+          }
+        },
+        {
+          "id": "taillight_L:light.taillight",
+          "connector": "taillight_L",
+          "connector_kind": "polygon",
+          "component": "light.taillight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 4244,
+          "info": {}
+        },
+        {
+          "id": "taillight_R:light.taillight",
+          "connector": "taillight_R",
+          "connector_kind": "polygon",
+          "component": "light.taillight",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 4242,
+          "info": {}
+        },
+        {
+          "id": "grille:grille.slats",
+          "connector": "grille",
+          "connector_kind": "rectangle",
+          "component": "grille.slats",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 200,
+          "info": {}
+        },
+        {
+          "id": "intake:grille.intake",
+          "connector": "intake",
+          "connector_kind": "rectangle",
+          "component": "grille.intake",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 484,
+          "info": {}
+        },
+        {
+          "id": "plate_front:plate.standard",
+          "connector": "plate_front",
+          "connector_kind": "rectangle",
+          "component": "plate.standard",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 60,
+          "info": {}
+        },
+        {
+          "id": "plate_rear:plate.standard",
+          "connector": "plate_rear",
+          "connector_kind": "rectangle",
+          "component": "plate.standard",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 54,
+          "info": {}
+        },
+        {
+          "id": "badge_front:badge.roundel",
+          "connector": "badge_front",
+          "connector_kind": "point",
+          "component": "badge.roundel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {}
+        },
+        {
+          "id": "badge_rear:badge.roundel",
+          "connector": "badge_rear",
+          "connector_kind": "point",
+          "component": "badge.roundel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {}
+        },
+        {
+          "id": "exhaust_L:exhaust.tip",
+          "connector": "exhaust_L",
+          "connector_kind": "circle",
+          "component": "exhaust.tip",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 170,
+          "info": {}
+        },
+        {
+          "id": "exhaust_R:exhaust.tip",
+          "connector": "exhaust_R",
+          "connector_kind": "circle",
+          "component": "exhaust.tip",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 170,
+          "info": {}
+        },
+        {
+          "id": "mirror_L:mirror.side",
+          "connector": "mirror_L",
+          "connector_kind": "point",
+          "component": "mirror.side",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {}
+        },
+        {
+          "id": "handle_front_L:handle.pull",
+          "connector": "handle_front_L",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "handle_rear_L:handle.pull",
+          "connector": "handle_rear_L",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "mirror_R:mirror.side",
+          "connector": "mirror_R",
+          "connector_kind": "point",
+          "component": "mirror.side",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 360,
+          "info": {}
+        },
+        {
+          "id": "handle_front_R:handle.pull",
+          "connector": "handle_front_R",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "handle_rear_R:handle.pull",
+          "connector": "handle_rear_R",
+          "connector_kind": "point",
+          "component": "handle.pull",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 148,
+          "info": {}
+        },
+        {
+          "id": "fuel_cap:fuel.cap",
+          "connector": "fuel_cap",
+          "connector_kind": "circle",
+          "component": "fuel.cap",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 144,
+          "info": {}
+        },
+        {
+          "id": "antenna:antenna.sharkfin",
+          "connector": "antenna",
+          "connector_kind": "point",
+          "component": "antenna.sharkfin",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 66,
+          "info": {}
+        },
+        {
+          "id": "seat_front_driver:seat.bucket",
+          "connector": "seat_front_driver",
+          "connector_kind": "rectangle",
+          "component": "seat.bucket",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 522,
+          "info": {
+            "modifier_values": {
+              "cushion_width": 0.0,
+              "cushion_depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": 0.6875000000000001,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "bolster": 0.0
+            },
+            "h_point_local": [
+              -0.16,
+              0.0,
+              0.38
+            ],
+            "backrest_length": 0.62,
+            "buckle_local": [
+              -0.09500000000000003,
+              -0.275,
+              0.375
+            ],
+            "headroom_clearance": 0.42014601016859165
+          }
+        },
+        {
+          "id": "seat_front_passenger:seat.bucket",
+          "connector": "seat_front_passenger",
+          "connector_kind": "rectangle",
+          "component": "seat.bucket",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 522,
+          "info": {
+            "modifier_values": {
+              "cushion_width": 0.0,
+              "cushion_depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": 0.6875000000000001,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "bolster": 0.0
+            },
+            "h_point_local": [
+              -0.16,
+              0.0,
+              0.38
+            ],
+            "backrest_length": 0.62,
+            "buckle_local": [
+              -0.09500000000000003,
+              0.275,
+              0.375
+            ],
+            "headroom_clearance": 0.42014601016859165
+          }
+        },
+        {
+          "id": "seat_row2:seat.bench",
+          "connector": "seat_row2",
+          "connector_kind": "rectangle",
+          "component": "seat.bench",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 456,
+          "info": {
+            "modifier_values": {
+              "width": 0.4393620948164667,
+              "depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": 0.6874999999999999,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "split": 0.0
+            },
+            "headrests": 3,
+            "cab_rear_clearance": 0.7505151770090625
+          }
+        },
+        {
+          "id": "seat_row3:seat.bench",
+          "connector": "seat_row3",
+          "connector_kind": "rectangle",
+          "component": "seat.bench",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 456,
+          "info": {
+            "modifier_values": {
+              "width": 0.4393620948164667,
+              "depth": 0.0,
+              "footprint_depth": 0.0,
+              "cushion_height": 0.5625000000000001,
+              "backrest_height": 0.0,
+              "recline_deg": 0.0,
+              "split": 0.0
+            },
+            "headrests": 3,
+            "cab_rear_clearance": 0.02901517700906231
+          }
+        },
+        {
+          "id": "steering_wheel:steering.wheel",
+          "connector": "steering_wheel",
+          "connector_kind": "circle",
+          "component": "steering.wheel",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 948,
+          "info": {
+            "radius": 0.185,
+            "flat_bottom": false
+          }
+        },
+        {
+          "id": "dashboard:dashboard.sculpted",
+          "connector": "dashboard",
+          "connector_kind": "polygon",
+          "component": "dashboard.sculpted",
+          "options": {},
+          "parent": null,
+          "children": [
+            "dashboard/cluster:cluster.analog",
+            "dashboard/screen:screen.infotainment",
+            "dashboard/hvac:hvac.knobs",
+            "dashboard/glovebox:glovebox.lid",
+            "dashboard/vent_L:vent.round",
+            "dashboard/vent_R:vent.round",
+            "dashboard/vent_center_L:vent.round",
+            "dashboard/vent_center_R:vent.round"
+          ],
+          "faces": 362,
+          "info": {
+            "modifier_values": {
+              "width": 0.4048667734884642,
+              "height": 1.0,
+              "depth": 0.0
+            }
+          }
+        },
+        {
+          "id": "pedals:pedals.hinged",
+          "connector": "pedals",
+          "connector_kind": "rectangle",
+          "component": "pedals.hinged",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 192,
+          "info": {
+            "heel_local": [
+              -0.025,
+              -0.09,
+              0.0
+            ]
+          }
+        },
+        {
+          "id": "console:console.center",
+          "connector": "console",
+          "connector_kind": "rectangle",
+          "component": "console.center",
+          "options": {},
+          "parent": null,
+          "children": [
+            "console/shifter:shifter.lever",
+            "console/cupholder_1:cupholder.round",
+            "console/cupholder_2:cupholder.round"
+          ],
+          "faces": 342,
+          "info": {
+            "height": 0.44
+          }
+        },
+        {
+          "id": "floor:floor.carpet",
+          "connector": "floor",
+          "connector_kind": "rectangle",
+          "component": "floor.carpet",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1582,
+          "info": {}
+        },
+        {
+          "id": "firewall:bulkhead.trim",
+          "connector": "firewall",
+          "connector_kind": "rectangle",
+          "component": "bulkhead.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 216,
+          "info": {}
+        },
+        {
+          "id": "rear_bulkhead:bulkhead.trim",
+          "connector": "rear_bulkhead",
+          "connector_kind": "rectangle",
+          "component": "bulkhead.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 36,
+          "info": {}
+        },
+        {
+          "id": "headliner:headliner.fabric",
+          "connector": "headliner",
+          "connector_kind": "polygon",
+          "component": "headliner.fabric",
+          "options": {},
+          "parent": null,
+          "children": [
+            "headliner/dome_light:light.dome",
+            "headliner/grab_handle_L:handle.grab",
+            "headliner/grab_handle_R:handle.grab"
+          ],
+          "faces": 688,
+          "info": {}
+        },
+        {
+          "id": "rearview_mirror:mirror.rearview",
+          "connector": "rearview_mirror",
+          "connector_kind": "point",
+          "component": "mirror.rearview",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 120,
+          "info": {
+            "header_mount_world": [
+              1.0414999999999999,
+              0.0,
+              1.865
+            ],
+            "fitted_header": true
+          }
+        },
+        {
+          "id": "door_card_front_L:door.card",
+          "connector": "door_card_front_L",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_front_L/speaker:speaker.round"
+          ],
+          "faces": 406,
+          "info": {
+            "span": 0.9129073967319548
+          }
+        },
+        {
+          "id": "door_card_rear_L:door.card",
+          "connector": "door_card_rear_L",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_rear_L/speaker:speaker.round"
+          ],
+          "faces": 616,
+          "info": {
+            "span": 1.8058341526690587
+          }
+        },
+        {
+          "id": "door_card_front_R:door.card",
+          "connector": "door_card_front_R",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_front_R/speaker:speaker.round"
+          ],
+          "faces": 406,
+          "info": {
+            "span": 0.9129073967319548
+          }
+        },
+        {
+          "id": "door_card_rear_R:door.card",
+          "connector": "door_card_rear_R",
+          "connector_kind": "polygon",
+          "component": "door.card",
+          "options": {},
+          "parent": null,
+          "children": [
+            "door_card_rear_R/speaker:speaker.round"
+          ],
+          "faces": 616,
+          "info": {
+            "span": 1.8058341526690587
+          }
+        },
+        {
+          "id": "bed_floor:floor.bedliner",
+          "connector": "bed_floor",
+          "connector_kind": "rectangle",
+          "component": "floor.bedliner",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 826,
+          "info": {}
+        },
+        {
+          "id": "cowl_trim:cowl.trim",
+          "connector": "cowl_trim",
+          "connector_kind": "point",
+          "component": "cowl.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 182,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_A_L:pillar.trim",
+          "connector": "pillar_trim_A_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 390,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_B_L:pillar.trim",
+          "connector": "pillar_trim_B_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 166,
+          "info": {}
+        },
+        {
+          "id": "cabin_side_liner_L:pillar.trim",
+          "connector": "cabin_side_liner_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1174,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_C_L:pillar.trim",
+          "connector": "pillar_trim_C_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 62,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_rear_L:pillar.trim",
+          "connector": "pillar_trim_rear_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 286,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_belt_L:pillar.trim",
+          "connector": "pillar_trim_belt_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 274,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_quarter_L:pillar.trim",
+          "connector": "pillar_trim_quarter_L",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "belt_anchor_L:belt.shoulder",
+          "connector": "belt_anchor_L",
+          "connector_kind": "point",
+          "component": "belt.shoulder",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 88,
+          "info": {
+            "buckle_world": [
+              0.7615000000000001,
+              0.14499999999999996,
+              0.645
+            ]
+          }
+        },
+        {
+          "id": "pillar_trim_A_R:pillar.trim",
+          "connector": "pillar_trim_A_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 390,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_B_R:pillar.trim",
+          "connector": "pillar_trim_B_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 166,
+          "info": {}
+        },
+        {
+          "id": "cabin_side_liner_R:pillar.trim",
+          "connector": "cabin_side_liner_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 1174,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_C_R:pillar.trim",
+          "connector": "pillar_trim_C_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 62,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_rear_R:pillar.trim",
+          "connector": "pillar_trim_rear_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 286,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_belt_R:pillar.trim",
+          "connector": "pillar_trim_belt_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 274,
+          "info": {}
+        },
+        {
+          "id": "pillar_trim_quarter_R:pillar.trim",
+          "connector": "pillar_trim_quarter_R",
+          "connector_kind": "point",
+          "component": "pillar.trim",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "belt_anchor_R:belt.shoulder",
+          "connector": "belt_anchor_R",
+          "connector_kind": "point",
+          "component": "belt.shoulder",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 88,
+          "info": {
+            "buckle_world": [
+              0.7615000000000001,
+              -0.14499999999999996,
+              0.645
+            ]
+          }
+        },
+        {
+          "id": "fog_front_L:light.fog",
+          "connector": "fog_front_L",
+          "connector_kind": "point",
+          "component": "light.fog",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 204,
+          "info": {}
+        },
+        {
+          "id": "rear_reflector_L:light.rear_reflector",
+          "connector": "rear_reflector_L",
+          "connector_kind": "point",
+          "component": "light.rear_reflector",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 174,
+          "info": {}
+        },
+        {
+          "id": "rear_fog_L:light.rear_aux",
+          "connector": "rear_fog_L",
+          "connector_kind": "point",
+          "component": "light.rear_aux",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "plate_lamp_L:light.plate",
+          "connector": "plate_lamp_L",
+          "connector_kind": "point",
+          "component": "light.plate",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "fog_front_R:light.fog",
+          "connector": "fog_front_R",
+          "connector_kind": "point",
+          "component": "light.fog",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 204,
+          "info": {}
+        },
+        {
+          "id": "rear_reflector_R:light.rear_reflector",
+          "connector": "rear_reflector_R",
+          "connector_kind": "point",
+          "component": "light.rear_reflector",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 174,
+          "info": {}
+        },
+        {
+          "id": "rear_reverse_R:light.rear_aux",
+          "connector": "rear_reverse_R",
+          "connector_kind": "point",
+          "component": "light.rear_aux",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "plate_lamp_R:light.plate",
+          "connector": "plate_lamp_R",
+          "connector_kind": "point",
+          "component": "light.plate",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 108,
+          "info": {}
+        },
+        {
+          "id": "tow_hook_cover_front:bumper.tow_cover",
+          "connector": "tow_hook_cover_front",
+          "connector_kind": "point",
+          "component": "bumper.tow_cover",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 72,
+          "info": {}
+        },
+        {
+          "id": "tow_hook_cover_rear:bumper.tow_cover",
+          "connector": "tow_hook_cover_rear",
+          "connector_kind": "point",
+          "component": "bumper.tow_cover",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 72,
+          "info": {}
+        },
+        {
+          "id": "tow_eye:bumper.tow_eye",
+          "connector": "tow_eye",
+          "connector_kind": "point",
+          "component": "bumper.tow_eye",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 196,
+          "info": {}
+        },
+        {
+          "id": "side_marker_L:light.side_marker",
+          "connector": "side_marker_L",
+          "connector_kind": "point",
+          "component": "light.side_marker",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 138,
+          "info": {}
+        },
+        {
+          "id": "side_marker_R:light.side_marker",
+          "connector": "side_marker_R",
+          "connector_kind": "point",
+          "component": "light.side_marker",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 138,
+          "info": {}
+        },
+        {
+          "id": "wipers:wipers.parked",
+          "connector": "wipers",
+          "connector_kind": "rectangle",
+          "component": "wipers.parked",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 480,
+          "info": {}
+        },
+        {
+          "id": "exhaust_system:exhaust.system",
+          "connector": "exhaust_system",
+          "connector_kind": "point",
+          "component": "exhaust.system",
+          "options": {},
+          "parent": null,
+          "children": [],
+          "faces": 2196,
+          "info": {}
+        },
+        {
+          "id": "dashboard/cluster:cluster.analog",
+          "connector": "dashboard/cluster",
+          "connector_kind": "rectangle",
+          "component": "cluster.analog",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 1579,
+          "info": {}
+        },
+        {
+          "id": "dashboard/screen:screen.infotainment",
+          "connector": "dashboard/screen",
+          "connector_kind": "rectangle",
+          "component": "screen.infotainment",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 54,
+          "info": {}
+        },
+        {
+          "id": "dashboard/hvac:hvac.knobs",
+          "connector": "dashboard/hvac",
+          "connector_kind": "rectangle",
+          "component": "hvac.knobs",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 486,
+          "info": {}
+        },
+        {
+          "id": "dashboard/glovebox:glovebox.lid",
+          "connector": "dashboard/glovebox",
+          "connector_kind": "rectangle",
+          "component": "glovebox.lid",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 78,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_L:vent.round",
+          "connector": "dashboard/vent_L",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_R:vent.round",
+          "connector": "dashboard/vent_R",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_center_L:vent.round",
+          "connector": "dashboard/vent_center_L",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "dashboard/vent_center_R:vent.round",
+          "connector": "dashboard/vent_center_R",
+          "connector_kind": "circle",
+          "component": "vent.round",
+          "options": {},
+          "parent": "dashboard:dashboard.sculpted",
+          "children": [],
+          "faces": 324,
+          "info": {}
+        },
+        {
+          "id": "console/shifter:shifter.lever",
+          "connector": "console/shifter",
+          "connector_kind": "point",
+          "component": "shifter.lever",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 206,
+          "info": {}
+        },
+        {
+          "id": "console/cupholder_1:cupholder.round",
+          "connector": "console/cupholder_1",
+          "connector_kind": "circle",
+          "component": "cupholder.round",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "console/cupholder_2:cupholder.round",
+          "connector": "console/cupholder_2",
+          "connector_kind": "circle",
+          "component": "cupholder.round",
+          "options": {},
+          "parent": "console:console.center",
+          "children": [],
+          "faces": 168,
+          "info": {}
+        },
+        {
+          "id": "headliner/dome_light:light.dome",
+          "connector": "headliner/dome_light",
+          "connector_kind": "circle",
+          "component": "light.dome",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 180,
+          "info": {}
+        },
+        {
+          "id": "headliner/grab_handle_L:handle.grab",
+          "connector": "headliner/grab_handle_L",
+          "connector_kind": "point",
+          "component": "handle.grab",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 120,
+          "info": {}
+        },
+        {
+          "id": "headliner/grab_handle_R:handle.grab",
+          "connector": "headliner/grab_handle_R",
+          "connector_kind": "point",
+          "component": "handle.grab",
+          "options": {},
+          "parent": "headliner:headliner.fabric",
+          "children": [],
+          "faces": 120,
+          "info": {}
+        },
+        {
+          "id": "door_card_front_L/speaker:speaker.round",
+          "connector": "door_card_front_L/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_front_L:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_rear_L/speaker:speaker.round",
+          "connector": "door_card_rear_L/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_rear_L:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_front_R/speaker:speaker.round",
+          "connector": "door_card_front_R/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_front_R:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        },
+        {
+          "id": "door_card_rear_R/speaker:speaker.round",
+          "connector": "door_card_rear_R/speaker",
+          "connector_kind": "circle",
+          "component": "speaker.round",
+          "options": {},
+          "parent": "door_card_rear_R:door.card",
+          "children": [],
+          "faces": 468,
+          "info": {}
+        }
+      ],
+      "scenes": {
+        "full": {
+          "stats": {
+            "vertices": 70445,
+            "faces": 64667,
+            "bounds_min": [
+              -3.1732,
+              -1.2233,
+              0.0001
+            ],
+            "bounds_max": [
+              2.8402,
+              1.2233,
+              1.961
+            ],
+            "materials": [
+              "antenna_gasket",
+              "aperture",
+              "aux_trim",
+              "badge_dark",
+              "bed",
+              "bezel",
+              "brake_disc",
+              "caliper",
+              "chrome",
+              "exhaust_dark",
+              "exhaust_steel",
+              "fog_chrome",
+              "fog_lens",
+              "fog_trim",
+              "glass",
+              "glass_frame",
+              "grille_dark",
+              "indicator",
+              "int_accent",
+              "int_belt",
+              "int_carpet",
+              "int_chrome",
+              "int_fabric",
+              "int_gauge",
+              "int_grille",
+              "int_leather",
+              "int_lens",
+              "int_metal",
+              "int_mirror",
+              "int_needle",
+              "int_plastic",
+              "int_rubber",
+              "int_screen",
+              "int_soft",
+              "int_stitch",
+              "int_trim",
+              "int_ui",
+              "int_wood",
+              "lamp_dark",
+              "lamp_led",
+              "lens",
+              "light_plate",
+              "light_rear_auxfog",
+              "light_rear_auxreverse",
+              "light_rear_reflector",
+              "light_side_marker",
+              "mesh_dark",
+              "mirror_glass",
+              "mirror_housing",
+              "mirror_signal",
+              "paint",
+              "plate",
+              "plate_blue",
+              "plate_text",
+              "projector_glass",
+              "rim",
+              "rim_dark",
+              "tail_bezel",
+              "tail_guide",
+              "tail_lens",
+              "tail_reflector",
+              "tail_reverse",
+              "tow_gap",
+              "tow_steel",
+              "trim",
+              "trim_dark",
+              "tyre",
+              "underbody",
+              "wiper_arm",
+              "wiper_rubber"
+            ]
+          },
+          "selection": "complete default assembly",
+          "omitted_instances": [],
+          "faces_removed": 0,
+          "geometry_displaced": false,
+          "geometry_clipped": false,
+          "material_overrides": {}
+        },
+        "diagnostic": {
+          "stats": {
+            "vertices": 25916,
+            "faces": 22884,
+            "bounds_min": [
+              -3.1255,
+              -1.0197,
+              0.0001
+            ],
+            "bounds_max": [
+              2.8015,
+              1.0197,
+              1.92
+            ],
+            "materials": [
+              "aperture",
+              "bed",
+              "brake_disc",
+              "caliper",
+              "chrome",
+              "exhaust_dark",
+              "exhaust_steel",
+              "paint",
+              "rim",
+              "rim_dark",
+              "trim",
+              "tyre",
+              "underbody"
+            ]
+          },
+          "selection": "actual body shell + selected assembled components",
+          "selected_instances": [
+            "wheel_front_L:wheel.alloy",
+            "wheel_front_R:wheel.alloy",
+            "wheel_rear_L:wheel.alloy",
+            "wheel_rear_R:wheel.alloy",
+            "exhaust_L:exhaust.tip",
+            "exhaust_R:exhaust.tip",
+            "exhaust_system:exhaust.system"
+          ],
+          "omitted_instances": [
+            "windshield:glass.tinted",
+            "rear_window:glass.tinted",
+            "glass_front_L:glass.tinted",
+            "glass_front_R:glass.tinted",
+            "glass_rear_L:glass.tinted",
+            "glass_rear_R:glass.tinted",
+            "headlight_L:light.headlight",
+            "headlight_R:light.headlight",
+            "taillight_L:light.taillight",
+            "taillight_R:light.taillight",
+            "grille:grille.slats",
+            "intake:grille.intake",
+            "plate_front:plate.standard",
+            "plate_rear:plate.standard",
+            "badge_front:badge.roundel",
+            "badge_rear:badge.roundel",
+            "mirror_L:mirror.side",
+            "handle_front_L:handle.pull",
+            "handle_rear_L:handle.pull",
+            "mirror_R:mirror.side",
+            "handle_front_R:handle.pull",
+            "handle_rear_R:handle.pull",
+            "fuel_cap:fuel.cap",
+            "antenna:antenna.sharkfin",
+            "seat_front_driver:seat.bucket",
+            "seat_front_passenger:seat.bucket",
+            "seat_row2:seat.bench",
+            "seat_row3:seat.bench",
+            "steering_wheel:steering.wheel",
+            "dashboard:dashboard.sculpted",
+            "pedals:pedals.hinged",
+            "console:console.center",
+            "floor:floor.carpet",
+            "firewall:bulkhead.trim",
+            "rear_bulkhead:bulkhead.trim",
+            "headliner:headliner.fabric",
+            "rearview_mirror:mirror.rearview",
+            "door_card_front_L:door.card",
+            "door_card_rear_L:door.card",
+            "door_card_front_R:door.card",
+            "door_card_rear_R:door.card",
+            "bed_floor:floor.bedliner",
+            "cowl_trim:cowl.trim",
+            "pillar_trim_A_L:pillar.trim",
+            "pillar_trim_B_L:pillar.trim",
+            "cabin_side_liner_L:pillar.trim",
+            "pillar_trim_C_L:pillar.trim",
+            "pillar_trim_rear_L:pillar.trim",
+            "pillar_trim_belt_L:pillar.trim",
+            "pillar_trim_quarter_L:pillar.trim",
+            "belt_anchor_L:belt.shoulder",
+            "pillar_trim_A_R:pillar.trim",
+            "pillar_trim_B_R:pillar.trim",
+            "cabin_side_liner_R:pillar.trim",
+            "pillar_trim_C_R:pillar.trim",
+            "pillar_trim_rear_R:pillar.trim",
+            "pillar_trim_belt_R:pillar.trim",
+            "pillar_trim_quarter_R:pillar.trim",
+            "belt_anchor_R:belt.shoulder",
+            "fog_front_L:light.fog",
+            "rear_reflector_L:light.rear_reflector",
+            "rear_fog_L:light.rear_aux",
+            "plate_lamp_L:light.plate",
+            "fog_front_R:light.fog",
+            "rear_reflector_R:light.rear_reflector",
+            "rear_reverse_R:light.rear_aux",
+            "plate_lamp_R:light.plate",
+            "tow_hook_cover_front:bumper.tow_cover",
+            "tow_hook_cover_rear:bumper.tow_cover",
+            "tow_eye:bumper.tow_eye",
+            "side_marker_L:light.side_marker",
+            "side_marker_R:light.side_marker",
+            "wipers:wipers.parked",
+            "dashboard/cluster:cluster.analog",
+            "dashboard/screen:screen.infotainment",
+            "dashboard/hvac:hvac.knobs",
+            "dashboard/glovebox:glovebox.lid",
+            "dashboard/vent_L:vent.round",
+            "dashboard/vent_R:vent.round",
+            "dashboard/vent_center_L:vent.round",
+            "dashboard/vent_center_R:vent.round",
+            "console/shifter:shifter.lever",
+            "console/cupholder_1:cupholder.round",
+            "console/cupholder_2:cupholder.round",
+            "headliner/dome_light:light.dome",
+            "headliner/grab_handle_L:handle.grab",
+            "headliner/grab_handle_R:handle.grab",
+            "door_card_front_L/speaker:speaker.round",
+            "door_card_rear_L/speaker:speaker.round",
+            "door_card_front_R/speaker:speaker.round",
+            "door_card_rear_R/speaker:speaker.round"
+          ],
+          "faces_omitted_from_full_assembly": 41783,
+          "faces_removed_from_selected_parts": 0,
+          "geometry_displaced": false,
+          "geometry_clipped": false,
+          "material_overrides": {
+            "underbody": {
+              "original": {
+                "name": "underbody",
+                "color": [
+                  0.1,
+                  0.1,
+                  0.11
+                ],
+                "alpha": 1.0,
+                "shininess": 0.05,
+                "emissive": 0.0,
+                "metallic": 0.0
+              },
+              "rendered": {
+                "name": "underbody",
+                "color": [
+                  0.4,
+                  0.42,
+                  0.44
+                ],
+                "alpha": 1.0,
+                "shininess": 0.2
+              }
+            }
+          }
+        }
+      },
+      "images": {
+        "underbody": {
+          "path": "before/pickup/underbody.png",
+          "sha256": "b988f552de5f23fb50f395ab73c3551f94860b2862beb36a8e901900c4e129d1",
+          "faces_rendered": 22884,
+          "seconds": 2.026,
+          "camera": {
+            "eye": [
+              -6.872100716628345,
+              4.698463103929541,
+              -4.775738416077141
+            ],
+            "target": [
+              -0.16199999999999992,
+              0.0,
+              0.9600259474333193
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 4.796880309782633
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "side": {
+          "path": "before/pickup/side.png",
+          "sha256": "a2e6a817c6aed85aa1a735a032712bc6c5ff701e1877dcea5ce735a8ec6e3aa0",
+          "faces_rendered": 22884,
+          "seconds": 1.949,
+          "camera": {
+            "eye": [
+              -0.1619999999999993,
+              9.902680687415703,
+              -0.43170506216733506
+            ],
+            "target": [
+              -0.16199999999999992,
+              0.0,
+              0.9600259474333193
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 4.97868
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        },
+        "rear_closeup": {
+          "path": "before/pickup/rear_closeup.png",
+          "sha256": "a491bde356a5442fe8b11ec744ad41d512496ce19f9b52cd41ca04b19417b8d4",
+          "faces_rendered": 22884,
+          "seconds": 1.448,
+          "camera": {
+            "eye": [
+              -11.756342107798751,
+              3.3036608954935227,
+              -2.1841071548702105
+            ],
+            "target": [
+              -2.679608395895065,
+              0.0,
+              0.4040832961549968
+            ],
+            "up": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "fov_deg": 32.0,
+            "ortho": true,
+            "ortho_height": 1.7706995278940914
+          },
+          "scene": "diagnostic",
+          "ground": false,
+          "lines": false,
+          "light_dir": [
+            -0.5,
+            0.6,
+            -1.0
+          ],
+          "fill_dir": [
+            0.7,
+            -0.4,
+            -0.4
+          ]
+        }
+      }
+    }
+  },
+  "limitations": "Diagnostic views omit unselected furniture and recolor the pan; images do not certify millimetre clearance."
+}
