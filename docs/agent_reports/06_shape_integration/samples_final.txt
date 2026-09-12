@@ -1,0 +1,16 @@
+generating 11 sample configs into /tmp/si_samples/
+  blend_sedan_wagon            102 connectors  102 components   62201 faces  34.3s  -> /tmp/si_samples/blend_sedan_wagon
+  blend_suv_coupe              102 connectors  102 components   61397 faces  34.8s  -> /tmp/si_samples/blend_suv_coupe
+  stretched_limousine          102 connectors  102 components   61849 faces  32.1s  -> /tmp/si_samples/stretched_limousine
+  gt_coupe                      96 connectors   94 components   58431 faces  32.7s  -> /tmp/si_samples/gt_coupe
+  city_hatchback               103 connectors  101 components   60937 faces  33.8s  -> /tmp/si_samples/city_hatchback
+  crew_cab_pickup               99 connectors   96 components   64083 faces  40.3s  -> /tmp/si_samples/crew_cab_pickup
+  random_hatch_a               103 connectors  101 components   61153 faces  36.1s  -> /tmp/si_samples/random_hatch_a
+  random_hatch_b               102 connectors  100 components   60721 faces  38.1s  -> /tmp/si_samples/random_hatch_b
+  random_sedan_c               102 connectors  100 components   61685 faces  45.1s  -> /tmp/si_samples/random_sedan_c
+  rhd_manual_sedan             102 connectors  100 components   61165 faces  48.2s  -> /tmp/si_samples/rhd_manual_sedan
+  family_sedan                 102 connectors  100 components   61089 faces  54.3s  -> /tmp/si_samples/family_sedan
+  roadster_sports               96 connectors   93 components   56905 faces  57.5s  -> /tmp/si_samples/roadster_sports
+  family_suv                   103 connectors  103 components   61813 faces  54.4s  -> /tmp/si_samples/family_suv
+  family_minivan               103 connectors  103 components   63083 faces  43.3s  -> /tmp/si_samples/family_minivan
+  estate_wagon                 103 connectors  103 components   62427 faces  34.9s  -> /tmp/si_samples/estate_wagon
