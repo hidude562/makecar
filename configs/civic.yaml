@@ -20,10 +20,11 @@ body:
     belt_rake: 0.048
     side_bulge: 0.012
     front_bumper_bottom: 0.275
-    hood_front_height: 0.690
+    hood_front_height: 0.830
     cowl_height: 0.940
     cowl_offset: 0.250
     hood_crown: 0.020
+    hood_straightness: 0.75
     nose_width_ratio: 0.710
     front_corner_length: 0.250
     front_fascia_rake: 0.045
@@ -56,7 +57,7 @@ body:
     rear_fascia_rake: -0.060
     deck_crown: 0.012
   modifiers:
-    face/wedge: 0.14
+    face/wedge: 0.03
     plan/pointed: 0.08
     section/tumblehome: 0.15
   sculpt:
@@ -72,6 +73,7 @@ components:
   defaults: true
   disable: [badge]
   assign:
+    grille: {component: grille.honeycomb, options: {frame: false, cell_size: 0.025}}
     wheel: {component: wheel.alloy, options: {spokes: 10, spoke_width: 0.32, hubcap: false}}
     plate: {component: plate.standard, options: {region: us}}
 output:
