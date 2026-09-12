@@ -15,6 +15,99 @@ from ..connectors import Connector
 from ..geometry.mesh import Mesh
 
 
+class _ExhaustFloor:
+    """Piecewise-planar ceiling from the measured A→B grid, in world metres.
+
+    Clip floor triangles to each pipe segment's radius-expanded XY footprint.
+    The minimum of (roof - centreline height) occurs at a clipped vertex, so
+    station breaks and tunnel shoulders BETWEEN sweep rings cannot be missed.
+    """
+
+    def __init__(self, grid):
+        import numpy as np
+
+        grid = np.asarray(grid)
+        a, b = grid[:-1, :-1], grid[:-1, 1:]
+        c, d = grid[1:, 1:], grid[1:, :-1]
+        # The ring loft's fan uses opposite diagonals on the two halves.
+        # Bound both, then mirror, so one symmetric route clears either skin.
+        left = np.stack([np.stack(t, axis=-2) for t in
+                         ((b, c, d), (b, d, a), (a, b, c), (a, c, d))], axis=-3).reshape(-1, 3, 3)
+        self.triangles = np.concatenate([left, left * [1, -1, 1]])
+        self.lo = self.triangles[:, :, :2].min(axis=1)
+        self.hi = self.triangles[:, :, :2].max(axis=1)
+
+    def clearance(self, start, end, radius):
+        import numpy as np
+
+        lo = np.minimum(start[:2], end[:2]) - radius
+        hi = np.maximum(start[:2], end[:2]) + radius
+        candidates = np.all((self.hi >= lo) & (self.lo <= hi), axis=1)
+        slope = (end[2] - start[2]) / (end[0] - start[0])
+        radial = radius * np.sqrt(1 + slope * slope)
+        top = max(start[2], end[2]) + radius
+        room = np.inf
+        for triangle in self.triangles[candidates]:
+            polygon = list(triangle)
+            for axis, bound, sign in ((0, lo[0], 1), (0, hi[0], -1),
+                                      (1, lo[1], 1), (1, hi[1], -1)):
+                clipped = []
+                for a, b in zip(polygon, polygon[1:] + polygon[:1]):
+                    da, db = sign * (a[axis] - bound), sign * (b[axis] - bound)
+                    if da >= 0:
+                        clipped.append(a)
+                    if (da < 0) != (db < 0):
+                        clipped.append(a + (b - a) * da / (da - db))
+                polygon = clipped
+            if polygon:
+                if abs(slope) > 1e-12:
+                    crossing = start[0] + (top - start[2] - radial) / slope
+                    extra = []
+                    for a, b in zip(polygon, polygon[1:] + polygon[:1]):
+                        if (a[0] < crossing) != (b[0] < crossing):
+                            extra.append(a + (b - a) * (crossing - a[0]) / (b[0] - a[0]))
+                    polygon += extra
+                p = np.asarray(polygon)
+                ceiling = np.minimum(top, start[2] + slope * (p[:, 0] - start[0]) + radial)
+                room = min(room, (p[:, 2] - ceiling).min())
+        # Every ring is inside a sphere at its centre; loft faces are in their
+        # convex hull. Both the sloping and horizontal planes bound that hull.
+        return room
+
+    def fit_paths(self, paths, radius):
+        import numpy as np
+
+        paths = [np.asarray(path, dtype=float).copy() for path in paths]
+        for _ in range(24):
+            changed = False
+            blocked = False
+            for k, path in enumerate(paths):
+                drop = np.zeros(len(path))
+                for i, (a, b) in enumerate(zip(path, path[1:])):
+                    gap = self.clearance(a, b, radius)
+                    if gap < .004 - 1e-10:
+                        blocked = True
+                        drop[i:i + 2] = np.maximum(drop[i:i + 2], .008 - gap)
+                # Ease a correction over nearby rings instead of introducing a
+                # sharp kink where a rounded bend has sub-millimetre samples.
+                distance = np.r_[0., np.cumsum(np.linalg.norm(np.diff(path[:, :2], axis=0), axis=1))]
+                drop = np.maximum(0., (drop[None, :] - .35 * abs(distance[:, None] - distance)).max(axis=1))
+                if k:
+                    # The last two centres define the exact rearward collar.
+                    drop[-2:] = 0
+                changed |= bool(drop.any())
+                path[:, 2] -= drop
+            junction = min(path[-1 if k == 0 else 0, 2] for k, path in enumerate(paths))
+            paths[0][-1, 2] = junction
+            for path in paths[1:]:
+                path[0, 2] = junction
+            if not blocked:
+                return [path.tolist() for path in paths]
+            if not changed:
+                break
+        raise ValueError("Exhaust route cannot clear the measured pan at its fixed tip collar")
+
+
 def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Connector]:
     """Detail mounts on the morphed shell; all path metadata is in world metres.
 
@@ -276,6 +369,7 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
         # Preserve a straight collar and its exact rearward terminal tangent.
         exhaust_paths.append([p.tolist() for p in [*rounded, approach, tip]])
         tips.append(tip.tolist())
+    exhaust_paths = _ExhaustFloor(floor_grid).fit_paths(exhaust_paths, .025)
     out.append(PointConnector("exhaust_system", Frame.from_normal(underfloor(midpoint), -Z, X),
                               tags=["exhaust_system"], meta={"paths": exhaust_paths, "tips": tips,
                               "pipe_radius": 0.025, "paths_space": "world", "floor_grid": floor_grid.tolist()}))

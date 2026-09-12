@@ -469,6 +469,45 @@ def test_exhaust_pan_and_tip_fit_follow_morphs(car_body, style, modifiers):
     assert {"pipe_run_0", "pipe_run_1", "pipe_run_2"} <= pipe_only.groups.keys()
 
 
+def test_exhaust_floor_envelope_catches_dips_between_rings():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    # Neither endpoint nor the midpoint sees this narrow low floor station.
+    grid = np.array([[[x, y, z] for y in (0., .4)] for x, z in
+                     ((0., .2), (.21, .2), (.23, .15), (.25, .2), (1., .2))])
+    floor = _ExhaustFloor(grid)
+    path = np.array([[.9, .1, .167], [.1, .1, .167]])
+    assert floor.clearance(*path, .025) == pytest.approx(-.042)
+    fitted, = floor.fit_paths([path], .025)
+    assert floor.clearance(*np.asarray(fitted), .025) >= .004
+    np.testing.assert_allclose(np.asarray(fitted)[:, :2], path[:, :2])
+
+
+def test_exhaust_floor_envelope_checks_lateral_radius_and_slopes():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    # The centreline fits; the outboard edge clips the tunnel shoulder.
+    grid = np.array([[[x, y, z + .1 * x] for y, z in
+                      ((0., .2), (.08, .2), (.12, .14), (.4, .14))] for x in (0., 1.)])
+    floor = _ExhaustFloor(grid)
+    path = np.array([[.9, .075, .257], [.1, .075, .177]])
+    assert floor.clearance(*path, .025) < 0
+    fitted, = floor.fit_paths([path], .025)
+    assert floor.clearance(*np.asarray(fitted), .025) >= .004
+    mirrored = path * MIRROR
+    np.testing.assert_allclose(floor.fit_paths([mirrored], .025)[0], np.asarray(fitted) * MIRROR)
+
+
+def test_exhaust_floor_does_not_accept_a_blocked_fixed_collar():
+    from makecar.body.connectors_extra import _ExhaustFloor
+
+    grid = np.array([[[x, y, .2] for y in (0., .4)] for x in (0., 1.)])
+    paths = [[[.9, 0., .167], [.6, 0., .167]],
+             [[.6, 0., .167], [.3, .1, .195], [.2, .1, .195]]]
+    with pytest.raises(ValueError, match="fixed tip collar"):
+        _ExhaustFloor(grid).fit_paths(paths, .025)
+
+
 def test_diffuser_has_real_tapered_fins_only_on_sporty_styles(detailed_assembly):
     sporty = detailed_assembly.body.hints["style"] in ("sports", "coupe")
     matches = [i for i in detailed_assembly.instances if "diffuser" in i.connector.tags]
