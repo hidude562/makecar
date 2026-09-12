@@ -499,9 +499,11 @@ def interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List
         length = x_cab_rear - meas["x_deck"]
         out.append(RectangleConnector("parcel_shelf", Frame.from_normal([x_cab_rear - length / 2, 0.0, meas["z_deck"] - 0.10], Z, x_hint=X),
                                       length, 2 * inner_half + 0.05, tags=["shelf"]))
-        # trunk floor
-        tl = length + 0.2
-        out.append(RectangleConnector("trunk_floor", Frame.from_normal([x_cab_rear - tl / 2 - 0.05, 0.0, floor + 0.10], Z, x_hint=X),
+        # trunk floor: from the rear bulkhead back to just ahead of the rear bumper
+        # structure (never past the tail, whatever the deck position of the style)
+        x_boot_rear = meas["x_rear"] + 0.28
+        tl = max(0.35, x_cab_rear - x_boot_rear)
+        out.append(RectangleConnector("trunk_floor", Frame.from_normal([x_cab_rear - tl / 2, 0.0, floor + 0.10], Z, x_hint=X),
                                       tl, 2 * inner_half - 0.1, tags=["cargo_floor"], meta={"enclosed": True}))
     elif not has_bed:
         length = x_cab_rear - (meas["x_rear"] + 0.25)

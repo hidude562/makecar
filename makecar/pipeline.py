@@ -112,7 +112,8 @@ def _camera(view: str, mesh_bounds, meas: Dict[str, float], asm: CarAssembly) ->
     raise KeyError(f"unknown view {view!r}")
 
 
-CUTAWAY_HIDE_TAGS = {"glass", "headliner", "antenna", "roof_rail", "rearview_mirror", "dome_light", "grab_handle", "mirror"}
+CUTAWAY_HIDE_TAGS = {"glass", "headliner", "antenna", "roof_rail", "rearview_mirror", "dome_light", "grab_handle", "mirror",
+                     "pillar_trim"}
 
 
 def cutaway_mesh(asm: CarAssembly) -> Mesh:
@@ -130,6 +131,11 @@ def cutaway_mesh(asm: CarAssembly) -> Mesh:
         top = inst.connector
         root = asm.body.connector(top.name.split("/")[0]) if "/" in top.name else top
         if root.tags & CUTAWAY_HIDE_TAGS or top.tags & CUTAWAY_HIDE_TAGS:
+            continue
+        # a part that is mostly above the cut (upper pillar skins) would leave
+        # fragments floating over the open cabin
+        plo, phi = inst.result.mesh.bounds()
+        if plo[2] > zc - 0.02:
             continue
         m.merge(inst.result.mesh)
     return m

@@ -1,0 +1,4 @@
+.cache/
+__pycache__/
+after*_meshes.pkl
+*.pkl.tmp
