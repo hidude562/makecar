@@ -206,6 +206,8 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
                                  meta={"paths": paths, "blade_normals": normals, "path_uv": uv_paths,
                                        "pivots": pivots, "blade_clearance": clearance, "paths_space": "world"}))
 
+    from .connectors import exhaust_mount
+
     # A is now the raised tunnel crown, not the flat pan at B. Retain the
     # measured cross-sections so cans also fit the tunnel's width and ceiling.
     floor_grid = np.array([V[(off + i) * RING_N:(off + i) * RING_N + RING["B"] + 1]
@@ -216,22 +218,30 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
                         for chain in floor_grid.transpose(1, 0, 2)])
         return np.array([x, y, np.interp(abs(y), row[:, 1], row[:, 2]) - clearance])
 
+    def branch_floor(x, y):
+        p = underfloor(x, y=y)
+        # Clearance is normal to a sloping pan, not a fixed vertical radius.
+        # The rear ramp is steep on lowered sports bodies.
+        heights = [underfloor(x + dx, y=y)[2] for dx in (-0.01, 0.01)]
+        slope = max(abs(h - p[2]) for h in heights) / 0.01
+        p[2] += 0.033 - (0.025 * np.sqrt(1 + slope * slope) + 0.008)
+        return p
+
     midpoint = 0.5 * (meas["wheel_front_x"] + meas["wheel_rear_x"])
     junction = underfloor(meas["wheel_rear_x"] + 0.24)
     # Dense tunnel samples keep the system's mesh centroid near its underfloor
     # origin; do not anchor this long component at either rear exhaust tip.
-    main_path = [underfloor(x).tolist() for x in np.linspace(meas["wheel_front_x"] + 0.16, junction[0], 61)]
+    main_path = [underfloor(x).tolist() for x in np.linspace(meas["wheel_front_x"] + 0.16, junction[0], 161)]
     exhaust_paths, tips = [main_path], []
     for _, sign, _ in sides:
-        # Use the built-in mounts' actual lateral fascia ray and rearward axis,
-        # not the obsolete centre-apex plane (the plate pocket is recessed).
-        tip = fascia_point(mesh, "rear", meas["tail_z_bottom"] + 0.10,
-                           sign * (meas["tail_half_width"] - 0.32), rear_triangles)
-        approach = tip + X * 0.14
-        bend = underfloor(meas["wheel_rear_x"] - 0.15, clearance=0.04, y=tip[1] * 0.65)
+        # The exact shared mount derivation keeps both terminal position and
+        # rearward tangent aligned with the below-valance exhaust outlets.
+        tip = exhaust_mount(mesh, meas, sign)
+        approach = tip + X * 0.04
+        bend = branch_floor(meas["wheel_rear_x"] - 0.15, tip[1] * 0.65)
         # Drop under the flat pan *before* turning out of the raised tunnel.
         # A diagonal directly from the crown-height junction cuts its shoulder.
-        drop = underfloor(junction[0] - 0.16, clearance=0.04, y=bend[1])
+        drop = branch_floor(junction[0] - 0.16, bend[1])
         drop[1] = tip[1] * 0.10
         # Follow every pan slope change until the short entry into the rear
         # bumper. A straight bend-to-tip diagonal passes through most of the
@@ -242,17 +252,29 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
         rear_path = []
         for x in samples:
             t = (bend[0] - x) / (bend[0] - rear_x)
-            # Extra vertical room clears the radius around the rising rear pan,
-            # where a tilted sweep needs more than its nominal radius in Z.
-            p = underfloor(x, clearance=0.04, y=bend[1] * (1-t) + tip[1] * t)
+            p = branch_floor(x, bend[1] * (1-t) + tip[1] * t)
             # Drop redundant stations along straight stretches of pan, but
             # retain every actual change of slope in the measured profile.
             while len(rear_path) > 1 and np.linalg.norm(np.cross(
                     rear_path[-1] - rear_path[-2], p - rear_path[-1])) < 1e-10:
                 rear_path.pop()
             rear_path.append(p)
-        exhaust_paths.append([junction.tolist(), drop.tolist(), *[p.tolist() for p in rear_path],
-                              approach.tolist(), tip.tolist()])
+        route = [junction, drop, *rear_path, approach, tip]
+        rounded = [junction]
+        for before, point, after in zip(route, route[1:-2], route[2:-1]):
+            incoming, outgoing = point - before, after - point
+            lengths = np.linalg.norm(incoming), np.linalg.norm(outgoing)
+            a, b = incoming / lengths[0], outgoing / lengths[1]
+            if np.dot(a, b) > 0.999:
+                rounded.append(point)
+                continue
+            distance = min(0.075, 0.35 * min(lengths))
+            entry, exit = point - distance * a, point + distance * b
+            for p in (entry, (entry + 2 * point + exit) / 4, exit):
+                p[2] = min(p[2], branch_floor(p[0], p[1])[2])
+                rounded.append(p)
+        # Preserve a straight collar and its exact rearward terminal tangent.
+        exhaust_paths.append([p.tolist() for p in [*rounded, approach, tip]])
         tips.append(tip.tolist())
     out.append(PointConnector("exhaust_system", Frame.from_normal(underfloor(midpoint), -Z, X),
                               tags=["exhaust_system"], meta={"paths": exhaust_paths, "tips": tips,

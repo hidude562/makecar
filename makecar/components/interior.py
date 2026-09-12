@@ -403,6 +403,19 @@ class BenchSeat(MorphableComponent):
         for k, y in enumerate(ys):
             res.mesh.merge(_headrest(top + np.array([0.0, y, 0.0]), u, t, 0.22, 0.18, 0.05), group_prefix=f"headrest_{k}")
         res.info["headrests"] = n
+        if ctx.measurements.get("has_bed", 0.0) > 0.5:
+            # Custom recline can exceed the default bench envelope reserved by
+            # the pickup's mount allocator. Report the completed seat's actual
+            # clearance to the measured cab wall + its default 20 mm trim;
+            # never shorten the seat or silently override its requested pose.
+            wall_x = min(ctx.measurements["x_deck"] - 0.05,
+                         ctx.measurements["x_roof_rear"] + 0.15) + 0.02
+            clearance = float(conn.frame.to_world(res.mesh.vertices)[:, 0].min() - wall_x)
+            res.info["cab_rear_clearance"] = clearance
+            if clearance < 0:
+                res.info.setdefault("fit_warnings", []).append(
+                    f"Bench exceeds the pickup cab rear clearance by {-clearance:.3f} m; "
+                    "reduce recline or use seat_rows: 2.")
         _finish(res.mesh, ctx)
         res.mesh.materials = {k: v for k, v in res.mesh.materials.items() if k in set(res.mesh.face_materials)}
         return res
