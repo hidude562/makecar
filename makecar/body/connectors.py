@@ -301,6 +301,8 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
 
     # -------------------------------------------------------------- interior
     out += interior_connectors(mesh, meas, hints)
+    from .connectors_extra import extra_exterior_connectors
+    out += extra_exterior_connectors(mesh, meas, hints)
     return out
 
 
@@ -463,4 +465,6 @@ def interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List
         length = meas["x_deck"] - meas["x_rear"] - 0.1
         out.append(RectangleConnector("bed_floor", Frame.from_normal([meas["x_rear"] + 0.05 + length / 2, 0.0, meas["z_deck"] - meas["bed"] + 0.01], Z, x_hint=X),
                                       length, 2 * (meas["roof_half_width"] - 0.05), tags=["cargo_floor", "bed"], meta={"enclosed": False}))
+    from .connectors_extra import extra_interior_connectors
+    out += extra_interior_connectors(mesh, meas, hints)
     return out
