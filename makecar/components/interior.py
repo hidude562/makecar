@@ -1034,6 +1034,18 @@ class RoundCupholder(CarComponent):
 
 
 # =============================================================== FLOOR / PANELS / SHELVES
+def _front_wheelhouse(ctx):
+    """Rear X, crown Z and inboard Y of the measured front wheel-house envelope."""
+    meas = ctx.measurements
+    if not all(k in meas for k in ("wheel_front_x", "wheel_front_y", "wheel_front_z", "arch_front_r")):
+        return None
+    radius = meas["arch_front_r"]
+    tyre_width = float(ctx.hints.get("tire_width", 0.225))
+    return (meas["wheel_front_x"] - radius - 0.025,
+            meas["wheel_front_z"] + radius + 0.025,
+            meas["wheel_front_y"] - tyre_width - 0.035)
+
+
 @register
 class CarpetFloor(CarComponent):
     """Carpet slab with a raised transmission tunnel (tapering under the rear
@@ -1052,6 +1064,12 @@ class CarpetFloor(CarComponent):
         ramp = float(opts["toe_ramp"])
         x_front = Lx / 2
         xs = np.unique(np.concatenate([np.linspace(-Lx / 2, Lx / 2, 22), [x_front - 0.25, x_front - 1.3, x_front - 1.6]]))
+        wheelhouse = _front_wheelhouse(ctx)
+        if wheelhouse is not None:
+            rear_x = wheelhouse[0] - conn.origin[0]
+            # Finish the inset before the arch begins; explicit stations keep
+            # a long floor quad from cutting diagonally through the tyre.
+            xs = np.unique(np.r_[xs, np.clip([rear_x - 0.08, rear_x], -Lx / 2, Lx / 2)])
         ys = np.unique(np.concatenate([np.linspace(-Wy / 2, Wy / 2, 15), np.linspace(-hw, hw, 9)]))
 
         def z_top(X, Y):
@@ -1062,6 +1080,13 @@ class CarpetFloor(CarComponent):
             return 0.01 + tunnel * hfac + toe
 
         m = H.heightfield_slab(xs, ys, z_top, -0.01, "int_carpet", name="carpet")
+        if wheelhouse is not None and wheelhouse[2] < Wy / 2:
+            inner = wheelhouse[2]
+            fixed_half = min(0.60, inner - 0.04)
+            blend = H.smoothstep(rear_x - 0.08, rear_x, m.vertices[:, 0])
+            lateral = np.abs(m.vertices[:, 1])
+            inset = np.clip((lateral - fixed_half) / (Wy / 2 - fixed_half), 0, 1)
+            m.vertices[:, 1] -= np.sign(m.vertices[:, 1]) * inset * blend * (Wy / 2 - inner)
         xh = ctx.measurements.get("x_cowl", conn.origin[0] + Lx / 2) - float(ctx.hints.get("front_h_point_offset", 0.95))
         lateral = min(0.42, Wy / 2 - 0.30)
         for row, (ahead, length) in enumerate(((0.58, 0.50), (-0.28, 0.40))):
@@ -1087,17 +1112,43 @@ class BulkheadTrim(CarComponent):
         m = P.rounded_box(conn.width - 0.01, conn.height - 0.01, t, 0.03, material="int_carpet" if conn.meta.get("position") == "front" else "int_plastic",
                           center=(0, 0, t / 2), name="bulkhead")
         if conn.meta.get("position") == "front":
-            # Original mount only covers the lower 320 mm.  Continue behind the
-            # dashboard to the windshield base, with returns closing its ends.
+            # Close the cowl, but wrap the lower firewall around the front
+            # wheel houses rather than carrying a full-width slab through the
+            # tyre and rim. The upper cowl stays at its original full width.
             top = ctx.measurements["z_cowl"] - 0.025 - conn.origin[2]
             bottom = -conn.height / 2
             upper_bottom = conn.height / 2 - 0.015
+            wheelhouse = _front_wheelhouse(ctx)
+            intrudes = wheelhouse is not None and conn.origin[0] > wheelhouse[0]
+
+            def levels(lo, hi):
+                if not intrudes:
+                    return [lo, hi]
+                crown = wheelhouse[1] - conn.origin[2]
+                return np.unique(np.r_[lo, np.clip([crown, crown + 0.04], lo, hi), hi])
+
+            def width_at(y, width):
+                if not intrudes:
+                    return width
+                blend = H.smoothstep(wheelhouse[1], wheelhouse[1] + 0.04, y + conn.origin[2])
+                inner = min(width, 2 * wheelhouse[2])
+                return inner + (width - inner) * blend
+
+            def panel(lo, hi, width, material):
+                heights = levels(lo, hi)
+                sections = [rounded_rect_points(width_at(y, width), t, min(0.008, t / 3), 3) for y in heights]
+                origins = [[0, y, t / 2] for y in heights]
+                return H.orient_outward(H.section_loft(sections, origins, np.array([1, 0, 0]), np.array([0, 0, 1]), material))
+
+            m = panel(bottom + 0.005, conn.height / 2 - 0.005, conn.width - 0.01, "int_carpet")
             if top > upper_bottom:
-                m.merge(H.named(P.box(conn.width, top - upper_bottom, t, material="int_plastic",
-                                      center=(0, (top + upper_bottom) / 2, t / 2)), "upper_firewall"))
+                m.merge(H.named(panel(upper_bottom, top, conn.width, "int_plastic"), "upper_firewall"))
             for sign in (-1, 1):
-                m.merge(H.named(P.box(0.024, top - bottom, 0.16, material="int_plastic",
-                                      center=(sign * (conn.width / 2 - 0.012), (top + bottom) / 2, 0.08)), f"firewall_return_{sign}"))
+                heights = levels(bottom, top)
+                sections = [rounded_rect_points(0.024, 0.16, 0.004, 3) for _ in heights]
+                origins = [[sign * (width_at(y, conn.width) / 2 - 0.012), y, 0.08] for y in heights]
+                side = H.orient_outward(H.section_loft(sections, origins, np.array([1, 0, 0]), np.array([0, 0, 1]), "int_plastic"))
+                m.merge(H.named(side, f"firewall_return_{sign}"))
         return ComponentResult(_finish(m, ctx))
 
 

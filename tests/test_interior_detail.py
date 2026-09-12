@@ -281,6 +281,48 @@ def test_explicit_two_row_pickup_keeps_original_mounts_and_pitch():
     assert seat.meta["legroom"] == pytest.approx(0.86)
 
 
+def test_carpet_and_firewall_clear_front_wheel_solids(cabin):
+    parts = instances(cabin)
+    for side, sign in (("L", 1), ("R", -1)):
+        wheel = cabin.body.connector(f"wheel_front_{side}")
+        tyre_width = wheel.meta["tire_width"]
+        inner = abs(wheel.origin[1]) - tyre_width / 2 - 0.020
+        centre = wheel.origin[[0, 2]]
+        for name in ("floor", "firewall"):
+            mesh = parts[name].result.mesh
+            triangles, _ = mesh.triangulated()
+            for triangle in mesh.vertices[triangles]:
+                # Clip each triangle to the tyre's lateral band. Testing only
+                # vertices misses the old full-width firewall/floor faces.
+                polygon = list(triangle)
+                for boundary, sense in ((inner, 1), (inner + tyre_width + 0.040, -1)):
+                    clipped = []
+                    for a, b in zip(polygon, polygon[1:] + polygon[:1]):
+                        da, db = sense * (sign * a[1] - boundary), sense * (sign * b[1] - boundary)
+                        if da >= 0:
+                            clipped.append(a)
+                        if (da >= 0) != (db >= 0):
+                            clipped.append(a + (b - a) * da / (da - db))
+                    polygon = clipped
+                    if not polygon:
+                        break
+                if not polygon:
+                    continue
+                points = np.asarray(polygon)[:, [0, 2]] - centre
+                ends = np.roll(points, -1, axis=0)
+                edges = ends - points
+                cross = points[:, 0] * ends[:, 1] - points[:, 1] * ends[:, 0]
+                inside = abs(cross.sum()) > 1e-12 and (np.all(cross >= -1e-12) or np.all(cross <= 1e-12))
+                projection = np.clip(-np.sum(points * edges, axis=1) / np.maximum(np.sum(edges * edges, axis=1), 1e-20), 0, 1)
+                distance = 0.0 if inside else np.linalg.norm(points + projection[:, None] * edges, axis=1).min()
+                assert distance >= wheel.radius + 0.020 - 1e-8, (cabin.body.hints["style"], name, side, distance)
+    # Closure is reshaped rather than deleted; the cowl keeps its full span.
+    firewall = parts["firewall"]
+    upper = firewall.result.mesh.vertices[firewall.result.mesh.groups["upper_firewall"]]
+    assert np.ptp(upper[:, 1]) == pytest.approx(firewall.connector.width)
+    assert {"firewall_return_-1", "firewall_return_1"} <= firewall.result.mesh.groups.keys()
+
+
 def test_cargo_wheelhouses_track_rear_axle(cabin):
     if cabin.body.measurements["has_bed"]:
         return
