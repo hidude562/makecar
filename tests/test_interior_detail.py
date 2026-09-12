@@ -273,6 +273,25 @@ def test_pickup_rear_mounts_clear_the_trimmed_cab_wall_without_losing_rows(rows)
         assert _seat_section_gap(parts[leading].result.mesh, parts[following].result.mesh) > 0.25
 
 
+@pytest.mark.parametrize("rows,recline,warning", [("auto", 24, False), (2, 24, False),
+                                                  (2, 30, False), (3, 30, True)])
+def test_pickup_custom_bench_recline_reports_actual_cab_clearance(rows, recline, warning):
+    cabin = assemble(CarBody().build("pickup", hints={"seat_rows": rows}),
+                     {"assign": {"seat_bench": {"options": {"recline_deg": recline}}}})
+    parts = instances(cabin)
+    seat = parts["seat_row3" if rows in ("auto", 3) else "seat_row2"]
+    actual = seat.result.mesh.bounds()[0][0] - parts["rear_bulkhead"].result.mesh.bounds()[1][0]
+    assert seat.result.info["cab_rear_clearance"] == pytest.approx(actual)
+    assert (actual < 0) == warning
+    assert bool(seat.result.info.get("fit_warnings")) == warning
+    # Diagnosis does not change the chosen pose or remove any headrests.
+    fitted = H.params_from_values(get_component("seat.bench"), seat.result.info["modifier_values"])
+    assert fitted.recline_deg == pytest.approx(recline)
+    assert seat.result.info["headrests"] == 3
+    if warning:
+        assert "seat_rows: 2" in seat.result.info["fit_warnings"][0]
+
+
 def test_explicit_two_row_pickup_keeps_original_mounts_and_pitch():
     body = CarBody().build("pickup", hints={"seat_rows": 2})
     seat = body.connector("seat_row2")
