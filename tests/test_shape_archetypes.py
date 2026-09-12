@@ -291,8 +291,8 @@ class TestStyleDefaultsAndOverrides:
             profiles[style] = np.array(widths)
         for first, second in combinations(STYLES, 2):
             difference = abs(profiles[first] - profiles[second])
-            assert np.sqrt(np.mean(difference ** 2)) > 0.012, (first, second)
-            assert np.max(difference) > 0.055, (first, second)
+            assert np.sqrt(np.mean(difference ** 2)) > 0.02, (first, second)
+            assert np.max(difference) > 0.09, (first, second)
 
     def test_every_style_has_a_valid_default_mix(self):
         assert set(STYLE_SHAPE_DEFAULTS) == set(STYLES)
