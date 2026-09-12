@@ -64,7 +64,11 @@ class BodyParams:
     shoulder_rise: float = 0.03
     shoulder_radius: float = 0.025    # definite rolled shoulder, not a spline bulge
     fender_crease: float = 0.012       # hood skin below fender top
-    a_pillar_lean: float = 0.45        # as fraction of windshield_length
+    a_pillar_lean: float = 0.98        # fraction of windshield run (1 = parallel to glass)
+    a_pillar_width: float = 0.070      # longitudinal pillar band at the cowl
+    glass_recess: float = 0.008        # inward normal offset below the frame
+    roof_edge_radius: float = 0.025   # rolled roof-side edge
+    drip_rail: float = 0.004          # bead proud of the rolled roof edge
     c_pillar_lean: float = 0.35        # as fraction of rear_window_length
     front_door_length: float = 1.32    # cowl -> B pillar centre
     b_pillar_width: float = 0.10

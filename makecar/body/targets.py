@@ -68,6 +68,11 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("roof_width_ratio", 0.08, 0.10, "greenhouse", "tumblehome (narrow <-> wide roof)"),
     ModifierSpec("roof_crown", 0.02, 0.04, "greenhouse", "transverse roof curvature"),
     ModifierSpec("shoulder_inset", 0.03, 0.04, "greenhouse", "glass base inboard of the belt"),
+    ModifierSpec("a_pillar_width", 0.025, 0.04, "greenhouse", "A-pillar painted band width"),
+    ModifierSpec("c_pillar_width", 0.03, 0.08, "greenhouse", "C-pillar longitudinal width"),
+    ModifierSpec("glass_recess", 0.006, 0.008, "greenhouse", "glass below the pillar surface"),
+    ModifierSpec("roof_edge_radius", 0.010, 0.015, "greenhouse", "rolled roof-side edge radius"),
+    ModifierSpec("drip_rail", 0.003, 0.004, "greenhouse", "roof-edge drip bead projection"),
     ModifierSpec("a_pillar_lean", 0.25, 0.30, "greenhouse", "A pillar diagonal"),
     ModifierSpec("c_pillar_lean", 0.25, 0.30, "greenhouse", "C pillar diagonal"),
     ModifierSpec("front_door_length", 0.25, 0.30, "greenhouse", "B pillar position"),
@@ -152,7 +157,7 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 6
+LIBRARY_VERSION = 8
 
 
 def _cache_dir():

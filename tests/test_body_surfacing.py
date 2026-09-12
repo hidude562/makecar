@@ -119,3 +119,62 @@ class TestSheetMetal:
         r = BodyGenerator(BodyParams(fender_crease=depth)).ring(station_index("cowl") + 3)
         assert r[RING["F"], 2] - r[RING["F"] + 1, 2] == pytest.approx(depth)
         assert r[RING["F"], 1] - r[RING["F"] + 1, 1] == pytest.approx(0.006)
+
+
+class TestGreenhouse:
+    @pytest.mark.parametrize("depth", [0.002, 0.008, 0.016])
+    def test_glass_and_boundaries_sink_by_normal_distance(self, depth):
+        flush = mesh(BodyParams(glass_recess=0))
+        recessed = mesh(BodyParams(glass_recess=depth))
+        vertices = set()
+        for name, (r0, r1, j0, j1) in flush.meta["aperture_rects"].items():
+            if "light" in name:
+                continue
+            for row in range(r0, r1 + 2):
+                vertices.update(row * RING_N + j for j in range(j0, j1 + 2))
+        ids = sorted(vertices)
+        delta = recessed.vertices - flush.vertices
+        assert np.allclose(np.linalg.norm(delta[ids], axis=1), depth)
+        other = np.ones(flush.n_vertices, bool)
+        other[ids] = False
+        assert np.allclose(delta[other], 0)  # frame surface is not sunk with the glass
+
+    def test_apertures_have_unbroken_painted_frame_bands(self):
+        m = mesh()
+        for name, (r0, r1, j0, j1) in m.meta["aperture_rects"].items():
+            if "light" in name:
+                continue
+            for row in range(r0, r1 + 1):
+                assert m.face_materials[row * RING_N + j0 - 1] == "paint"
+                assert m.face_materials[row * RING_N + j1 + 1] == "paint"
+            for j in range(j0, j1 + 1):
+                assert m.face_materials[(r0 - 1) * RING_N + j] == "paint"
+                assert m.face_materials[(r1 + 1) * RING_N + j] == "paint"
+
+    def test_side_glass_top_follows_roof_curve(self):
+        m = mesh()
+        r0, r1, _, j1 = m.meta["aperture_rects"]["aperture/glass_front_L"]
+        top = m.vertices[np.arange(r0, r1 + 2) * RING_N + j1 + 1]
+        t = (top[:, 0] - top[0, 0]) / (top[-1, 0] - top[0, 0])
+        chord = top[0, 2] + (top[-1, 2] - top[0, 2]) * t
+        assert len(top) >= 6
+        assert np.max(np.abs(top[:, 2] - chord)) > 0.0005
+
+    def test_a_and_c_pillar_widths_move_mesh_boundaries(self):
+        p = BodyParams()
+        a = mesh(p)
+        b = mesh(replace(p, a_pillar_width=p.a_pillar_width + 0.025))
+        assert group(b, "ring/roof_front")[RING["F"], 0] - group(a, "ring/roof_front")[RING["F"], 0] == pytest.approx(-0.025)
+        c = mesh(replace(p, c_pillar_width=p.c_pillar_width + 0.04))
+        assert group(c, "ring/cp_f")[RING["G"], 0] - group(a, "ring/cp_f")[RING["G"], 0] == pytest.approx(0.04)
+
+    def test_roof_radius_and_drip_bead_do_not_inflate_roof(self):
+        p = BodyParams()
+        g = BodyGenerator(p)
+        r = g.ring(station_index("bp_f"))
+        radius = BodyGenerator(replace(p, roof_edge_radius=p.roof_edge_radius + 0.01)).ring(station_index("bp_f"))
+        bead = BodyGenerator(replace(p, drip_rail=p.drip_rail + 0.004)).ring(station_index("bp_f"))
+        assert radius[RING["G"], 2] - r[RING["G"], 2] == pytest.approx(-0.005)
+        assert bead[RING["G"] + 1, 2] - r[RING["G"] + 1, 2] == pytest.approx(0.004)
+        assert np.allclose(radius[RING["H"]], r[RING["H"]])
+        assert np.allclose(bead[RING["H"]], r[RING["H"]])

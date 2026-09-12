@@ -64,10 +64,10 @@ def mirror_index(j: int) -> int:
 # ----------------------------------------------------------------------------
 # Station allocation (fixed counts per chain interval)
 # ----------------------------------------------------------------------------
-UPPER_COUNTS = [6, 6, 1, 1, 6, 1, 3, 8, 12]   # 9 intervals of the greenhouse chain
-LOWER_COUNTS = [6, 5, 5, 12, 5, 5, 6]          # 7 intervals of the arch chain
+UPPER_COUNTS = [6, 8, 4, 1, 8, 1, 8, 10, 12]  # glass boundaries have dedicated frame rows
+LOWER_COUNTS = [6, 6, 6, 22, 6, 6, 6]          # arch chords retain independent stations
 assert sum(UPPER_COUNTS) == sum(LOWER_COUNTS)
-N_STATIONS = sum(UPPER_COUNTS) + 1              # 45 rings in the main loft
+N_STATIONS = sum(UPPER_COUNTS) + 1              # 59 rings in the main loft
 N_FASCIA = 6                                    # corner, face, pocket rim and pocket floor
 UPPER_NAMES = ["rear", "deck", "roof_rear", "cp_r", "cp_f", "bp_r", "bp_f", "roof_front", "cowl", "front"]
 LOWER_NAMES = ["rear", "ra_start", "ra", "ra_end", "fa_start", "fa", "fa_end", "front"]
@@ -100,6 +100,14 @@ class BodyGenerator:
         self.L = params.layout()
         self.x_lo = _station_positions(self.L["lower"], LOWER_COUNTS)
         self.x_hi = _station_positions(self.L["upper"], UPPER_COUNTS)
+        # Reserve a 25 mm painted frame at both ends of every glass patch.
+        # Interior samples still follow the roof curve, rather than a long quad
+        # whose top edge would be a straight chord across the whole door.
+        for start, end in (("deck", "roof_rear"), ("roof_rear", "cp_r"),
+                           ("cp_f", "bp_r"), ("bp_f", "roof_front"), ("roof_front", "cowl")):
+            a, b = station_index(start), station_index(end)
+            frame = min(0.025, (self.x_hi[b] - self.x_hi[a]) * 0.18)
+            self.x_hi[a + 1:b] = np.linspace(self.x_hi[a] + frame, self.x_hi[b] - frame, b - a - 1)
         assert len(self.x_lo) == len(self.x_hi) == N_STATIONS
         self._make_profiles()
 
@@ -178,7 +186,7 @@ class BodyGenerator:
             ]
         )
         # pillar lean (x shift of the glass base relative to the roof rail)
-        lean_a = p.a_pillar_lean * p.windshield_length
+        lean_a = max(0.0, min(p.a_pillar_lean, 1.0) * p.windshield_length - p.a_pillar_width)
         lean_c = p.c_pillar_lean * p.rear_window_length
         self.lean = Profile(
             [
@@ -190,7 +198,8 @@ class BodyGenerator:
                 (L["u_roof_front"], lean_a),
                 (L["u_cowl"], 0.0),
                 (xf, 0.0),
-            ]
+            ],
+            sharp=[True] * 8,  # a narrow pillar must not fold back at the cowl
         )
         # pickup bed weight/depth
         if p.bed_depth > 0:
@@ -374,9 +383,71 @@ class BodyGenerator:
             for k in range(jF + 2, jG):
                 t = (k - jF - 1) / (jG - jF - 1)
                 ring[k] = root * (1 - t) + G * t
+        elif self.L["u_deck"] < xh < self.L["u_cowl"]:
+            t_roof = np.clip((xh - self.L["u_roof_rear"]) /
+                             max(self.L["u_roof_front"] - self.L["u_roof_rear"], 1e-9), 0, 1)
+            rail_arch = 0.018 * np.sin(np.pi * t_roof)
+            G[2] += rail_arch
+            ring[RING["G2"], 2] += rail_arch * 0.6
+            ring[RING["G3"], 2] += rail_arch * 0.15
+            radius = p.roof_edge_radius
+            ring[jG] = G - [0, 0, radius / 2]
+            # Circular rolled edge and a raised drip bead. G2 remains on the
+            # roof crown so changing the edge never inflates the whole roof.
+            ring[jG + 1] = G + [0, -radius * (1 - np.cos(np.pi / 4)),
+                                    radius * (np.sin(np.pi / 4) - 0.5)]
+            ring[jG + 1, 1] += p.drip_rail * 0.5
+            ring[jG + 1, 2] += p.drip_rail
+            ring[jG + 2] = G + [0, -max(radius, p.a_pillar_width * 0.5), radius * 0.5]
+            ring[jG + 3] = (ring[jG + 2] + ring[RING["G2"]]) / 2
+            # Glass boundaries are 20 mm from the belt and roof rail. The
+            # remaining eight vertices trace the curved strip, not the frame.
+            rail = ring[jG].copy()
+            band = min(0.08, 0.020 / max(np.linalg.norm(rail - F), 1e-9))
+            ts = np.r_[0.0, np.linspace(band, 1 - band, jG - jF - 1)]
+            for k, t in enumerate(ts):
+                ring[jF + k] = F * (1 - t) + rail * t
+                ring[jF + k, 1] += 0.003 * np.sin(np.pi * t)
         # Do not let independent spline evaluation introduce asymmetric flanges.
         for j in range(1, HALF_N):
             ring[mirror_index(j)] = ring[j] * [1, -1, 1]
+
+    def _glass_regions(self):
+        """Rectangular aperture cells, excluding the painted perimeter bands."""
+        jF, jG = RING["F"], RING["G"]
+        regions = {}
+        top = range(jG + 2, RING_N - jG - 2)
+        for name, start, end in (("windshield", "roof_front", "cowl"), ("rear_window", "deck", "roof_rear")):
+            regions[f"aperture/{name}"] = (range(station_index(start) + 1, station_index(end) - 1), top)
+        for name, start, end in (("front", "bp_f", "roof_front"), ("rear", "cp_f", "bp_r"),
+                                  ("quarter", "roof_rear", "cp_r")):
+            if name == "quarter" and self.p.quarter_window_length <= 0.15:
+                continue
+            rows = range(station_index(start) + 1, station_index(end) - 1)
+            regions[f"aperture/glass_{name}_L"] = (rows, range(jF + 1, jG - 1))
+            regions[f"aperture/glass_{name}_R"] = (rows, range(RING_N - jG + 1, RING_N - jF - 1))
+        return regions
+
+    def _recess_glass(self, rings):
+        """Sink every glass vertex, including its boundary, along its normal.
+
+        Adjacent frame vertices are left on the original shell. The intervening
+        narrow face is a real reveal, so the aperture connector and its grid
+        inherit the recess without a component-specific displacement trick.
+        """
+        surface = np.asarray(rings)
+        along = np.gradient(surface, axis=0)
+        around = np.roll(surface, -1, axis=1) - np.roll(surface, 1, axis=1)
+        normals = np.cross(around, along)
+        normals /= np.maximum(np.linalg.norm(normals, axis=2, keepdims=True), 1e-9)
+        glass = np.zeros(surface.shape[:2], dtype=bool)
+        for rows, cols in self._glass_regions().values():
+            glass[rows.start:rows.stop + 1, cols.start:cols.stop + 1] = True
+        surface[glass] -= self.p.glass_recess * normals[glass]
+        # Exact mirror symmetry is part of the fixed-target contract.
+        for j in range(1, HALF_N):
+            surface[:, mirror_index(j)] = surface[:, j] * [1, -1, 1]
+        return list(surface)
 
     # --------------------------------------------------------------- build
     def build(self) -> Mesh:
@@ -384,7 +455,8 @@ class BodyGenerator:
         rings = [self.ring(i) for i in range(N_STATIONS)]
         # nose / tail rake: shift the top rearwards progressively over the corner run
         rings = self._apply_rake(rings)
-        # fascia rings (shrinking towards the face centre) and apexes
+        rings = self._recess_glass(rings)
+        # fascia rings and flat pocket centres
         rear_fascia, rear_apex = self._fascia(rings[0], forward=False)
         front_fascia, front_apex = self._fascia(rings[-1], forward=True)
         all_rings = rear_fascia[::-1] + rings + front_fascia
@@ -552,22 +624,9 @@ class BodyGenerator:
                 rects[zone] = (min(rows), max(rows), min(cols), max(cols))
 
         jF, jG, jH, jE, jD, jC = RING["F"], RING["G"], RING["H"], RING["E"], RING["D"], RING["C"]
-        top = range(jG, RING_N - jG)                 # roof arc between the two roof rails
-        left_glass = range(jF, jG)
-        right_glass = range(RING_N - jG, RING_N - jF)
-        # windshield & rear window
-        add("aperture/windshield", range(u("roof_front"), u("cowl")), top)
-        if p.bed_depth <= 0 or True:
-            add("aperture/rear_window", range(u("deck"), u("roof_rear")), top)
-        # side glass
-        add("aperture/glass_front_L", range(u("bp_f"), u("roof_front")), left_glass)
-        add("aperture/glass_front_R", range(u("bp_f"), u("roof_front")), right_glass)
-        add("aperture/glass_rear_L", range(u("cp_f"), u("bp_r")), left_glass)
-        add("aperture/glass_rear_R", range(u("cp_f"), u("bp_r")), right_glass)
-        if p.quarter_window_length > 0.15:
-            add("aperture/glass_quarter_L", range(u("roof_rear"), u("cp_r")), left_glass)
-            add("aperture/glass_quarter_R", range(u("roof_rear"), u("cp_r")), right_glass)
-        # lights: wrap-around corner strips (shoulder + top corner) at the nose/tail
+        for name, (rows, cols) in self._glass_regions().items():
+            add(name, range(rows.start + off, rows.stop + off), cols)
+        # lights: wrap-around corner strips at the nose/tail
         n_front = 3
         n_rear = 3
         jL = jE - 3  # lights extend down the fender side to mid height of the D->E strip
