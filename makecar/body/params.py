@@ -40,7 +40,15 @@ class BodyParams:
     hood_crown: float = 0.03
     nose_width_ratio: float = 0.72  # flat nose width / body width
     front_corner_length: float = 0.55  # plan-view corner rounding run
-    front_fascia_rake: float = 0.08    # nose top set back relative to bumper bottom
+    front_fascia_rake: float = 0.03    # upper fascia setback (bumper stays vertical)
+    bumper_projection: float = 0.035  # bumper face proud of the end ring
+    bumper_crease_height: float = 0.60
+    hood_overhang: float = 0.03       # hood lip proud of the upper grille face
+    front_splitter: float = 0.025    # lower lip projection beyond the bumper
+    rear_bumper_crease_height: float = 0.62
+    plate_recess: float = 0.025      # depth of the rear licence-plate pocket
+    diffuser_step: float = 0.012     # lower rear valance setback
+    tailgate_panel: float = 0.0      # lower tailgate panel setback (two-box bodies)
     # ---- greenhouse ----------------------------------------------------------
     windshield_length: float = 0.90    # horizontal run of the windshield
     roof_height: float = 1.45

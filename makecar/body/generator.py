@@ -68,7 +68,7 @@ UPPER_COUNTS = [6, 6, 1, 1, 6, 1, 3, 8, 12]   # 9 intervals of the greenhouse ch
 LOWER_COUNTS = [6, 5, 5, 12, 5, 5, 6]          # 7 intervals of the arch chain
 assert sum(UPPER_COUNTS) == sum(LOWER_COUNTS)
 N_STATIONS = sum(UPPER_COUNTS) + 1              # 45 rings in the main loft
-N_FASCIA = 2                                    # extra shrinking rings per end
+N_FASCIA = 6                                    # corner, face, pocket rim and pocket floor
 UPPER_NAMES = ["rear", "deck", "roof_rear", "cp_r", "cp_f", "bp_r", "bp_f", "roof_front", "cowl", "front"]
 LOWER_NAMES = ["rear", "ra_start", "ra", "ra_end", "fa_start", "fa", "fa_end", "front"]
 
@@ -373,36 +373,102 @@ class BodyGenerator:
 
     # ------------------------------------------------------------ details
     def _apply_rake(self, rings: List[np.ndarray]) -> List[np.ndarray]:
+        """Keep the bumper upright; rake only the upper nose and tail panels.
+
+        The nominal ends include the bumper/lip, not an extra cap extension.
+        Arch vertices are untouched because their stations are outside the corner.
+        """
         p, L = self.p, self.L
         out = []
-        xf, xr = L["x_front"], L["x_rear"]
-        rake_f = min(p.front_fascia_rake, 0.45 * p.front_corner_length)
-        rake_r = min(abs(p.rear_fascia_rake), 0.45 * p.rear_corner_length) * np.sign(p.rear_fascia_rake)
-        for i, r in enumerate(rings):
-            r = r.copy()
-            xh = self.x_hi[i]
-            zmin, zmax = r[:, 2].min(), r[:, 2].max()
-            tz = (r[:, 2] - zmin) / max(zmax - zmin, 1e-6)
-            tf = np.clip((xh - (xf - p.front_corner_length)) / max(p.front_corner_length, 1e-6), 0, 1)
-            tr = np.clip(((xr + p.rear_corner_length) - xh) / max(p.rear_corner_length, 1e-6), 0, 1)
-            r[:, 0] -= rake_f * tf ** 2 * tz
-            r[:, 0] -= rake_r * tr ** 2 * tz
+        for i, ring in enumerate(rings):
+            r = ring.copy()
+            # Each vertex follows its own longitudinal chain (important at arches).
+            for forward, end, run in ((True, L["x_front"], p.front_corner_length),
+                                      (False, L["x_rear"], p.rear_corner_length)):
+                sign = 1 if forward else -1
+                w = np.clip(1 - sign * (end - r[:, 0]) / max(run, 1e-6), 0, 1) ** 2
+                reserve = p.bumper_projection + (p.front_splitter if forward else 0.0)
+                r[:, 0] -= sign * reserve * w
+                crease = p.bumper_crease_height if forward else p.rear_bumper_crease_height
+                top = p.hood_front_height if forward else p.deck_rear_height
+                rake = p.front_fascia_rake if forward else -p.rear_fascia_rake
+                upper = np.clip((r[:, 2] - crease) / max(top - crease, 0.08), 0, 1)
+                r[:, 0] -= sign * rake * w * upper
             out.append(r)
         return out
 
+    def _fascia_x(self, y, z, forward: bool):
+        """Piecewise bumper section: lip, upright face, upper setback, hood lip."""
+        p, L = self.p, self.L
+        if forward:
+            bottom, top, crease = p.front_bumper_bottom, p.hood_front_height, p.bumper_crease_height
+            # A narrow crease, not a rake through the entire bumper volume.
+            upper = smoothstep(crease, crease + 0.025, z)
+            hood = smoothstep(top - 0.035, top - 0.008, z)
+            lip = 1 - smoothstep(bottom + 0.012, bottom + 0.045, z)
+            return (L["x_front"] - p.front_splitter + p.front_splitter * lip
+                    - (p.front_fascia_rake + p.hood_overhang) * upper + p.hood_overhang * hood)
+        bottom, crease = p.rear_bumper_bottom, p.rear_bumper_crease_height
+        valance = 1 - smoothstep(bottom + 0.04, bottom + 0.10, z)
+        panel = smoothstep(crease, crease + 0.035, z)
+        return (L["x_rear"] + p.diffuser_step * valance
+                + (p.tailgate_panel - p.rear_fascia_rake) * panel)
+
     def _fascia(self, ring: np.ndarray, forward: bool) -> Tuple[List[np.ndarray], np.ndarray]:
-        """Extra rings that close the nose/tail with rounded edges + apex point."""
-        sgn = 1.0 if forward else -1.0
-        zmid = 0.5 * (ring[:, 2].min() + ring[:, 2].max())
-        center = np.array([0.0, 0.0, zmid])
-        out = []
-        for s, dx in ((0.90, 0.012), (0.66, 0.022)):
-            r = ring.copy()
-            r[:, 1:] = center[1:] + (ring[:, 1:] - center[1:]) * s
-            r[:, 0] = ring[:, 0] + sgn * dx
-            out.append(r)
-        apex = np.array([ring[:, 0].mean() + sgn * 0.028, 0.0, zmid])
-        return out, apex
+        """Rounded bumper perimeter closing onto a *flat* rectangular pocket.
+
+        The final fan is coplanar with the pocket floor: its apex is a useful
+        centre landmark, not a pointed nose.  Corresponding rings exist even
+        when a recess or splitter has zero depth, preserving target topology.
+        """
+        p = self.p
+        bottom = p.front_bumper_bottom if forward else p.rear_bumper_bottom
+        top = p.hood_front_height if forward else p.deck_rear_height
+        crease = p.bumper_crease_height if forward else p.rear_bumper_crease_height
+        hw = max(abs(ring[:, 1]))
+        zmid = (bottom + top) / 2
+
+        def outline(width, lo, hi, shoulder):
+            # Semantic samples retain the lamp corner (D..G) and flat top/bottom.
+            radius = min(0.045, width * 0.12, (hi - lo) * 0.18)
+            pts = np.array([(0, lo), (width - radius, lo), (width, lo + radius),
+                            (width, lo + 2 * radius), (width, np.clip(shoulder, lo + 2.5 * radius, hi - radius)),
+                            (width - radius * 0.3, hi - radius * 0.3), (width - radius, hi),
+                            (width * 2 / 3, hi), (width / 3, hi), (0, hi)])
+            full = np.vstack([pts, pts[1:-1][::-1] * [-1, 1]])
+            counts = [n for _, _, n in SEGMENTS]
+            return catmull_rom_closed(full, counts + counts[::-1], np.ones(len(full)))
+
+        face_yz = outline(hw * 0.985, bottom, top, crease)
+        face = np.column_stack([self._fascia_x(face_yz[:, 0], face_yz[:, 1], forward), face_yz])
+        # The first roll carries wraparound lamps into the face. The next roll
+        # gives the bumper a rounded edge without a pillow-shaped central cap.
+        corner = ring.copy()
+        corner[:, 1] *= 0.995
+        corner[:, 2] = zmid + (corner[:, 2] - zmid) * 0.995
+        corner[:, 0] += (1 if forward else -1) * p.bumper_projection * 0.55
+        out = [corner, face]
+        for k, (width, lo, hi, depth) in enumerate((
+                (hw * 0.87, bottom + 0.035, top - 0.025, 0.0),
+                (0.32, zmid - 0.115, zmid + 0.115, 0.0),
+                (0.29, zmid - 0.09, zmid + 0.09, p.plate_recess),
+                (0.20, zmid - 0.06, zmid + 0.06, p.plate_recess))):
+            if forward and k > 0:
+                # Full-width upper grille landing, then the bumper crease.
+                # No artificial licence-plate-shaped dent in the front face.
+                width = hw * (0.80, 0.77, 0.46)[k - 1]
+                lo = bottom + (0.07, 0.09, 0.13)[k - 1]
+                hi = min(top - 0.04, crease + (0.025, 0.0, -0.025)[k - 1])
+                hi = max(lo + 0.02, hi)
+            yz = outline(width, lo, hi, crease if k == 0 else zmid)
+            x = self._fascia_x(yz[:, 0], yz[:, 1], forward)
+            if not forward and k >= 1:
+                x = np.full(len(yz), self.L["x_rear"] + depth)
+            out.append(np.column_stack([x, yz]))
+        if forward:
+            zmid = float((out[-1][:, 2].min() + out[-1][:, 2].max()) / 2)
+        apex_x = float(self._fascia_x(0.0, zmid, forward)) if forward else self.L["x_rear"] + p.plate_recess
+        return out, np.array([apex_x, 0.0, zmid])
 
     def _assign_zones(self, mesh: Mesh, face_grid, off: int):
         """Classify faces into zones (apertures, underbody, trim)."""
@@ -447,13 +513,18 @@ class BodyGenerator:
         add("aperture/taillight_L", range(off - 1, off + n_rear), range(jL, jG))
         add("aperture/taillight_R", range(off - 1, off + n_rear), range(RING_N - jG, RING_N - jL))
         # underbody / wells
-        all_rows = range(0, max(face_grid)[0] + 1)
+        all_rows = range(off, off + N_STATIONS - 1)
         add("underbody", all_rows, list(range(0, jC)) + list(range(RING_N - jC, RING_N)))
         arch_rows = [i + off for i in range(N_STATIONS) if self.arch(self.x_lo[i])[0] > 0]
         add("wheel_well", arch_rows, list(range(jC, jD)) + list(range(RING_N - jD, RING_N - jC)))
-        # lower bumper trim (dark) on the fascia rings
-        add("trim", list(range(0, off)) + list(range(off + N_STATIONS - 1, off + N_STATIONS - 1 + N_FASCIA)),
-            list(range(0, jD)) + list(range(RING_N - jD, RING_N)))
+        # Classify a fascia by height, not ring columns: inner rings encircle
+        # the plate, and their A..D samples are no longer under the car.
+        centers = mesh.face_centroids()
+        for (r, j), fi in face_grid.items():
+            if r < off or r >= off + N_STATIONS - 1:
+                bottom = p.rear_bumper_bottom if r < off else p.front_bumper_bottom
+                if centers[fi, 2] < bottom + 0.08:
+                    zones.setdefault("trim", []).append(fi)
         if self.bed is not None:
             bed_rows = [i + off for i in range(N_STATIONS) if self.bed(self.x_hi[i]) > 0.5]
             add("bed", bed_rows, range(RING["G2"], RING_N - RING["G2"]))
@@ -504,6 +575,11 @@ class BodyGenerator:
         mesh.add_group("apex_rear", [rear_apex_i])
         mesh.add_group("nose_ring", [v(N_STATIONS - 1, j) for j in range(RING_N)])
         mesh.add_group("tail_ring", [v(0, j) for j in range(RING_N)])
+        for end, rows in (("front", range(off + N_STATIONS, n_rings)), ("rear", range(off - 1, -1, -1))):
+            rows = list(rows)
+            mesh.add_group(f"fascia/{end}", [r * RING_N + j for r in rows for j in range(RING_N)])
+            for name, k in (("face", 1), ("pocket_rim", 3), ("pocket_floor", 4)):
+                mesh.add_group(f"fascia/{end}_{name}", [rows[k] * RING_N + j for j in range(RING_N)])
 
 
 def vertex_index(station: int, j: int, ring_offset: int) -> int:

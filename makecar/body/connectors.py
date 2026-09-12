@@ -76,6 +76,36 @@ def aperture_loop(mesh: Mesh, name: str) -> Tuple[np.ndarray, Tuple[int, int], n
     return pts, (r1s - r0s + 1, j1e - j0 + 1), fn, grid
 
 
+def fascia_point(mesh: Mesh, end: str, z: float, y: float = 0.0) -> np.ndarray:
+    """Mount on the actual stepped fascia, including the rear plate pocket.
+
+    Intersect an X ray with the fascia triangles instead of treating a bumper,
+    upper panel and recess as one raked plane. All inputs come from the morphed
+    mesh, so differential targets and style blends move the mounts with it.
+    """
+    ids = np.append(mesh.groups[f"fascia/{end}"], mesh.groups[f"apex_{end}"])
+    mask = np.zeros(mesh.n_vertices, dtype=bool)
+    mask[ids] = True
+    tris, _ = mesh.triangulated()
+    triangles = mesh.vertices[tris[mask[tris].all(axis=1)]]
+    a, b, c = triangles[:, 0], triangles[:, 1], triangles[:, 2]
+    u, v = b[:, 1:] - a[:, 1:], c[:, 1:] - a[:, 1:]
+    q = np.array([y, z]) - a[:, 1:]
+    det = u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]
+    valid = np.abs(det) > 1e-12
+    den = np.where(valid, det, 1.0)
+    s = (q[:, 0] * v[:, 1] - q[:, 1] * v[:, 0]) / den
+    t = (u[:, 0] * q[:, 1] - u[:, 1] * q[:, 0]) / den
+    valid &= (s >= -1e-8) & (t >= -1e-8) & (s + t <= 1 + 1e-8)
+    x = a[:, 0] + s * (b[:, 0] - a[:, 0]) + t * (c[:, 0] - a[:, 0])
+    if valid.any():
+        return np.array([x[valid].max() if end == "front" else x[valid].min(), y, z])
+    # Out-of-range custom hints still get a finite nearest-surface mount.
+    pts = mesh.vertices[ids]
+    nearest = pts[np.argmin(np.linalg.norm(pts[:, 1:] - [y, z], axis=1))]
+    return np.array([nearest[0], y, z])
+
+
 # ------------------------------------------------------------ measurements
 def measure(mesh: Mesh) -> Dict[str, float]:
     V = mesh.vertices
@@ -91,8 +121,8 @@ def measure(mesh: Mesh) -> Dict[str, float]:
     cowl, rf, rr, deck = ring("cowl"), ring("roof_front"), ring("roof_rear"), ring("deck")
     bp = ring("bp_r")
     m: Dict[str, float] = {}
-    m["x_front"] = float(V[G["apex_front"]][0, 0])
-    m["x_rear"] = float(V[G["apex_rear"]][0, 0])
+    m["x_front"] = float(V[G["fascia/front"]][:, 0].max())
+    m["x_rear"] = float(V[G["fascia/rear"]][:, 0].min())
     m["length"] = m["x_front"] - m["x_rear"]
     m["width"] = float(2 * np.abs(V[:, 1]).max())
     m["height"] = float(V[:, 2].max())
@@ -218,20 +248,15 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     tail = V[mesh.groups["tail_ring"]]
     apex_f = V[mesh.groups["apex_front"]][0]
     apex_r = V[mesh.groups["apex_rear"]][0]
-    nose_n = _face_normal_from_ring(nose, +1)
-    tail_n = _face_normal_from_ring(tail, -1)
+    nose_n, tail_n = X, -X
     z_nose_top, z_nose_bot = meas["nose_z_top"], meas["nose_z_bottom"]
     z_tail_top, z_tail_bot = meas["tail_z_top"], meas["tail_z_bottom"]
     nose_w = 2 * meas["nose_top_half_width"]
     tail_w = 2 * meas["tail_top_half_width"]
 
-    def on_face(apex, nrm, z, ahead=0.004):
-        # point on the fascia plane at height z (shifted along the normal a bit)
-        p = np.array([apex[0], 0.0, z])
-        # move onto the (raked) face: plane through apex with normal nrm
-        d = np.dot(apex - p, nrm) / max(abs(nrm[0]), 1e-6)
-        p[0] += d * np.sign(nrm[0])
-        return p + nrm * ahead
+    def on_face(apex, nrm, z, ahead=0.004, y=0.0):
+        end = "front" if nrm[0] > 0 else "rear"
+        return fascia_point(mesh, end, z, y) + nrm * ahead
 
     grille_z = z_nose_top - 0.18
     out.append(RectangleConnector("grille", Frame.from_normal(on_face(apex_f, nose_n, grille_z), nose_n, x_hint=-Y),
@@ -248,8 +273,8 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     out.append(PointConnector("badge_rear", Frame.from_normal(on_face(apex_r, tail_n, z_tail_top - 0.16, 0.012), tail_n, x_hint=Y), tags=["badge"]))
     # exhaust tips
     for side, ys in (("L", 1.0), ("R", -1.0)):
-        p = on_face(apex_r, tail_n, z_tail_bot + 0.10, 0.0)
-        p[1] = ys * (meas["tail_half_width"] - 0.32)
+        p = on_face(apex_r, tail_n, z_tail_bot + 0.10, 0.0,
+                    y=ys * (meas["tail_half_width"] - 0.32))
         out.append(CircleConnector(f"exhaust_{side}", Frame.from_normal(p, tail_n, x_hint=Y), 0.038, tags=["exhaust"],
                                    meta={"side": "left" if ys > 0 else "right"}))
     # side mirrors at the front-bottom corner of the front door glass

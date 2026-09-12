@@ -47,6 +47,14 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("front_corner_length", 0.20, 0.25, "front", "plan-view rounding of the nose"),
     ModifierSpec("front_fascia_rake", 0.06, 0.08, "front", "nose top set back over the bumper"),
     ModifierSpec("front_bumper_bottom", 0.08, 0.10, "front", "front bumper lower edge"),
+    ModifierSpec("bumper_projection", 0.025, 0.035, "front", "bumper stand-off from body end"),
+    ModifierSpec("bumper_crease_height", 0.05, 0.05, "front", "top of the upright front bumper face"),
+    ModifierSpec("hood_overhang", 0.025, 0.025, "front", "hood leading lip over the grille"),
+    ModifierSpec("front_splitter", 0.025, 0.05, "front", "front lower lip projection"),
+    ModifierSpec("rear_bumper_crease_height", 0.05, 0.07, "rear", "rear bumper shoulder height"),
+    ModifierSpec("plate_recess", 0.025, 0.025, "rear", "licence plate pocket depth"),
+    ModifierSpec("diffuser_step", 0.012, 0.06, "rear", "lower rear valance setback"),
+    ModifierSpec("tailgate_panel", 0.0, 0.04, "rear", "lower tailgate panel inset"),
     ModifierSpec("windshield_length", 0.25, 0.30, "greenhouse", "windshield rake / horizontal run"),
     ModifierSpec("roof_height", 0.15, 0.28, "greenhouse", "roof height"),
     ModifierSpec("roof_drop", 0.02, 0.06, "greenhouse", "roof falling towards the rear"),
@@ -139,7 +147,7 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 3
+LIBRARY_VERSION = 5
 
 
 def _cache_dir():
