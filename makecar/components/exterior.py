@@ -504,6 +504,13 @@ class Grille(CarComponent):
         # These mounts sit on uncut fascia, unlike the lamp apertures. Keep the
         # radiator backing in front of the skin so paint cannot fill the cells.
         m.translate([0, 0, .022])
+        if conn.meta.get("lower"):
+            # The rounded lower bumper projects past the average fascia plane.
+            # Rake the insert's backing and cells together, anchored at its top,
+            # rather than leaving blue bodywork visible through the lower rows.
+            rake = .75 * abs(conn.normal[2]) / max(abs(conn.normal[0]), .5)
+            down = -1 if conn.frame.y_axis[2] > 0 else 1
+            m.vertices[:, 2] += .007 + rake * (down * m.vertices[:, 1] + h / 2)
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -559,9 +566,9 @@ class LicensePlate(CarComponent):
             m.merge(P.box(w * 0.08, h - 0.01, 0.002, material="plate_blue", center=(-w / 2 + w * 0.05, 0, 0.007), name="euband"))
         if conn.meta.get("position") == "front":
             # The lower intake and plate overlap in elevation on short fascias;
-            # a 25mm plinth puts the plate ahead of, not behind, the insert.
-            _part(m, P.box(w * .82, h * .72, .025, material="plate_text", center=(0, 0, -.0125)), "mounting_plinth")
-            m.translate([0, 0, .025])
+            # a 50mm plinth puts the plate ahead of, not behind, the insert.
+            _part(m, P.box(w * .82, h * .72, .050, material="plate_text", center=(0, 0, -.025)), "mounting_plinth")
+            m.translate([0, 0, .050])
         m.materials.update(mats)
         return ComponentResult(m)
 

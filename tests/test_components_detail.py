@@ -148,3 +148,32 @@ def test_visual_regressions_have_geometric_guards(sedan, ctx):
     assert centre[2] < lamp.points[:, 2].max() - .055  # no hood-edge crowding
     guide = surf.ribbon([[.1, .3], [.9, .3], [.9, .8], [.1, .8]], .008, "guide", closed=True)
     assert guide.n_vertices > 6 * 80  # curved grid edges must not become four chords
+
+
+def _front_depth(mesh, frame, xy):
+    """Frontmost triangle hit along a connector-normal ray."""
+    triangles, _ = mesh.triangulated()
+    a, b, c = frame.to_local(mesh.vertices)[triangles].transpose(1, 0, 2)
+    ab, ac, q = b - a, c - a, np.r_[xy, 0.] - a
+    det = ab[:, 0] * ac[:, 1] - ab[:, 1] * ac[:, 0]
+    safe = np.where(np.abs(det) > 1e-10, det, 1.)
+    u = (q[:, 0] * ac[:, 1] - q[:, 1] * ac[:, 0]) / safe
+    v = (ab[:, 0] * q[:, 1] - ab[:, 1] * q[:, 0]) / safe
+    hit = (np.abs(det) > 1e-10) & (u >= -1e-8) & (v >= -1e-8) & (u + v <= 1 + 1e-8)
+    return (a[:, 2] + u * ab[:, 2] + v * ac[:, 2])[hit].max()
+
+
+@pytest.mark.parametrize("style", STYLES)
+def test_intake_backing_clears_uncut_fascia(car_body, ctx, style):
+    body = car_body.build(style=style)
+    conn = body.connector("intake")
+    intake = get_component("grille.intake").build(conn, None, ctx).mesh
+    back = intake.subset(intake.zones["back"])
+    for x, y in itertools.product((-.35 * conn.width, 0, .35 * conn.width), (-.06, 0, .06)):
+        assert _front_depth(back, conn.frame, [x, y]) > _front_depth(body.mesh, conn.frame, [x, y]) + .002
+    plate_conn = body.connector("plate_front")
+    plate = get_component("plate.standard").build(plate_conn, None, ctx).mesh
+    fascia = body.mesh.copy().merge(intake)
+    for x in (-.20, 0, .20):
+        # At the plate's centre the insert must not occlude its printed face.
+        assert _front_depth(plate, plate_conn.frame, [x, 0]) > _front_depth(fascia, plate_conn.frame, [x, 0])
