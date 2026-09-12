@@ -1,0 +1,23 @@
+name: roadster_sports
+description: Low, wide two-seat sports car; the seat_rows hint forces a single row.
+seed: 7
+body:
+  style: sports
+  modifiers:
+    ground_clearance: -0.4
+    fender_flare: 0.8
+    nose_width_ratio: 0.3
+  sculpt:
+    haunches: 1.0
+    side_crease: 0.5
+  hints: {door_count: 2, seat_rows: 1, transmission: manual}
+palette:
+  paint: "#f2c318"
+  interior: "#141414"
+  seat: "#1c1c1e"
+  rim: "#1a1a1a"
+components:
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 5, spoke_width: 0.35}}
+    exhaust: {component: exhaust.tip, options: {dual: true, length: 0.1}}
+  disable: [roof_rail*, antenna]

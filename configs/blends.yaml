@@ -1,0 +1,25 @@
+name: blend_sedan_wagon
+description: Style macros are targets, so they blend — half sedan, half wagon gives a shooting-brake-like tail.
+seed: 9
+body:
+  style: {sedan: 0.5, wagon: 0.5}
+  modifiers:
+    roof_drop: 0.5
+palette:
+  paint: "#7d2a4f"
+components:
+  assign:
+    roof_rail: roof.rails
+variants:
+  - name: blend_suv_coupe
+    description: SUV-coupe crossover — 70% SUV macro plus 30% coupe macro with a lowered roof.
+    body:
+      style: {suv: 0.7, coupe: 0.3}
+      modifiers: {roof_height: -0.2, wheel_diameter: 0.3}
+    palette: {paint: "#b86b2b"}
+  - name: stretched_limousine
+    description: The sedan with the wheelbase slider at +1 (+0.55 m) and a longer rear door area.
+    body:
+      style: sedan
+      modifiers: {wheelbase: 1.0, front_door_length: 0.4, roof_rear_offset: -0.3}
+    palette: {paint: "#101010", interior: "#1a1a1a", seat: "#2a2a2a"}

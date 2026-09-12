@@ -1,0 +1,23 @@
+name: gt_coupe
+description: Two-door grand-touring coupe with a long hood, fastback rear window and muscular rear haunches.
+seed: 6
+body:
+  style: coupe
+  modifiers:
+    cowl_offset: 0.3
+    roof_height: -0.15
+    width: 0.2
+  sculpt:
+    haunches: 0.8
+    wedge: 0.5
+  hints: {door_count: 2, transmission: manual}
+palette:
+  paint: "#151820"
+  interior: "#3a1f1c"
+  seat: "#6b2f28"
+  rim: "#d0d3d8"
+components:
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 10, spoke_width: 0.4}}
+    exhaust: {component: exhaust.tip, options: {dual: true}}
+    handle: {component: handle.pull, options: {chrome: true}}

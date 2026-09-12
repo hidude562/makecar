@@ -1,0 +1,11 @@
+name: rhd_manual_sedan
+description: Right-hand-drive sedan with a manual gearbox (three pedals), showing that the interior connectors follow the drive hint.
+seed: 10
+body:
+  style: sedan
+  modifiers: {belt_height: 0.2, roof_width_ratio: 0.3}
+  hints: {drive: right, transmission: manual, fuel_side: right}
+palette:
+  paint: "#1f5b3a"
+  interior: "#2a2724"
+  seat: "#8a7a63"

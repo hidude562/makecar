@@ -1,0 +1,16 @@
+name: random_hatch_a
+description: Hatchback with random modifier jitter (amount 0.5) — every build with a different seed is a different car.
+seed: 11
+body:
+  style: hatchback
+  random: {amount: 0.5}
+palette:
+  paint: "#c94f2c"
+variants:
+  - name: random_hatch_b
+    seed: 12
+    palette: {paint: "#4fa3c9"}
+  - name: random_sedan_c
+    seed: 13
+    body: {style: sedan, random: {amount: 0.6}}
+    palette: {paint: "#8a8f3c"}

@@ -1,0 +1,16 @@
+name: family_minivan
+description: One-box minivan with a long wheelbase and three seat rows (the body emits a third bench when it fits).
+seed: 8
+body:
+  style: van
+  modifiers:
+    wheelbase: 0.3
+    roof_height: 0.2
+  hints: {door_count: 4, seat_rows: 3}
+palette:
+  paint: "#7a7f86"
+  interior: "#3b3a37"
+  seat: "#57534d"
+components:
+  assign:
+    roof_rail: roof.rails

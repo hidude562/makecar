@@ -1,0 +1,17 @@
+name: family_sedan
+description: Mid-size three-box family sedan — the canonical base body with no modifiers.
+seed: 1
+body:
+  style: sedan
+  modifiers: {}
+  hints: {door_count: 4, drive: left, transmission: automatic}
+palette:
+  paint: "#9b1b1b"
+  interior: "#2b2926"
+  seat: "#3d3630"
+components:
+  defaults: true
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 5}}
+output:
+  formats: [obj, svg, png, json]

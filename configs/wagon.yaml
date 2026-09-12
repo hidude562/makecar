@@ -1,0 +1,16 @@
+name: estate_wagon
+description: Estate car derived from the sedan body with the roof extended to the tail; roof rails enabled.
+seed: 3
+body:
+  style: wagon
+  modifiers:
+    wheelbase: 0.2
+    roof_drop: 0.3
+palette:
+  paint: "#4e5d4a"
+  interior: "#2a2724"
+  seat: "#5b4a3a"
+components:
+  assign:
+    roof_rail: roof.rails
+    seat_front: {component: seat.bucket, options: {material: leather}}

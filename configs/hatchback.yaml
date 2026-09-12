@@ -1,0 +1,17 @@
+name: city_hatchback
+description: Compact five-door hatchback with a slightly raised roof and small wheels.
+seed: 2
+body:
+  style: hatchback
+  modifiers:
+    roof_height: 0.15
+    wheel_diameter: -0.2
+    width: -0.15
+palette:
+  paint: "#2f7bd6"
+  interior: "#33322f"
+  seat: "#44423c"
+components:
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 8, spoke_width: 0.45}}
+    plate: {component: plate.standard, options: {region: eu}}

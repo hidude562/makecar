@@ -1,0 +1,21 @@
+name: family_suv
+description: Tall five-seat SUV with big wheels, flared arches and roof rails.
+seed: 4
+body:
+  style: suv
+  modifiers:
+    fender_flare: 0.5
+    wheel_diameter: 0.2
+  sculpt:
+    side_crease: 0.6
+  hints: {door_count: 4}
+palette:
+  paint: "#d9d6cf"
+  interior: "#1f1e1c"
+  seat: "#2d2b28"
+  rim: "#3a3c40"
+components:
+  assign:
+    roof_rail: roof.rails
+    wheel: {component: wheel.alloy, options: {spokes: 6, spoke_width: 0.6}}
+    exhaust: {component: exhaust.tip, options: {dual: true}}

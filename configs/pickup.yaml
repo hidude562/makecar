@@ -1,0 +1,18 @@
+name: crew_cab_pickup
+description: Crew-cab pickup truck; the deck region of the body becomes an open bed via the bed_depth parameter.
+seed: 5
+body:
+  style: pickup
+  modifiers:
+    ground_clearance: 0.3
+    tire_width: 0.5
+  hints: {door_count: 4, seat_rows: 2}
+palette:
+  paint: "#1d3a6b"
+  interior: "#2e2c29"
+  seat: "#4a4642"
+components:
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 6, spoke_width: 0.7}}
+    plate: {component: plate.standard, options: {region: us}}
+  disable: [antenna]
