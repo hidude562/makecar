@@ -103,6 +103,13 @@ def test_rear_furniture_is_visible_on_the_new_bumper(fitted):
                           > front_depths(body.mesh, conn.frame, xy) + .002)
 
 
+def test_narrow_grille_default_spacing_preserves_explicit_counts(car_body, ctx):
+    conn = car_body.build("sports").connector("grille")
+    for options, expected in ((None, 2), ({"slats": 5}, 5), ({"slats": 14}, 14)):
+        mesh = get_component("grille.slats").build(conn, options, ctx).mesh
+        assert sum(name.startswith("slat_") for name in mesh.groups) == expected
+
+
 def test_side_mirror_geometry_stays_symmetric_on_new_shoulders(fitted):
     body, ctx = fitted
     left = get_component("mirror.side").build(body.connector("mirror_L"), None, ctx).mesh

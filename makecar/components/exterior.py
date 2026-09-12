@@ -534,7 +534,7 @@ class Grille(CarComponent):
     name = "grille.slats"
     accepts = (RectangleConnector,)
     default_for = ("grille",)
-    options = {"slats": 5, "frame": True, "mesh": False, "badge": False}
+    options = {"slats": None, "frame": True, "mesh": False, "badge": False}
     description = "deep horizontal slats interrupted around an inset roundel, with an open surround"
     pattern = "slats"
 
@@ -552,7 +552,10 @@ class Grille(CarComponent):
         pattern = "mesh" if opts.get("mesh") else self.pattern
         badge_r = min(.040, h * .29) if opts.get("badge") and pattern == "slats" else 0
         if pattern == "slats":
-            n = int(np.clip(opts["slats"], 1, 14))
+            # Five slats crowd the new 45mm sports opening into a chrome strip.
+            # Fit the default spacing; explicit counts retain their old range.
+            requested = opts["slats"]
+            n = int(np.clip(min(5, int(ih / .014)) if requested is None else requested, 1, 14))
             for k in range(n):
                 y = -ih / 2 + (k + .5) * ih / n
                 thick = min(.012, ih / n * .32)
