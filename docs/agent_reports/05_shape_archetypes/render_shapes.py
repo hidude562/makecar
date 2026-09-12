@@ -89,7 +89,9 @@ def load_pipeline(args):
     # Isolate target caches by complete source hash, including uncommitted edits.
     os.environ["MAKECAR_CACHE"] = str(Path(tempfile.gettempdir()) / "shape-render-cache" / fingerprint[:16])
     sys.path.insert(0, str(source))
-    global CarConfig, Camera, Renderer, Material, build_car, car_body_for
+    global CarConfig, Camera, Renderer, Material, build_car, car_body_for, resolve_shape_values
+    from makecar.body import targets as body_targets
+    resolve_shape_values = getattr(body_targets, "resolve_shape_values", dict)
     from makecar.config import CarConfig
     from makecar.export.render import Camera, Renderer
     from makecar.geometry.mesh import Material
@@ -131,7 +133,8 @@ def capture(config, clay_only=False, shell_only=False):
     scope = "shell only" if shell_only else "shell+glass only" if clay_only else "complete default assembly"
     metadata = {"config": build_config, "assembly_scope": scope,
                 "measurements": body.measurements,
-                "effective_modifiers": body.modifier_values,
+                "requested_modifiers": body.modifier_values,
+                "effective_modifiers": resolve_shape_values(body.modifier_values),
                 "bounds": [x.tolist() for x in full.bounds()],
                 "body_faces": body.mesh.n_faces, "assembly_faces": full.n_faces,
                 "clay_faces": clay.n_faces, "silhouette_faces": silhouette.n_faces,
