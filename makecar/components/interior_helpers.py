@@ -267,6 +267,35 @@ def knob(radius: float, height: float, material_body: str, material_cap: str, n:
     return m
 
 
+def named(mesh: Mesh, name: str) -> Mesh:
+    """Keep an inspectable vertex group and face zone for a detail part."""
+    mesh.add_group(name, range(mesh.n_vertices))
+    mesh.add_zone(name, range(mesh.n_faces))
+    return mesh
+
+
+def ribbon(path, width: float, thickness: float, material: str, name="ribbon", up=(0, 0, 1)) -> Mesh:
+    """Solid flat strip along a path (webbing, trim, or a recessed seam)."""
+    profile = np.array([[-width / 2, -thickness / 2], [width / 2, -thickness / 2],
+                        [width / 2, thickness / 2], [-width / 2, thickness / 2]])
+    return named(P.sweep_profile(np.asarray(path), profile, material=material, name=name, up_hint=up), name)
+
+
+def grille(radius: float, name="grille") -> Mesh:
+    """Crossed 1 mm ribs on 6 mm centres, with actual gaps and a recessed backing."""
+    m = P.cylinder(radius, 0.002, 24, material="int_gauge", center=(0, 0, -0.004), name=name)
+    ribs = Mesh(name=name + "_mesh")
+    for a in (0.0, np.pi / 2):
+        for y in np.arange(-radius + 0.006, radius - 0.005, 0.006):
+            length = 2 * np.sqrt(max((radius - 0.002) ** 2 - y * y, 0.0))
+            if length > 0.002:
+                bar = P.box(length, 0.001, 0.0015, material="int_grille", center=(0, y, 0.002))
+                ribs.merge(bar.transform(rot_z(a)))
+    m.merge(named(ribs, name + "_mesh"))
+    m.merge(P.tube(radius + 0.009, radius, 0.008, 24, material="int_plastic", center=(0, 0, 0.001)))
+    return named(m, name)
+
+
 def button_row(n: int, pitch: float, size: Tuple[float, float], height: float, material: str,
                center=(0.0, 0.0, 0.0), along="x") -> Mesh:
     """A row of n small rounded buttons."""
