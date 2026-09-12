@@ -530,6 +530,11 @@ class SteeringWheel(CarComponent):
         return ComponentResult(_finish(m, ctx), [], {"radius": R, "flat_bottom": flat})
 
 
+def _console_nose_rise(height: float) -> float:
+    """Console nose above its horizontal shifter deck, shared with dash packing."""
+    return float(np.clip(0.35 - height, 0.0, 0.11))
+
+
 # =============================================================== DASHBOARD
 @dataclass
 class DashParams:
@@ -654,10 +659,15 @@ class Dashboard(MorphableComponent):
         y_screen = y_vent - 0.058 - h_s / 2 - 0.008
         y_hvac = stack_bot + 0.028
         if sc is not None:
-            # Console top is H-point + 60 mm = wheel centre - 260 mm.
-            # Lift the control stack for tall H-points rather than burying its
-            # buttons behind the SUV/van console nose.
-            y_hvac = max(y_hvac, float(conn.frame.to_local(np.asarray(sc))[0, 1]) - 0.205)
+            wheel_y = float(conn.frame.to_local(np.asarray(sc))[0, 1])
+            # The level shifter deck is wheel centre - 260 mm, but in low
+            # cabins the console nose rises above it. Reserve the full 50 mm
+            # HVAC panel plus a 10 mm gap above that nose, not just the deck.
+            y_hvac = max(y_hvac, wheel_y - 0.205)
+            if "floor" in conn.meta:
+                console_height = float(np.asarray(sc)[2]) - float(conn.meta["floor"]) - 0.26
+                nose_y = wheel_y - 0.26 + _console_nose_rise(console_height)
+                y_hvac = max(y_hvac, nose_y + 0.025 + 0.010)
         y_screen = max(y_screen, y_hvac + 0.053 + h_s / 2)
         y_vent = max(y_vent, y_screen + h_s / 2 + 0.076)
         y_cluster = y_band + 0.01
@@ -945,7 +955,7 @@ class CenterConsole(CarComponent):
         # body: rounded-rect sections along x, height profile rises towards the dash
         secs, origins = [], []
         # Keep the nose below the centre-stack controls in high-H-point cars.
-        rise = float(np.clip(0.35 - hc, 0.0, 0.11))
+        rise = _console_nose_rise(hc)
         for x, hgt, wsc in ((xr, hc - 0.03, 0.92), (xr + 0.02, hc - 0.02, 1.0), (-0.16, hc - 0.02, 1.0), (-0.14, hc, 1.0),
                             (0.25, hc, 1.0), (0.42, hc + rise * 0.18, 1.0), (xf - 0.02, hc + rise * 0.91, 0.98), (xf, hc + rise, 0.9)):
             sec = rounded_rect_points(Wc * wsc, hgt, min(0.035, Wc * 0.15), 3)

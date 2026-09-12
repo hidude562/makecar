@@ -168,6 +168,31 @@ def test_dashboard_controls_and_closure_all_styles(cabin):
     assert mirror.result.mesh.vertices[:, 0].mean() > cabin.body.measurements["x_roof_front"] - 0.20
 
 
+@pytest.mark.parametrize("drive", ["left", "right"])
+@pytest.mark.parametrize("h_point", [0.17, 0.198, 0.22, 0.27, 0.35])
+def test_low_cabin_control_stack_clears_the_rising_console_nose(drive, h_point):
+    # Exercise both capped and uncapped nose rise, including the retuned sports
+    # default. Keeping the level console deck clear was insufficient here.
+    cabin = assemble(CarBody().build("sports", hints={"drive": drive, "h_point_height": h_point}))
+    parts = instances(cabin)
+    console = parts["console"].result.mesh
+    nose_top = console.vertices[console.groups["console_body"], 2].max()
+    hvac = parts["dashboard/hvac"]
+    hlo, hhi = hvac.result.mesh.bounds()
+    slo, shi = parts["dashboard/screen"].result.mesh.bounds()
+    assert hlo[2] - nose_top >= 0.010 - 1e-8
+    assert slo[2] - hhi[2] >= 0.005
+    for side in ("L", "R"):
+        vlo, _ = parts[f"dashboard/vent_center_{side}"].result.mesh.bounds()
+        assert vlo[2] - shi[2] >= 0.005
+    # Clearance is obtained by moving full-sized controls, not scaling them.
+    assert hvac.connector.width == pytest.approx(0.24)
+    assert hvac.connector.height == pytest.approx(0.05)
+    assert np.ptp(hvac.result.mesh.vertices[:, 2]) == pytest.approx(0.05)
+    assert parts["dashboard/screen"].connector.height == pytest.approx(0.07)
+    assert parts["dashboard/vent_center_L"].connector.radius == pytest.approx(0.045)
+
+
 def test_console_floor_doors_and_ceiling_all_styles(cabin):
     parts = instances(cabin)
     assert {"cup_sliding_cover", "ebrake_switch", "armrest_seam"} <= set(parts["console"].result.mesh.groups)
