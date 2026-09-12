@@ -267,6 +267,59 @@ def knob(radius: float, height: float, material_body: str, material_cap: str, n:
     return m
 
 
+def bucket_buckle(params, side: float) -> np.ndarray:
+    """Buckle datum from fitted bucket-seat parameters (shared with webbing)."""
+    return np.array([-params.footprint_depth / 2 + 0.18,
+                     -side * (params.cushion_width / 2 + 0.025), params.cushion_height + 0.045])
+
+
+def named(mesh: Mesh, name: str) -> Mesh:
+    """Keep an inspectable vertex group and face zone for a detail part."""
+    mesh.add_group(name, range(mesh.n_vertices))
+    mesh.add_zone(name, range(mesh.n_faces))
+    return mesh
+
+
+def ribbon(path, width: float, thickness: float, material: str, name="ribbon", up=(0, 0, 1)) -> Mesh:
+    """Solid flat strip along a path (webbing, trim, or a recessed seam)."""
+    profile = np.array([[-width / 2, -thickness / 2], [width / 2, -thickness / 2],
+                        [width / 2, thickness / 2], [-width / 2, thickness / 2]])
+    mesh = P.sweep_profile(np.asarray(path), profile, material=material, name=name, up_hint=up)
+    # sweep_profile maps this CCW profile into a basis facing against the path.
+    return named(mesh.flip_normals(), name)
+
+
+def grille(radius: float, name="grille") -> Mesh:
+    """Crossed 1 mm ribs on 6 mm centres, with actual gaps and a recessed backing."""
+    m = P.cylinder(radius, 0.002, 24, material="int_gauge", center=(0, 0, -0.004), name=name)
+    ribs = Mesh(name=name + "_mesh")
+    for a in (0.0, np.pi / 2):
+        for y in np.arange(-radius + 0.006, radius - 0.005, 0.006):
+            length = 2 * np.sqrt(max((radius - 0.002) ** 2 - y * y, 0.0))
+            if length > 0.002:
+                bar = P.box(length, 0.001, 0.0015, material="int_grille", center=(0, y, 0.002))
+                ribs.merge(bar.transform(rot_z(a)))
+    m.merge(named(ribs, name + "_mesh"))
+    m.merge(P.tube(radius + 0.009, radius, 0.008, 24, material="int_plastic", center=(0, 0, 0.001)))
+    return named(m, name)
+
+
+def digits(text: str, height: float, center=(0, 0, 0), material="int_lens") -> Mesh:
+    """Tiny seven-segment instrument markings, using geometry rather than fonts."""
+    segments = {"0": "abcdef", "1": "bc", "2": "abdeg", "3": "abcdg", "4": "bcfg",
+                "5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg"}
+    locations = {"a": (0, 0.5, True), "b": (0.25, 0.25, False), "c": (0.25, -0.25, False),
+                 "d": (0, -0.5, True), "e": (-0.25, -0.25, False), "f": (-0.25, 0.25, False), "g": (0, 0, True)}
+    m = Mesh(name="digits")
+    for i, char in enumerate(text):
+        x = (i - (len(text) - 1) / 2) * height * 0.7
+        for key in segments[char]:
+            dx, dy, horizontal = locations[key]
+            sx, sy = (height * 0.40, height * 0.10) if horizontal else (height * 0.10, height * 0.36)
+            m.merge(P.box(sx, sy, 0.0005, material=material, center=(x + dx * height, dy * height, 0)))
+    return m.translate(center)
+
+
 def button_row(n: int, pitch: float, size: Tuple[float, float], height: float, material: str,
                center=(0.0, 0.0, 0.0), along="x") -> Mesh:
     """A row of n small rounded buttons."""
