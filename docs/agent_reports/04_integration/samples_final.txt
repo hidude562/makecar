@@ -1,0 +1,27 @@
+Frozen engine revision: 78d260b
+Command: OPENBLAS_NUM_THREADS=1 PYTHONUNBUFFERED=1 python3 -m makecar samples -c configs -o /tmp/int_samples
+Exit status: 0
+
+ generating 11 sample configs into /tmp/int_samples/
+  blend_sedan_wagon            102 connectors  102 components   62257 faces  33.0s  -> /tmp/int_samples/blend_sedan_wagon
+  blend_suv_coupe              102 connectors  102 components   61387 faces  37.3s  -> /tmp/int_samples/blend_suv_coupe
+  stretched_limousine          102 connectors  102 components   61929 faces  35.5s  -> /tmp/int_samples/stretched_limousine
+  gt_coupe                      96 connectors   94 components   58545 faces  32.0s  -> /tmp/int_samples/gt_coupe
+  city_hatchback               102 connectors  100 components   60921 faces  33.6s  -> /tmp/int_samples/city_hatchback
+  crew_cab_pickup               99 connectors   96 components   64791 faces  42.1s  -> /tmp/int_samples/crew_cab_pickup
+  random_hatch_a               103 connectors  101 components   61105 faces  40.3s  -> /tmp/int_samples/random_hatch_a
+  random_hatch_b               102 connectors  100 components   60701 faces  41.8s  -> /tmp/int_samples/random_hatch_b
+  random_sedan_c               102 connectors  100 components   61765 faces  37.6s  -> /tmp/int_samples/random_sedan_c
+  rhd_manual_sedan             102 connectors  100 components   61245 faces  32.5s  -> /tmp/int_samples/rhd_manual_sedan
+  family_sedan                 102 connectors  100 components   61169 faces  32.2s  -> /tmp/int_samples/family_sedan
+  roadster_sports               96 connectors   93 components   57777 faces  34.4s  -> /tmp/int_samples/roadster_sports
+  family_suv                   103 connectors  103 components   62159 faces  32.7s  -> /tmp/int_samples/family_suv
+  family_minivan               103 connectors  103 components   63271 faces  32.3s  -> /tmp/int_samples/family_minivan
+  estate_wagon                 103 connectors  103 components   62441 faces  29.6s  -> /tmp/int_samples/estate_wagon
+
+Post-build verification: 15 directories, 165 nonempty expected files.
+Each contains car.obj/car.mtl, body.obj/body.mtl, connectors.json, assembly.json,
+blueprint.svg, connector_map.svg, preview.png, interior.png, and spec.txt.
+All JSON/SVG files parse; all PNGs verify; each car.obj face count matches the
+CLI log and stays below 120000. Final sample face range: 57777–64791.
+The generated roadster_sports/preview.png was also viewed.
