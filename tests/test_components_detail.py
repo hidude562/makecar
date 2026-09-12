@@ -60,3 +60,66 @@ def test_wheel_options_and_budget(ctx):
     assert "steel_hubcap" not in wheel(ctx, component="wheel.steel", hubcap=False).groups
     shallow, deep = wheel(ctx, dish=.01), wheel(ctx, dish=.09)
     assert deep.vertices[deep.groups["spoke_0"]][0, 2] < shallow.vertices[shallow.groups["spoke_0"]][0, 2] - .07
+
+
+STYLES = ("sedan", "hatchback", "wagon", "suv", "pickup", "coupe", "sports", "van")
+
+
+@pytest.mark.parametrize("style", STYLES)
+def test_lamp_panes_fit_apertures_without_inverted_faces(car_body, ctx, style):
+    body = car_body.build(style=style)
+    for kind in ("headlight", "taillight"):
+        for side in ("L", "R"):
+            conn = body.connector(f"{kind}_{side}")
+            m = get_component(f"light.{kind}").build(conn, None, ctx).mesh
+            pane = m.subset(m.zones["lens"])
+            if kind == "headlight":
+                assert np.all(pane.face_normals() @ conn.normal > 0), (style, kind, side)
+            else:
+                # Wagon/SUV/van tail grids already fold in the unmodified body.
+                # Preserve their exact geometry; never "fix" it by flipping
+                # isolated cells. Bulging must not introduce any further folds.
+                from makecar.components.fills import fill_connector
+                reference = fill_connector(conn, "reference", upsample=3)
+                assert np.all(np.einsum("ij,ij->i", pane.face_normals(), reference.face_normals()) > 0)
+            assert np.isfinite(m.vertices).all()
+            assert np.all(pane.vertices >= conn.points.min(axis=0) - .01)
+            assert np.all(pane.vertices <= conn.points.max(axis=0) + .01)
+            # A bulged pane still meets the original aperture's corners.
+            for corner in conn.meta["grid_points"][[0, -1]][:, [0, -1]].reshape(-1, 3):
+                assert np.linalg.norm(pane.vertices - corner - conn.normal * .001, axis=1).min() < 1e-8
+            if kind == "headlight":
+                assert {"projector_0", "projector_1", "drl", "indicator"} <= m.groups.keys()
+                drl = m.vertices[m.groups["drl"]]
+                indicator = m.vertices[m.groups["indicator"]]
+                assert drl[:, 2].mean() > m.vertices[m.groups["projector_0"]][:, 2].mean()
+                assert np.abs(indicator[:, 1]).mean() > abs(conn.points[:, 1].mean())
+            else:
+                assert {"light_guide", "reverse", "reflex_strip", "bezel"} <= m.groups.keys()
+                assert m.materials["tail_bezel"].color == ctx.material("paint").color
+
+
+def test_grille_variants_and_badge_clearance(sedan, ctx):
+    conn = sedan.connector("grille")
+    slats = get_component("grille.slats").build(conn, None, ctx).mesh
+    for name, ids in slats.groups.items():
+        if name.startswith("slat_"):
+            pts = conn.frame.to_local(slats.vertices[ids])
+            assert np.ptp(pts[:, 2]) == pytest.approx(.030)
+            assert np.linalg.norm(pts[:, :2], axis=1).min() >= .046 - 1e-9
+    for name, prefix in (("grille.honeycomb", "cell_"), ("grille.mesh", "wire_")):
+        mesh = get_component(name).build(conn, None, ctx).mesh
+        assert any(k.startswith(prefix) for k in mesh.groups)
+        pts = conn.frame.to_local(mesh.vertices)
+        assert np.max(np.abs(pts[:, 0])) <= conn.width / 2 + 1e-9
+        assert np.max(np.abs(pts[:, 1])) <= conn.height / 2 + 1e-9
+
+
+def test_mirror_and_handle_are_world_symmetric(sedan, ctx):
+    for connector, component in (("mirror", "mirror.side"), ("handle_front", "handle.pull")):
+        left = get_component(component).build(sedan.connector(connector + "_L"), None, ctx).mesh
+        right = get_component(component).build(sedan.connector(connector + "_R"), None, ctx).mesh
+        assert np.allclose(left.vertices * [1, -1, 1], right.vertices)
+    mirror = get_component("mirror.side").build(sedan.connector("mirror_L"), None, ctx).mesh
+    assert {"base_plinth", "housing", "mirror_pane", "turn_signal"} <= mirror.groups.keys()
+    assert np.all(mirror.face_normals()[mirror.zones["mirror_pane"], 0] < 0)

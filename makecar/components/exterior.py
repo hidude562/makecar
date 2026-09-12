@@ -253,47 +253,134 @@ class Glass(CarComponent):
         }
         m = fill_connector(conn, "glass", offset=-float(opts["inset"]), border=float(opts["border"]),
                            border_material="glass_frame", thickness=0.0, name="glass")
+        if conn.name.startswith("glass_"):
+            # Separate 8mm rubber moulding follows the actual aperture boundary.
+            trim = _pipe(conn.points + conn.normal * .001, .004, "glass_frame", closed=True, sides=6)
+            _part(m, trim, "window_moulding")
         m.materials.update(mats)
         m.transform(np.linalg.inv(conn.frame.matrix))  # to local; build() maps back to world
         return ComponentResult(m, [], {"area": conn.area})
 
 
 # =============================================================== LIGHTS
+class _LampSurface:
+    """Decorations in aperture UVs, following the exact (possibly warped) grid.
+
+    U runs inboard -> outboard; V runs bottom -> top in WORLD space. Neither
+    handedness nor the lamp's steep corner rake is guessed from local Y.
+    """
+    def __init__(self, conn):
+        grid = conn.meta.get("grid_points")
+        shape = conn.meta.get("grid")
+        if grid is None and shape and len(conn.points) == 2 * (shape[0] + shape[1] - 2):
+            grid = coons_patch(conn.points, *shape, max(shape[0], 3), max(shape[1], 3))
+        if grid is None:
+            # Generic convex polygon: an inscribed square for the internals;
+            # the pane itself still uses fill_connector's full outline.
+            lp = conn.local_points()
+            c = lp.mean(axis=0)
+            edges = np.roll(lp[:, :2], -1, axis=0) - lp[:, :2]
+            distances = np.abs(np.cross(edges, c[:2] - lp[:, :2])) / np.maximum(np.linalg.norm(edges, axis=1), 1e-9)
+            r = distances.min() * .65
+            grid = conn.frame.to_world(np.array([[[c[0] - r, c[1] - r, c[2]], [c[0] - r, c[1] + r, c[2]]],
+                                                [[c[0] + r, c[1] - r, c[2]], [c[0] + r, c[1] + r, c[2]]]]))
+        grid = np.asarray(grid, dtype=float)
+        lengths = [np.linalg.norm(np.diff(grid, axis=i), axis=2).sum(axis=i).mean() for i in (0, 1)]
+        if lengths[1] > lengths[0]:
+            grid = grid.transpose(1, 0, 2)
+        if grid[:, -1, 2].mean() < grid[:, 0, 2].mean():
+            grid = grid[:, ::-1]
+        if abs(grid[-1, :, 1].mean()) < abs(grid[0, :, 1].mean()):
+            grid = grid[::-1]
+        self.grid = conn.frame.to_local(grid.reshape(-1, 3)).reshape(grid.shape)
+        self.width = np.linalg.norm(np.diff(grid, axis=0), axis=2).sum(axis=0).mean()
+        self.height = np.linalg.norm(np.diff(grid, axis=1), axis=2).sum(axis=1).mean()
+
+    def at(self, uv, depth=0.0):
+        uv = np.asarray(uv, dtype=float)
+        shape = uv.shape[:-1]
+        ij = np.clip(uv.reshape(-1, 2), 0, 1) * (np.array(self.grid.shape[:2]) - 1)
+        base = np.minimum(ij.astype(int), np.array(self.grid.shape[:2]) - 2)
+        f = ij - base
+        i, j = base.T
+        u, v = f[:, 0:1], f[:, 1:2]
+        pts = ((1 - u) * (1 - v) * self.grid[i, j] + u * (1 - v) * self.grid[i + 1, j]
+               + (1 - u) * v * self.grid[i, j + 1] + u * v * self.grid[i + 1, j + 1])
+        pts[:, 2] += depth
+        return pts.reshape(*shape, 3)
+
+    def ribbon(self, uv, width, material, depth=-.008, closed=False):
+        return _pipe(self.at(uv, depth), width / 2, material, closed, sides=6)
+
+    def patch(self, u0, u1, v0, v1, material, depth=-.014):
+        from .fills import grid_mesh
+        u, v = np.meshgrid(np.linspace(u0, u1, 9), np.linspace(v0, v1, 4), indexing="ij")
+        mesh = grid_mesh(self.at(np.stack([u, v], axis=-1), depth), material)
+        if mesh.face_normals()[:, 2].mean() < 0:
+            mesh.flip_normals()
+        return mesh
+
+    def border(self, material, depth=-.005):
+        uv = np.array([(u, .035) for u in np.linspace(.025, .975, 17)]
+                      + [(.975, v) for v in np.linspace(.035, .965, 9)[1:]]
+                      + [(u, .965) for u in np.linspace(.975, .025, 17)[1:]]
+                      + [(.025, v) for v in np.linspace(.965, .035, 9)[1:-1]])
+        return self.ribbon(uv, min(.010, self.height * .08), material, depth, True)
+
+    def projector(self, u, radius):
+        a = np.linspace(0, 2 * np.pi, 24, endpoint=False)
+        rings = []
+        for size, depth in ((.30, -.048), (.62, -.041), (.88, -.026), (1., -.017), (1.04, -.012)):
+            uv = np.column_stack([u + radius / self.width * size * np.cos(a),
+                                  .49 + radius / self.height * size * np.sin(a)])
+            rings.append(self.at(uv, depth))
+        bowl = P.loft(rings, material="bezel")
+        if bowl.face_normals()[:, 2].mean() < 0:
+            bowl.flip_normals()
+        # Small convex lens within the reflector, with no collapsed pole quads.
+        uv = np.column_stack([u + radius / self.width * .62 * np.cos(a),
+                              .49 + radius / self.height * .62 * np.sin(a)])
+        edge = self.at(uv, -.019)
+        center = self.at([u, .49], -.011)
+        lens = Mesh(np.vstack([edge, center]), [(k, (k + 1) % 24, 24) for k in range(24)], ["projector_glass"] * 24)
+        if lens.face_normals()[:, 2].mean() < 0:
+            lens.flip_normals()
+        return bowl.merge(lens)
+
+
 @register
 class Headlight(CarComponent):
     name = "light.headlight"
     accepts = (PolygonConnector,)
     default_for = ("headlight",)
-    options = {"lens_alpha": 0.55, "projector": True}
-    description = "wrap-around headlamp: clear lens over a chrome bezel with a projector unit"
+    options = {"lens_alpha": 0.28, "projector": True}
+    description = "twin projector bowls, upper DRL and outboard indicator under a curved clear pane"
 
     def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
         mats = {
             "lens": Material("lens", (0.82, 0.88, 0.92), float(opts["lens_alpha"]), 0.95),
-            "bezel": ctx.material("bezel", "#d8dde2", shininess=0.8, metallic=0.9),
-            "lamp_dark": ctx.material("lamp_dark", "#1b1c1f", shininess=0.4),
-            "lamp_led": Material("lamp_led", (0.95, 0.97, 1.0), 1.0, 0.5, emissive=0.8),
+            "bezel": ctx.material("bezel", "#b9c3ce", shininess=0.8, metallic=0.9),
+            "lamp_dark": ctx.material("lamp_dark", "#12161d", shininess=0.4),
+            "lamp_led": Material("lamp_led", (0.95, 0.97, 1.0), 1.0, 0.5, emissive=0.65),
+            "projector_glass": ctx.material("projector_glass", "#8caac1", shininess=.95),
+            "indicator": ctx.material("indicator", "#ee8c14", emissive=.3, shininess=.65),
         }
-        housing = fill_connector(conn, "lamp_dark", offset=-0.05, name="housing")
-        bezel = fill_connector(conn, "bezel", offset=-0.03, border=0.03, border_material="lamp_dark", name="bezel")
-        lens = fill_connector(conn, "lens", offset=-0.004, thickness=0.0, name="lens")
-        m = housing.merge(bezel).merge(lens)
-        # projector: a short cylinder near the outer/forward end of the lamp
-        lp = conn.local_points()
-        c = conn.centroid
-        i = int(np.argmax(lp[:, 0]))  # major direction ~ car forward
-        p_world = conn.points[i] * 0.45 + c * 0.55
-        proj = P.cylinder(0.055, 0.03, 20, material="lamp_dark", name="projector")
-        proj_face = P.cylinder(0.04, 0.012, 20, material="lamp_led", center=(0, 0, 0.02), name="projector_led")
-        proj.merge(proj_face)
-        proj.apply_frame(Frame.from_normal(p_world - conn.frame.z_axis * 0.035, conn.frame.z_axis, conn.frame.x_axis))
-        # DRL strip along the top edge
-        top = lp[:, 1].max()
-        strip_pts = conn.points[lp[:, 1] > top - 0.02]
-        m.merge(proj)
+        inv = np.linalg.inv(conn.frame.matrix)
+        m = Mesh(name="headlight")
+        _part(m, fill_connector(conn, "lamp_dark", offset=-.056).transform(inv), "housing")
+        surf = _LampSurface(conn)
+        _part(m, surf.border("bezel"), "bezel")
+        radius = min(.052, surf.height * .27, surf.width * .15)
+        for k, u in enumerate((.28, .61) if opts["projector"] else (.37,)):
+            _part(m, surf.projector(u, radius), f"projector_{k}")
+        if not opts["projector"]:
+            _part(m, surf.patch(.58, .78, .35, .60, "lamp_led"), "led_bar")
+        uv = np.column_stack([np.linspace(.08, .84, 25), np.full(25, .85)])
+        _part(m, surf.ribbon(uv, min(.008, surf.height * .065), "lamp_led"), "drl")
+        _part(m, surf.patch(.86, .95, .18, .77, "indicator", -.010), "indicator")
+        _part(m, fill_connector(conn, "lens", offset=.001, bulge=.008, upsample=3).transform(inv), "lens")
         m.materials.update(mats)
-        m.transform(np.linalg.inv(conn.frame.matrix))
-        return ComponentResult(m, [], {})
+        return ComponentResult(m, [], {"projectors": 2 if opts["projector"] else 1})
 
 
 @register
@@ -301,32 +388,33 @@ class Taillight(CarComponent):
     name = "light.taillight"
     accepts = (PolygonConnector,)
     default_for = ("taillight",)
-    options = {"lens_alpha": 0.7}
-    description = "red lens tail lamp with an inner reflector and reversing-light band"
+    options = {"lens_alpha": 0.32}
+    description = "curved tail lamp with light-guide ring, clear reverse segment and painted bezel"
 
     def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
-        red = Material.parse_color(ctx.palette.taillight)
         mats = {
-            "tail_lens": Material("tail_lens", red, float(opts["lens_alpha"]), 0.95, emissive=0.25),
-            "tail_reflector": Material("tail_reflector", (0.9, 0.35, 0.3), 1.0, 0.6),
-            "tail_reverse": Material("tail_reverse", (0.9, 0.92, 0.95), 1.0, 0.6),
-            "lamp_dark": ctx.material("lamp_dark", "#1b1c1f", shininess=0.4),
+            "tail_lens": Material("tail_lens", Material.parse_color(ctx.palette.taillight), float(opts["lens_alpha"]), .95),
+            "tail_guide": ctx.material("tail_guide", "#f12837", emissive=.6, shininess=.7),
+            "tail_reflector": ctx.material("tail_reflector", "#b92231", shininess=.8),
+            "tail_reverse": ctx.material("tail_reverse", "#e5e7ee", shininess=.8),
+            "tail_bezel": ctx.material("tail_bezel", ctx.palette.paint, shininess=.85),
+            "lamp_dark": ctx.material("lamp_dark", "#17131a", shininess=.4),
         }
-        housing = fill_connector(conn, "lamp_dark", offset=-0.04, name="housing")
-        inner = fill_connector(conn, "tail_reflector", offset=-0.02, border=0.03, border_material="lamp_dark", name="inner")
-        # reversing band on the lower third
-        lp = conn.local_points()
-        lo, hi = lp[:, 1].min(), lp[:, 1].max()
-        cent = inner.face_centroids()
-        cl = conn.frame.to_local(cent)[:, :2]
-        for i in range(inner.n_faces):
-            if inner.face_materials[i] == "tail_reflector" and cl[i, 1] < lo + 0.3 * (hi - lo):
-                inner.face_materials[i] = "tail_reverse"
-        lens = fill_connector(conn, "tail_lens", offset=-0.004, thickness=0.0, name="lens")
-        m = housing.merge(inner).merge(lens)
+        inv = np.linalg.inv(conn.frame.matrix)
+        m = Mesh(name="taillight")
+        _part(m, fill_connector(conn, "lamp_dark", offset=-.038).transform(inv), "housing")
+        surf = _LampSurface(conn)
+        _part(m, surf.border("tail_bezel", .001), "bezel")
+        uv = rounded_rect_points(.78, .54, .10, 6) + [.5, .57]
+        _part(m, surf.ribbon(uv, min(.012, surf.height * .08), "tail_guide", -.012, True), "light_guide")
+        _part(m, surf.patch(.22, .55, .41, .57, "tail_reverse", -.015), "reverse")
+        _part(m, surf.patch(.12, .88, .12, .23, "tail_reflector", -.009), "reflex_strip")
+        # Small prismatic flutes are geometry, rather than a single red patch.
+        for u in np.linspace(.14, .86, 19):
+            _part(m, surf.ribbon([[u, .135], [u, .215]], .0025, "tail_reflector", -.007), f"reflex_flute_{u:.2f}")
+        _part(m, fill_connector(conn, "tail_lens", offset=.001, bulge=.006, upsample=3).transform(inv), "lens")
         m.materials.update(mats)
-        m.transform(np.linalg.inv(conn.frame.matrix))
-        return ComponentResult(m, [], {})
+        return ComponentResult(m)
 
 
 # =============================================================== GRILLE / INTAKE / PLATE / BADGE
@@ -335,54 +423,88 @@ class Grille(CarComponent):
     name = "grille.slats"
     accepts = (RectangleConnector,)
     default_for = ("grille",)
-    options = {"slats": 5, "frame": True, "mesh": False}
-    description = "horizontal-slat radiator grille in a chrome frame (fits any rectangle)"
+    options = {"slats": 5, "frame": True, "mesh": False, "badge": True}
+    description = "deep horizontal slats interrupted around an inset roundel, with an open surround"
+    pattern = "slats"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
         w, h = conn.width, conn.height
-        mats = {"grille_dark": ctx.material("grille_dark", "#0e0f11", shininess=0.2),
-                "chrome": ctx.material("chrome", ctx.palette.chrome, shininess=0.85, metallic=0.9)}
-        m = P.rounded_box(w, h, 0.02, min(0.04, h / 3), material="grille_dark", center=(0, 0, 0.0), name="grille_back")
-        if opts.get("frame", True):
-            fr = P.rounded_box(w + 0.03, h + 0.03, 0.016, min(0.05, h / 2.5), material="chrome", center=(0, 0, 0.006), name="frame")
-            m.merge(fr)
-            back = P.rounded_box(w - 0.0, h - 0.0, 0.014, min(0.04, h / 3), material="grille_dark", center=(0, 0, 0.012), name="grille_inner")
-            m.merge(back)
-        n = int(opts.get("slats", 5))
-        if opts.get("mesh"):
-            n = max(n, 8)
-        for k in range(n):
-            y = -h / 2 + (k + 0.5) * h / n
-            slat = P.box(w - 0.02, h / n * 0.45, 0.02, material="chrome", center=(0, y, 0.02), name="slat")
-            m.merge(slat)
+        band = min(.012, h * .09)
+        mats = {"grille_dark": ctx.material("grille_dark", "#101317", shininess=.2),
+                "mesh_dark": ctx.material("mesh_dark", "#42484d", shininess=.5, metallic=.5),
+                "chrome": ctx.material("chrome", ctx.palette.chrome, shininess=.85, metallic=.9)}
+        m = Mesh(name="grille")
+        _part(m, P.rounded_box(w, h, .010, min(.03, h * .2), material="grille_dark", center=(0, 0, -.022)), "back")
+        if opts["frame"]:
+            _part(m, _surround(w, h, band, .022, "chrome", -.012), "surround")
+        iw, ih = w - 2 * band, h - 2 * band
+        pattern = "mesh" if opts.get("mesh") else self.pattern
+        badge_r = min(.040, h * .29) if opts.get("badge") and pattern == "slats" else 0
+        if pattern == "slats":
+            n = int(np.clip(opts["slats"], 1, 14))
+            for k in range(n):
+                y = -ih / 2 + (k + .5) * ih / n
+                thick = min(.012, ih / n * .32)
+                cut = np.sqrt(max(0, (badge_r + .006) ** 2 - max(0, abs(y) - thick / 2) ** 2))
+                spans = [(-iw / 2, -cut), (cut, iw / 2)] if cut else [(-iw / 2, iw / 2)]
+                for j, (lo, hi) in enumerate(spans):
+                    _part(m, P.box(hi - lo, thick, .030, material="chrome", bevel=.002,
+                                   center=((lo + hi) / 2, y, -.001)), f"slat_{k}_{j}")
+        elif pattern == "honeycomb":
+            # Individual open hexagonal cells. Cell size is bounded to keep a
+            # wide van grille inexpensive even at the smallest option value.
+            r = max(float(opts.get("cell_size", .025)), iw / 48, .018)
+            row = np.sqrt(3) * r
+            for i, x in enumerate(np.arange(-iw / 2 + r, iw / 2 - r, 1.5 * r)):
+                for j, y in enumerate(np.arange(-ih / 2 + row / 2 + (i % 2) * row / 2, ih / 2 - row / 2, row)):
+                    _part(m, P.tube(r, r - .0025, .022, 6, material="mesh_dark", center=(x, y, -.001)), f"cell_{i}_{j}")
+        else:
+            # Intersecting diagonal wires clipped analytically to the insert.
+            for slope in (-1, 1):
+                for k, intercept in enumerate(np.arange(-ih / 2 - iw / 2, ih / 2 + iw / 2, .030)):
+                    ends = []
+                    for x in (-iw / 2, iw / 2):
+                        y = slope * x + intercept
+                        if -ih / 2 <= y <= ih / 2:
+                            ends.append([x, y, .003])
+                    for y in (-ih / 2, ih / 2):
+                        x = (y - intercept) / slope
+                        if -iw / 2 < x < iw / 2:
+                            ends.append([x, y, .003])
+                    if len(ends) == 2 and np.linalg.norm(np.subtract(*ends)) > .001:
+                        _part(m, _pipe(ends, .0022, "mesh_dark", sides=4), f"wire_{slope}_{k}")
+        if badge_r:
+            _part(m, P.tube(badge_r, badge_r - .004, .012, 24, material="chrome", center=(0, 0, .003)), "badge_rim")
+            _part(m, P.cylinder(badge_r - .005, .008, 24, material="grille_dark", center=(0, 0, .004)), "badge")
         m.materials.update(mats)
         return ComponentResult(m)
 
 
 @register
-class Intake(CarComponent):
+class HoneycombGrille(Grille):
+    name = "grille.honeycomb"
+    default_for = ()
+    pattern = "honeycomb"
+    options = dict(Grille.options, cell_size=.025, badge=False)
+    description = "open hexagonal grille cells with 22mm wall depth"
+
+
+@register
+class MeshGrille(Grille):
+    name = "grille.mesh"
+    default_for = ()
+    pattern = "mesh"
+    options = dict(Grille.options, badge=False)
+    description = "clipped diagonal woven-wire grille insert"
+
+
+@register
+class Intake(HoneycombGrille):
     name = "grille.intake"
-    accepts = (RectangleConnector,)
     default_for = ("intake",)
     priority = 1
-    options = {"mesh": True}
-    description = "lower bumper air intake with a honeycomb/mesh insert"
-
-    def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
-        w, h = conn.width, conn.height
-        mats = {"grille_dark": ctx.material("grille_dark", "#0e0f11", shininess=0.2),
-                "mesh_dark": ctx.material("mesh_dark", "#26282c", shininess=0.35)}
-        m = P.rounded_box(w, h, 0.03, min(0.05, h / 2.5), material="grille_dark", center=(0, 0, -0.005), name="intake")
-        # mesh bars
-        n = max(3, int(w / 0.08))
-        for k in range(n):
-            x = -w / 2 + (k + 0.5) * w / n
-            m.merge(P.box(0.012, h - 0.02, 0.02, material="mesh_dark", center=(x, 0, 0.012), name="bar"))
-        for k in range(max(2, int(h / 0.05))):
-            y = -h / 2 + (k + 0.5) * h / max(2, int(h / 0.05))
-            m.merge(P.box(w - 0.02, 0.01, 0.02, material="mesh_dark", center=(0, y, 0.012), name="bar"))
-        m.materials.update(mats)
-        return ComponentResult(m)
+    options = dict(HoneycombGrille.options)
+    description = "lower bumper honeycomb intake in a three-dimensional surround"
 
 
 @register
@@ -492,6 +614,8 @@ class SharkFinAntenna(CarComponent):
             pts = np.column_stack([prof[:, 0], np.full(len(prof), y), prof[:, 1] * s])
             rings.append(pts)
         m = P.loft(rings, closed_rings=True, cap_start=True, cap_end=True, material="paint", name="fin")
+        _part(m, P.rounded_box(L * 1.02, .068, .007, .026, material="antenna_gasket", center=(0, 0, .0035)), "antenna_base")
+        mats["antenna_gasket"] = ctx.material("antenna_gasket", "#181a1d", shininess=.2)
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -510,8 +634,22 @@ class DoorHandle(CarComponent):
         mats = {"paint": ctx.material("paint", ctx.palette.paint, shininess=0.85),
                 "chrome": ctx.material("chrome", ctx.palette.chrome, shininess=0.85, metallic=0.9),
                 "trim_dark": ctx.material("trim_dark", "#101113", shininess=0.2)}
-        m = P.rounded_box(L + 0.02, 0.045, 0.004, 0.015, material="trim_dark", center=(0, 0, 0.002), name="recess")
-        m.merge(P.rounded_box(L, 0.028, 0.018, 0.012, material=mat, center=(0.0, 0.004, 0.014), name="handle"))
+        m = Mesh(name="handle")
+        outer = rounded_rect_points(L + .025, .054, .020, 5)
+        inner = outer * [.72, .52]
+        rings = [np.column_stack([outer, np.full(len(outer), .006)]),
+                 np.column_stack([inner, np.full(len(inner), .001)])]
+        bowl = P.loft(rings, material="trim_dark", cap_end=True)
+        if bowl.face_normals()[:, 2].mean() < 0:
+            bowl.flip_normals()
+        _part(m, bowl, "finger_recess")
+        path = np.array([[-L / 2, .006, .006], [-L * .38, .008, .025],
+                         [0, .008, .030], [L * .38, .008, .025], [L / 2, .006, .006]])
+        handle = P.sweep_profile(path, rounded_rect_points(.022, .013, .004, 3), material=mat).flip_normals()
+        _part(m, handle, "pull_bridge")
+        _part(m, P.cylinder(.003, .002, 12, material="trim_dark", center=(L * .39, .006, .034)), "keyhole")
+        # The left connector's local Y points down, unlike the right one.
+        m.scale([1, 1 if conn.frame.y_axis[2] >= 0 else -1, 1])
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -525,16 +663,29 @@ class SideMirror(CarComponent):
     description = "door mirror on a short stalk, housing in body colour, mirror glass facing rearwards"
 
     def build_local(self, conn: PointConnector, opts, ctx) -> ComponentResult:
-        # local: +Z outboard, +X car-forward, +Y up (right-handed with z out, x fwd -> y = z × x)
         col = opts.get("housing_color") or ctx.palette.paint
-        mats = {"mirror_housing": ctx.material("mirror_housing", col, shininess=0.85),
-                "trim_dark": ctx.material("trim_dark", "#101113", shininess=0.2),
-                "mirror_glass": Material("mirror_glass", (0.75, 0.8, 0.85), 1.0, 0.95)}
-        stalk = P.box(0.05, 0.03, 0.06, material="trim_dark", center=(0.0, -0.01, 0.03), name="stalk")
-        # housing: rounded box, 0.10 deep (x, fore-aft), 0.11 tall (y), 0.13 outboard (z)
-        housing = P.rounded_box(0.10, 0.11, 0.13, 0.03, material="mirror_housing", center=(0.02, 0.02, 0.05 + 0.065), name="housing")
-        glass = P.box(0.004, 0.09, 0.11, material="mirror_glass", center=(-0.031, 0.02, 0.115), name="mglass")
-        m = stalk.merge(housing).merge(glass)
+        mats = {"mirror_housing": ctx.material("mirror_housing", col, shininess=.85),
+                "trim_dark": ctx.material("trim_dark", "#101113", shininess=.2),
+                "mirror_glass": Material("mirror_glass", (.62, .73, .82), 1., .95),
+                "mirror_signal": ctx.material("mirror_signal", "#edb66b", shininess=.85)}
+        m = Mesh(name="mirror")
+        _part(m, P.rounded_box(.065, .095, .016, .022, material="trim_dark", center=(0, .005, .008)), "base_plinth")
+        _part(m, _pipe([[0, -.015, .012], [0, -.009, .045], [-.005, .009, .085]], .016, "trim_dark"), "stalk")
+        outline = rounded_rect_points(.20, .112, .035, 5)
+        rings = [np.column_stack([np.full(len(outline), x), outline[:, 1] * scale + .025,
+                                  outline[:, 0] * scale + .145])
+                 for x, scale in ((-.045, 1.), (.010, 1.03), (.066, .77), (.090, .30))]
+        housing = P.loft(rings, cap_end=True, material="mirror_housing")
+        if P.signed_volume(housing) < 0:
+            housing.flip_normals()
+        _part(m, housing, "housing")
+        rear_frame = Frame.from_normal([-.046, .025, .145], [-1, 0, 0], [0, 0, 1])
+        _part(m, _surround(.202, .114, .007, .008, "trim_dark").apply_frame(rear_frame), "glass_gasket")
+        glass = P.grid_fill_polygon(rounded_rect_points(.186, .098, .026, 5), material="mirror_glass", z=.003, bulge=.003)
+        _part(m, glass.apply_frame(rear_frame), "mirror_pane")
+        path = [[.047, -.008, .071], [.069, -.009, .110], [.070, -.009, .161], [.058, -.004, .218]]
+        _part(m, _pipe(path, .0035, "mirror_signal"), "turn_signal")
+        m.scale([1, 1 if conn.frame.y_axis[2] >= 0 else -1, 1])
         m.materials.update(mats)
         return ComponentResult(m)
 
