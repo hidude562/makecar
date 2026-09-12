@@ -267,6 +267,12 @@ def knob(radius: float, height: float, material_body: str, material_cap: str, n:
     return m
 
 
+def bucket_buckle(params, side: float) -> np.ndarray:
+    """Buckle datum from fitted bucket-seat parameters (shared with webbing)."""
+    return np.array([-params.footprint_depth / 2 + 0.18,
+                     -side * (params.cushion_width / 2 + 0.025), params.cushion_height + 0.045])
+
+
 def named(mesh: Mesh, name: str) -> Mesh:
     """Keep an inspectable vertex group and face zone for a detail part."""
     mesh.add_group(name, range(mesh.n_vertices))
@@ -278,7 +284,9 @@ def ribbon(path, width: float, thickness: float, material: str, name="ribbon", u
     """Solid flat strip along a path (webbing, trim, or a recessed seam)."""
     profile = np.array([[-width / 2, -thickness / 2], [width / 2, -thickness / 2],
                         [width / 2, thickness / 2], [-width / 2, thickness / 2]])
-    return named(P.sweep_profile(np.asarray(path), profile, material=material, name=name, up_hint=up), name)
+    mesh = P.sweep_profile(np.asarray(path), profile, material=material, name=name, up_hint=up)
+    # sweep_profile maps this CCW profile into a basis facing against the path.
+    return named(mesh.flip_normals(), name)
 
 
 def grille(radius: float, name="grille") -> Mesh:

@@ -236,7 +236,7 @@ class BucketSeat(MorphableComponent):
         # The footprint is a floor mount, not the hip centre: the H-point is
         # 95 mm ahead of the cushion's rear edge, over the back/cushion junction.
         side = 1.0 if conn.meta.get("side", "left") == "left" else -1.0
-        buckle = np.array([x0 + 0.16, -side * (p.cushion_width / 2 + 0.025), p.cushion_height + 0.045])
+        buckle = H.bucket_buckle(p, side)
         res.mesh.merge(H.ribbon([buckle - [0.05, 0, 0.15], buckle], 0.018, 0.009, "int_belt", "buckle_stalk"))
         res.mesh.merge(H.named(P.rounded_box(0.055, 0.032, 0.045, 0.008, material="int_plastic", center=buckle), "buckle"))
         res.mesh.merge(P.box(0.023, 0.022, 0.006, material="int_needle", center=buckle + [0.006, 0, 0.025]))
@@ -249,6 +249,11 @@ class BucketSeat(MorphableComponent):
             for zone in ("headrest", "post_left", "post_right"):
                 res.mesh.remove_faces(res.mesh.zone_faces(zone))
             res.mesh.prune_unused_vertices()
+        if "headroom" in conn.meta:
+            clearance = float(conn.meta["headroom"]) - float(res.mesh.vertices[:, 2].max())
+            res.info["headroom_clearance"] = clearance
+            if clearance < 0:
+                res.info["fit_warnings"] = [f"Seat exceeds supplied headroom by {-clearance:.3f} m; raise the roof or lower the H-point."]
         _finish(res.mesh, ctx)
         res.mesh.materials = {k: v for k, v in res.mesh.materials.items() if k in set(res.mesh.face_materials)}
         return res
@@ -412,7 +417,13 @@ class ShoulderBelt(CarComponent):
     description = "B-pillar height adjuster, D-ring and 47 mm webbing to the seat buckle"
 
     def build_local(self, conn, opts, ctx):
-        buckle = conn.frame.to_local(np.asarray(conn.meta["buckle"]))[0]
+        seat = RectangleConnector(conn.meta["seat"], Frame.from_normal(conn.meta["seat_origin"], [0, 0, 1], x_hint=(1, 0, 0)),
+                                  *conn.meta["seat_size"], meta={"h_point_height": conn.meta["h_point_height"]})
+        component = BucketSeat()
+        params = H.params_from_values(component, component.fit(seat, component.resolve_options(None), ctx))
+        side = 1 if conn.meta["side"] == "L" else -1
+        buckle_world = seat.frame.to_world(H.bucket_buckle(params, side))[0]
+        buckle = conn.frame.to_local(buckle_world)[0]
         m = H.named(P.rounded_box(0.045, 0.14, 0.014, 0.012, material="int_plastic"), "belt_adjuster")
         m.merge(P.rounded_box(0.064, 0.023, 0.012, 0.008, material="int_metal", center=(0, 0, 0.014)))
         # Flat webbing, not a cable: slight forward bow clears the seat bolster.
@@ -420,7 +431,7 @@ class ShoulderBelt(CarComponent):
         mid = start * 0.45 + buckle * 0.55 + np.array([0.085, 0.0, 0.015])
         m.merge(H.ribbon([start, mid, buckle], float(conn.meta["belt_width"]), 0.0014,
                          "int_belt", "shoulder_webbing", up=(0, 0, 1)))
-        return ComponentResult(_finish(m, ctx))
+        return ComponentResult(_finish(m, ctx), info={"buckle_world": buckle_world.tolist()})
 
 
 @register
@@ -482,18 +493,24 @@ class SteeringWheel(CarComponent):
             a = np.linspace(0, 2 * np.pi, 48, endpoint=False)
             path = np.column_stack([(R - rt) * np.cos(a), np.minimum((R - rt) * np.sin(a), R * 0.74), np.zeros_like(a)])
             b = np.linspace(0, 2 * np.pi, 10, endpoint=False)
-            rim = P.sweep_profile(path, np.column_stack([rt * np.cos(b), rt * np.sin(b)]),
-                                  material="int_leather", name="rim", closed_path=True)
+            tangent = np.roll(path, -1, axis=0) - np.roll(path, 1, axis=0)
+            radial = np.column_stack([tangent[:, 1], -tangent[:, 0], np.zeros(len(path))])
+            radial /= np.linalg.norm(radial, axis=1)[:, None]
+            rings = [p + rt * np.cos(b)[:, None] * n + rt * np.sin(b)[:, None] * [0, 0, 1] for p, n in zip(path, radial)]
+            # Wrap tangents too: a generic open-end sweep leaves a wedge at
+            # the closed path's seam, even when its endpoint is duplicated.
+            rim = P.loft(rings + [rings[0]], material="int_leather", name="rim").flip_normals()
         else:
             rim = P.torus(R - rt, rt, 48, 10, material="int_leather", name="rim")
         m = H.named(rim, "rim")
         # spokes at 3, 9 o'clock (±x) and 6 o'clock (+y is "down" in this frame)
         angles = [0.0, np.pi, np.pi / 2] if int(opts["spokes"]) == 3 else [0.0, np.pi, np.pi / 2 - 0.5, np.pi / 2 + 0.5]
-        for a in angles:
-            ln = R - rt - 0.04
+        for i, a in enumerate(angles):
+            reach = min(R - rt, R * 0.74 / max(np.sin(a), 1e-9)) if flat else R - rt
+            ln = reach - 0.04
             spoke = P.box(ln, 0.032, 0.02, material="int_plastic", center=(0.04 + ln / 2, 0, 0.0), name="spoke", bevel=0.004)
             spoke.transform(H.rot_z(a))
-            m.merge(spoke)
+            m.merge(H.named(spoke, f"spoke_{i}"))
         m.merge(H.named(P.rounded_box(0.179, 0.134, 0.042, 0.04, material="int_trim", center=(0, 0.005, 0.012)), "horn_edge"))
         hub = P.rounded_box(0.17, 0.125, 0.05, 0.04, material="int_soft", center=(0, 0.005, 0.012), name="hub")
         m.merge(H.named(hub, "airbag_pad"))
@@ -636,6 +653,13 @@ class Dashboard(MorphableComponent):
         y_vent = stack_top - 0.058
         y_screen = y_vent - 0.058 - h_s / 2 - 0.008
         y_hvac = stack_bot + 0.028
+        if sc is not None:
+            # Console top is H-point + 60 mm = wheel centre - 260 mm.
+            # Lift the control stack for tall H-points rather than burying its
+            # buttons behind the SUV/van console nose.
+            y_hvac = max(y_hvac, float(conn.frame.to_local(np.asarray(sc))[0, 1]) - 0.205)
+        y_screen = max(y_screen, y_hvac + 0.053 + h_s / 2)
+        y_vent = max(y_vent, y_screen + h_s / 2 + 0.076)
         y_cluster = y_band + 0.01
         if sc is not None:
             y_cluster = max(y_cluster, float(conn.frame.to_local(np.asarray(sc))[0, 1]) + 0.075)
@@ -752,6 +776,8 @@ class AnalogCluster(CarComponent):
             outer = np.column_stack([a * np.cos(th), b * np.sin(th) - 0.005])
             inner = np.column_stack([(a - 0.007) * np.cos(th), (b - 0.007) * np.sin(th) - 0.005])
             prof = np.vstack([outer, inner[::-1]])
+            rear_outline = np.vstack([outer, [[a, -h / 2 - 0.01], [-a, -h / 2 - 0.01]]])
+            m.merge(H.named(P.extrude_polygon(rear_outline, 0.006, material="int_gauge", z0=-0.036), "binnacle_back"))
             depth = float(opts["hood_depth"])
             secs, origins = [], []
             for z, sx, dy in ((-0.03, 1.0, 0.0), (0.04, 1.02, 0.004), (depth, 0.95, -0.012)):
@@ -918,13 +944,15 @@ class CenterConsole(CarComponent):
         ey, ez = np.array([0.0, 1.0, 0.0]), np.array([0.0, 0.0, 1.0])
         # body: rounded-rect sections along x, height profile rises towards the dash
         secs, origins = [], []
+        # Keep the nose below the centre-stack controls in high-H-point cars.
+        rise = float(np.clip(0.35 - hc, 0.0, 0.11))
         for x, hgt, wsc in ((xr, hc - 0.03, 0.92), (xr + 0.02, hc - 0.02, 1.0), (-0.16, hc - 0.02, 1.0), (-0.14, hc, 1.0),
-                            (0.25, hc, 1.0), (0.42, hc + 0.02, 1.0), (xf - 0.02, hc + 0.10, 0.98), (xf, hc + 0.11, 0.9)):
+                            (0.25, hc, 1.0), (0.42, hc + rise * 0.18, 1.0), (xf - 0.02, hc + rise * 0.91, 0.98), (xf, hc + rise, 0.9)):
             sec = rounded_rect_points(Wc * wsc, hgt, min(0.035, Wc * 0.15), 3)
             sec[:, 1] += hgt / 2
             secs.append(sec)
             origins.append(np.array([x, 0.0, 0.0]))
-        m = H.orient_outward(H.section_loft(secs, origins, ey, ez, "int_plastic", name="console_body"))
+        m = H.named(H.orient_outward(H.section_loft(secs, origins, ey, ez, "int_plastic", name="console_body")), "console_body")
         # shifter trim panel + armrest
         panel = P.rounded_box(0.28, Wc - 0.06, 0.006, 0.02, material=str(opts.get("panel_material", "int_wood")),
                               center=(0.27, 0, hc + 0.003), name="shift_panel")
@@ -1364,7 +1392,7 @@ class RearviewMirror(CarComponent):
     name = "mirror.rearview"
     accepts = (PointConnector,)
     default_for = ("rearview_mirror",)
-    options = {"width": 0.24, "height": 0.07}
+    options = {"width": 0.24, "height": 0.07, "fit_header": "auto"}
     description = "interior rear-view mirror on a stalk"
 
     def build_local(self, conn: PointConnector, opts, ctx) -> ComponentResult:
@@ -1376,8 +1404,15 @@ class RearviewMirror(CarComponent):
         cy, cz = 0.10 * np.sin(np.radians(40)) + 0.02, 0.10 * np.cos(np.radians(40)) + 0.02
         m.merge(P.rounded_box(w, h, 0.025, 0.02, material="int_plastic", center=(0, cy, cz), name="mirror_housing"))
         m.merge(P.box(w - 0.02, h - 0.012, 0.003, material="int_mirror", center=(0, cy, cz + 0.014), name="mirror_glass"))
-        # Legacy body mount is at the rear roof ring.  Keep its public frame
-        # intact, but fit the actual mirror to the measured windshield header.
-        mount = np.array([ctx.measurements["x_roof_front"] + 0.015, 0, ctx.measurements["z_roof_front"] - 0.055])
-        m.translate(conn.frame.to_local(mount)[0])
-        return ComponentResult(_finish(m, ctx), info={"header_mount_world": mount.tolist()})
+        # Fit only the legacy body root; explicit/custom mounts still follow
+        # their connector.  fit_header=False also preserves the old root frame.
+        fit = opts["fit_header"]
+        if fit == "auto":
+            fit = (conn.name == "rearview_mirror" and conn.owner == "body"
+                   and "x_roof_front" in ctx.measurements and "z_roof_front" in ctx.measurements
+                   and conn.origin[0] < ctx.measurements["x_roof_front"] - 0.35)
+        mount = conn.origin.copy()
+        if fit:
+            mount = np.array([ctx.measurements["x_roof_front"] + 0.015, 0, ctx.measurements["z_roof_front"] - 0.055])
+            m.translate(conn.frame.to_local(mount)[0])
+        return ComponentResult(_finish(m, ctx), info={"header_mount_world": mount.tolist(), "fitted_header": bool(fit)})

@@ -4,7 +4,10 @@ import dataclasses
 import numpy as np
 import pytest
 
-from makecar.assembly import assemble
+from makecar.assembly import assemble, INTERIOR_TAGS
+from makecar.connectors import PointConnector
+from makecar.geometry.frame import Frame
+from makecar.geometry.primitives import signed_volume
 from makecar.body.body import CarBody
 from makecar.body.connectors import aperture_loop
 from makecar.components.base import BuildContext, Palette, get_component
@@ -19,6 +22,16 @@ def cabin(request):
 
 def instances(assembly):
     return {i.connector.name: i for i in assembly.instances}
+
+
+def complete_interior(assembly):
+    # The shared assembler's hardcoded INTERIOR_TAGS is outside task ownership.
+    # Include neutral-tagged extensions explicitly rather than undercount them.
+    mesh = assembly.interior_mesh()
+    for part in assembly.instances:
+        if "interior_detail" in part.connector.tags and not part.connector.tags & INTERIOR_TAGS:
+            mesh.merge(part.result.mesh)
+    return mesh
 
 
 def test_adult_front_seat_packaging_all_styles(cabin):
@@ -39,6 +52,8 @@ def test_adult_front_seat_packaging_all_styles(cabin):
         axis = np.array([-np.sin(np.radians(22)), 0, np.cos(np.radians(22))])
         assert 0.60 <= np.ptp(local[mesh.groups["backrest"]] @ axis) <= 0.65
         assert mesh.vertices[mesh.groups["headrest"], 2].max() - hp[2] >= 0.80
+        assert seat.result.info["headroom_clearance"] > 0
+        assert "fit_warnings" not in seat.result.info
         for rail in ("rail_0", "rail_1"):
             assert local[mesh.groups[rail], 2].min() == pytest.approx(0.0)
         if name.endswith("driver"):
@@ -50,6 +65,16 @@ def test_adult_front_seat_packaging_all_styles(cabin):
     rim = rim[parts["steering_wheel"].result.mesh.groups["rim"]]
     assert np.ptp(rim[:, 0]) == pytest.approx(0.37, abs=0.002)
     assert np.ptp(rim[:, 2]) == pytest.approx(0.032, abs=0.002)
+    assert np.allclose(rim[:10], rim[-10:])
+    rings = rim[:-10].reshape(-1, 10, 3)
+    centres = rings.mean(axis=1)
+    assert np.allclose(np.linalg.norm(rings - centres[:, None], axis=2), 0.016)
+    if cabin.body.hints["style"] == "sports":
+        assert centres[:, 1].max() == pytest.approx(0.185 * 0.74)
+        assert np.count_nonzero(np.isclose(centres[:, 1], centres[:, 1].max())) > 5
+        mesh = parts["steering_wheel"].result.mesh
+        spoke = wheel.frame.to_local(mesh.vertices[mesh.groups["spoke_2"]])
+        assert spoke[:, 1].max() <= centres[:, 1].max() + 1e-9
 
 
 def test_pillar_and_belt_connectors_follow_body(cabin):
@@ -64,7 +89,7 @@ def test_pillar_and_belt_connectors_follow_body(cabin):
         belt = body.connector(f"belt_anchor_{side}")
         seat = parts[belt.meta["seat"]]
         buckle = seat.connector.frame.to_world(seat.result.info["buckle_local"])[0]
-        assert np.allclose(belt.meta["buckle"], buckle)
+        assert np.allclose(parts[belt.name].result.info["buckle_world"], buckle)
         assert belt.origin[2] > buckle[2] + 0.35
         assert "shoulder_webbing" in parts[belt.name].result.mesh.groups
         assert a.name in parts
@@ -103,8 +128,9 @@ def test_seat_targets_keep_exact_topology(cls):
 
 
 def test_interior_budget_and_materials(cabin):
-    assert cabin.interior_mesh().n_faces < 50000
-    assert len(cabin.interior_mesh().triangulated()[0]) < 50000
+    interior = complete_interior(cabin)
+    assert interior.n_faces < 50000
+    assert len(interior.triangulated()[0]) < 50000
     assert cabin.mesh().n_faces < 120000
     for part in cabin.instances:
         mesh = part.result.mesh
@@ -121,6 +147,12 @@ def test_dashboard_controls_and_closure_all_styles(cabin):
     assert {"tachometer_face", "speedometer_face", "needle_0", "needle_1", "binnacle_hood"} <= set(cluster.result.mesh.groups)
     assert cluster.connector.origin[2] >= cabin.body.connector("steering_wheel").origin[2] + 0.074
     hvac = parts["dashboard/hvac"]
+    console = parts["console"].result.mesh
+    assert hvac.result.mesh.bounds()[0][2] > console.vertices[console.groups["console_body"], 2].max()
+    screen = parts["dashboard/screen"].result.mesh
+    assert screen.bounds()[0][2] > hvac.result.mesh.bounds()[1][2]
+    assert parts["dashboard/vent_center_L"].result.mesh.bounds()[0][2] > screen.bounds()[1][2]
+    assert "binnacle_back" in cluster.result.mesh.groups
     local = hvac.connector.frame.to_local(hvac.result.mesh.vertices)
     for i in range(6):
         button = local[hvac.result.mesh.groups[f"hvac_button_{i}"]]
@@ -205,7 +237,7 @@ def test_right_hand_drive_manual_and_component_options(style):
     for side in ("L", "R"):
         belt = body.connector(f"belt_anchor_{side}")
         seat = parts[belt.meta["seat"]]
-        assert np.allclose(belt.meta["buckle"], seat.connector.frame.to_world(seat.result.info["buckle_local"])[0])
+        assert np.allclose(parts[belt.name].result.info["buckle_world"], seat.connector.frame.to_world(seat.result.info["buckle_local"])[0])
     ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
     opened = get_component("console.center").build(body.connector("console"), {"cup_cover": 0, "armrest": False}, ctx)
     assert "cup_sliding_cover" not in opened.mesh.groups
@@ -217,4 +249,56 @@ def test_right_hand_drive_manual_and_component_options(style):
         single = get_component("seat.bench").build(bench.connector, {"headrests": 1}, ctx)
         loc = bench.connector.frame.to_local(single.mesh.vertices[single.mesh.groups["headrest_0/headrest"]])
         assert loc[:, 1].mean() == pytest.approx(0.0, abs=1e-6)
+
+
+@pytest.mark.parametrize("tag,component", [("dashboard", "dashboard.sculpted"), ("bulkhead", "bulkhead.trim"),
+                                         ("seat", "seat.bucket"), ("cargo_floor", "floor.cargo")])
+def test_existing_tag_assignments_do_not_select_extension_points(tag, component):
+    cabin = assemble(CarBody().build("suv"), {"assign": {tag: component}})
+    assert not cabin.unattached or set(cabin.unattached) <= {"roof_rail_L", "roof_rail_R"}
+    for part in cabin.instances:
+        if "interior_detail" in part.connector.tags:
+            assert tag not in part.connector.tags
+
+
+@pytest.mark.parametrize("hp", [0.10, 0.50])
+def test_belt_endpoint_uses_clamped_seat_fit(hp):
+    cabin = assemble(CarBody().build("van", hints={"h_point_height": hp}))
+    parts = instances(cabin)
+    for side in ("L", "R"):
+        belt = parts[f"belt_anchor_{side}"]
+        seat = parts[belt.connector.meta["seat"]]
+        target = seat.connector.frame.to_world(seat.result.info["buckle_local"])[0]
+        assert np.allclose(belt.result.info["buckle_world"], target)
+
+
+@pytest.mark.parametrize("end", [[1, 0, 0], [-1, 0, 0], [0, 0, 1], [0.4, 0.6, 0.8]])
+def test_ribbon_winding_faces_outward(end):
+    mesh = H.ribbon([[0, 0, 0], end], 0.04, 0.002, "int_belt")
+    assert signed_volume(mesh) == pytest.approx(np.linalg.norm(end) * 0.04 * 0.002)
+
+
+def test_explicit_mirror_mounts_follow_connector():
+    ctx = BuildContext({}, {}, Palette(), np.random.default_rng(0))
+    component = get_component("mirror.rearview")
+    a = PointConnector("custom_mirror", Frame.from_normal([0.3, 0, 1.2], [-1, 0, 0], x_hint=(0, 1, 0)))
+    b = PointConnector("custom_mirror", Frame.from_normal([0.5, 0.1, 1.3], [-1, 0, 0], x_hint=(0, 1, 0)))
+    first, second = component.build(a, None, ctx), component.build(b, None, ctx)
+    assert not first.info["fitted_header"]
+    assert np.allclose(second.mesh.vertices - first.mesh.vertices, [0.2, 0.1, 0.1])
+    body = CarBody().build()
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    old = component.build(body.connector("rearview_mirror"), {"fit_header": False}, ctx)
+    assert np.allclose(old.info["header_mount_world"], body.connector("rearview_mirror").origin)
+
+
+def test_impossible_headroom_is_reported_not_silently_miniaturized():
+    body = CarBody().build()
+    seat = body.connector("seat_front_driver")
+    seat.meta["headroom"] = 1.0
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    result = get_component("seat.bucket").build(seat, None, ctx)
+    assert result.info["headroom_clearance"] < 0
+    assert result.info["fit_warnings"]
+    assert 0.60 <= result.info["backrest_length"] <= 0.65
 

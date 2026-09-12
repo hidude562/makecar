@@ -25,6 +25,8 @@ def extra_interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
     Path metadata is world-space.  Pillar +Z faces into the cabin; belt mounts
     carry the matching seat name, leaving buckle placement to the fitted seat.
     Existing body connector names and frames are deliberately left untouched.
+    The neutral interior_detail tag must not alias old component-selection tags
+    (e.g. dashboard), whose assignments would otherwise target these points.
     """
     import numpy as np
     from ..connectors import PointConnector
@@ -44,7 +46,7 @@ def extra_interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
     base = windshield[np.argmax(windshield[:, :, 0].mean(axis=1))].copy()
     base += np.array([-0.025, 0.0, -0.025])
     out.append(PointConnector("cowl_trim", Frame.from_normal(base.mean(axis=0), [0, 0, 1]),
-                              tags=["cowl_trim", "dashboard"], meta={"path": base}))
+                              tags=["cowl_trim", "interior_detail"], meta={"path": base}))
     floor = meas["z_floor"] + 0.05
     hp = float(hints.get("h_point_height", np.clip(0.17 + (meas["z_roof_front"] - 1.2) * 0.4, 0.17, 0.38)))
     for side, sign in (("L", 1.0), ("R", -1.0)):
@@ -53,7 +55,7 @@ def extra_interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
         path += np.array([-0.02, -sign * 0.025, -0.025])
         normal = np.array([0.0, -sign, 0.0])
         out.append(PointConnector(f"pillar_trim_A_{side}", Frame.from_normal(path.mean(axis=0), normal),
-                                  tags=["pillar_trim", "bulkhead"], meta={"pillar": "A", "side": side, "path": path, "width": 0.065,
+                                  tags=["pillar_trim", "interior_detail"], meta={"pillar": "A", "side": side, "path": path, "width": 0.065,
                                                                         "grid_points": skin_grid("roof_front", "cowl", "E", "G", sign)}))
         js = list(range(J["D"], J["G"] + 1))
         if sign < 0:
@@ -64,7 +66,7 @@ def extra_interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
         foot[2] = floor
         path = np.vstack([foot, path])
         out.append(PointConnector(f"pillar_trim_B_{side}", Frame.from_normal(path.mean(axis=0), normal),
-                                  tags=["pillar_trim", "bulkhead"], meta={"pillar": "B", "side": side, "path": path, "width": 0.10,
+                                  tags=["pillar_trim", "interior_detail"], meta={"pillar": "B", "side": side, "path": path, "width": 0.10,
                                                                         "grid_points": skin_grid("bp_r", "bp_f", "E", "G", sign)}))
         lower = skin_grid("deck", "front", "B", "E", sign)
         end = int(np.searchsorted(lower[:, :, 0].mean(axis=1), meas["x_cowl"] + 0.20))
@@ -73,31 +75,32 @@ def extra_interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
         lower[:, :, 0] -= 0.015
         lower[:, :, 2] += 0.02
         out.append(PointConnector(f"cabin_side_liner_{side}", Frame.from_normal(lower.reshape(-1, 3).mean(axis=0), normal),
-                                  tags=["pillar_trim", "bulkhead"], meta={"pillar": "lower", "side": side, "grid_points": lower}))
+                                  tags=["pillar_trim", "interior_detail"], meta={"pillar": "lower", "side": side, "grid_points": lower}))
         for pillar, first, last in (("C", "cp_r", "cp_f"), ("rear", "deck", "roof_rear"), ("belt", "roof_rear", "roof_front")):
             grid = skin_grid(first, last, "E", "F" if pillar == "belt" else "G", sign)
             out.append(PointConnector(f"pillar_trim_{pillar}_{side}", Frame.from_normal(grid.reshape(-1, 3).mean(axis=0), normal),
-                                      tags=["pillar_trim", "bulkhead"], meta={"pillar": pillar, "side": side, "grid_points": grid}))
+                                      tags=["pillar_trim", "interior_detail"], meta={"pillar": pillar, "side": side, "grid_points": grid}))
         if f"aperture/glass_quarter_{side}" not in mesh.meta["aperture_rects"]:
             grid = skin_grid("roof_rear", "cp_r", "F", "G", sign)
             out.append(PointConnector(f"pillar_trim_quarter_{side}", Frame.from_normal(grid.reshape(-1, 3).mean(axis=0), normal),
-                                      tags=["pillar_trim", "bulkhead"], meta={"pillar": "quarter", "side": side, "grid_points": grid}))
+                                      tags=["pillar_trim", "interior_detail"], meta={"pillar": "quarter", "side": side, "grid_points": grid}))
         height = float(np.clip(floor + hp + 0.57, path[0, 2] + 0.2, path[-1, 2] - 0.06))
         anchor = np.array([np.interp(height, path[:, 2], path[:, k]) for k in range(3)])
         anchor[1] -= sign * 0.016
         role = "driver" if (sign > 0) == (hints.get("drive", "left") == "left") else "passenger"
         xh = meas["x_cowl"] - float(hints.get("front_h_point_offset", 0.95))
         seat_y = min(0.42, meas["y_shoulder"] - 0.44)
-        buckle = [xh + 0.025, sign * (seat_y - 0.275), floor + hp - 0.005]
         out.append(PointConnector(f"belt_anchor_{side}", Frame.from_normal(anchor, normal, x_hint=(1, 0, 0)),
-                                  tags=["belt_anchor", "seat"], meta={"side": side, "seat": f"seat_front_{role}",
-                                                            "belt_width": 0.047, "path": path, "buckle": buckle}))
+                                  tags=["belt_anchor", "interior_detail"], meta={"side": side, "seat": f"seat_front_{role}",
+                                                            "belt_width": 0.047, "path": path,
+                                                            "seat_origin": [xh + 0.12, sign * seat_y, floor],
+                                                            "seat_size": [0.55, 0.52], "h_point_height": hp}))
     if meas.get("has_bed", 0.0) < 0.5:
         for side, sign in (("L", 1.0), ("R", -1.0)):
             origin = [meas["wheel_rear_x"], sign * (meas["y_shoulder"] - 0.12), floor + 0.03]
             radius = meas["arch_rear_r"] + 0.035
             height = max(0.18, meas["wheel_rear_z"] + radius - origin[2])
             out.append(PointConnector(f"cargo_wheelhouse_{side}", Frame.from_normal(origin, [0, 0, 1], x_hint=(1, 0, 0)),
-                                      tags=["cargo_wheelhouse", "cargo_floor"],
+                                      tags=["cargo_wheelhouse", "interior_detail"],
                                       meta={"side": side, "radius": radius, "height": height, "depth": 0.25}))
     return out
