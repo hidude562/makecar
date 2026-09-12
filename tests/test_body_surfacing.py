@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 
 from makecar.body import BodyGenerator, BodyParams, CarBody, style_params, style_names
-from makecar.body.connectors import fascia_point
-from makecar.body.generator import RING, RING_N, N_FASCIA, mirror_index, station_index
+from makecar.body.connectors import fascia_point, fascia_triangles
+from makecar.body.generator import RING, RING_N, N_FASCIA, N_STATIONS, mirror_index, station_index
 from makecar.body.targets import BODY_MODIFIER_SPECS
 
 
@@ -210,3 +210,120 @@ class TestUnderbody:
         assert p.rear_bumper_bottom - tail[RING["A"], 2] == pytest.approx(p.rear_valance_height)
         assert group(m, "fascia/front_face")[RING["A"], 2] == pytest.approx(nose[RING["A"], 2])
         assert group(m, "fascia/rear_face")[RING["A"], 2] == pytest.approx(tail[RING["A"], 2])
+
+
+# L, W, roof skin, WB, nominal tyre diameter. Factory sources and the two
+# estimated bare roof heights (wagon/SUV) are distinguished in the report.
+REFERENCE_DIMENSIONS = {
+    "sedan": (4.879, 1.839, 1.445, 2.824, 0.6683),
+    "hatchback": (4.284, 1.789, 1.491, 2.619, 0.6319),
+    "wagon": (4.854, 1.854, 1.640, 2.746, 0.7243),
+    "suv": (4.595, 1.854, 1.660, 2.690, 0.7243),
+    "pickup": (5.885, 2.029, 1.920, 3.693, 0.7748),
+    "coupe": (4.811, 1.915, 1.397, 2.718, 0.6903),
+    "sports": (3.914, 1.735, 1.245, 2.309, 0.6163),
+    "van": (5.174, 1.994, 1.740, 3.061, 0.7373),
+}
+
+
+class TestProductionPresets:
+    @pytest.mark.parametrize("style", style_names())
+    def test_reference_dimensions_are_present_in_mesh(self, style):
+        from makecar.body.connectors import measure
+        p = style_params(style)
+        measured = measure(mesh(p))
+        length, width, roof, wb, tyre = REFERENCE_DIMENSIONS[style]
+        assert measured["length"] == pytest.approx(length, abs=0.025)
+        assert measured["width"] == pytest.approx(width, abs=0.03)
+        assert measured["height"] == pytest.approx(roof, abs=0.01)
+        assert measured["wheelbase"] == pytest.approx(wb, abs=0.001)
+        assert 2 * (measured["arch_front_r"] - p.arch_gap) == pytest.approx(tyre, abs=0.001)
+        assert measured["z_cowl"] == pytest.approx(p.cowl_height)
+        assert measured["x_cowl"] - measured["x_roof_front"] == pytest.approx(p.windshield_length)
+        assert measured["x_front"] - measured["wheel_front_x"] == pytest.approx(p.front_overhang, abs=0.001)
+        assert measured["wheel_rear_x"] - measured["x_rear"] == pytest.approx(p.rear_overhang, abs=0.025)
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_caps_have_no_opposing_triangle_normals(self, style):
+        m = mesh(style_params(style))
+        off = m.meta["ring_offset"]
+        rows = list(range(off)) + list(range(off + N_STATIONS - 1, m.meta["n_rings"] - 1))
+        faces = np.array([m.faces[r * RING_N + j] for r in rows for j in range(RING_N)])
+        a, b, c, d = m.vertices[faces].transpose(1, 0, 2)
+        n0, n1 = np.cross(b - a, c - a), np.cross(c - a, d - a)
+        dots = np.sum(n0 * n1, axis=1)
+        assert np.all(dots >= -1e-12)
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_lights_and_glass_fill_without_folded_cells(self, style):
+        from makecar.components.fills import fill_connector
+        result = CarBody().build(style=style)
+        for c in result.connectors:
+            if c.meta.get("aperture"):
+                fill = fill_connector(c, "glass")
+                assert np.all(fill.face_normals() @ c.normal > 0), (style, c.name)
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_style_macros_activate_their_optional_zones(self, style):
+        car = CarBody()
+        result = car.build(style=style)
+        generated = mesh(style_params(style))
+        assert set(result.full_mesh.meta["aperture_rects"]) == set(generated.meta["aperture_rects"])
+        assert ("bed" in result.full_mesh.zones) == (style == "pickup")
+        # No nested-metadata mutation may leak back into the cached sedan.
+        assert "aperture/glass_quarter_L" not in car.library.base.meta["aperture_rects"]
+        assert "aperture/glass_quarter_L" not in car.build().full_mesh.meta["aperture_rects"]
+
+    @pytest.mark.parametrize("style", style_names())
+    def test_rigid_fascia_mounts_clear_their_entire_footprints(self, style):
+        result = CarBody().build(style=style)
+        for name in ("grille", "intake", "plate_front", "plate_rear"):
+            c = result.connector(name)
+            end = "rear" if name == "plate_rear" else "front"
+            sign = -1 if end == "rear" else 1
+            triangles = fascia_triangles(result.full_mesh, end)
+            for y in np.linspace(-c.width / 2, c.width / 2, 7):
+                for z in np.linspace(c.origin[2] - c.height / 2, c.origin[2] + c.height / 2, 9):
+                    surface = fascia_point(result.full_mesh, end, z, y, triangles)
+                    assert sign * (c.origin[0] - surface[0]) >= 0.0039, (style, name)
+        antenna = result.connector("antenna")
+        assert antenna.origin[0] - result.measurements["x_roof_rear"] >= 0.10
+        assert antenna.origin[0] < result.measurements["x_roof_front"]
+
+
+NEW_PARAMETERS = {
+    "bumper_projection", "bumper_crease_height", "hood_overhang", "front_splitter",
+    "rear_bumper_crease_height", "plate_recess", "diffuser_step", "tailgate_panel",
+    "arch_lip_width", "rocker_height", "door_step", "shoulder_radius", "fender_crease",
+    "a_pillar_width", "c_pillar_width", "glass_recess", "roof_edge_radius", "drip_rail",
+    "tunnel_height", "tunnel_width", "air_dam_height", "rear_valance_height",
+}
+
+
+class TestDetailTargets:
+    @pytest.mark.parametrize("spec", BODY_MODIFIER_SPECS, ids=lambda s: s.param)
+    def test_all_parameter_endpoints_keep_face_indices(self, spec):
+        p = BodyParams()
+        base = mesh(p)
+        for delta in (-spec.delta_minus, spec.delta_plus):
+            if not delta:
+                continue
+            variant = mesh(replace(p, **{spec.param: getattr(p, spec.param) + delta}))
+            assert variant.n_vertices == base.n_vertices
+            assert variant.faces == base.faces
+            assert np.isfinite(variant.vertices).all()
+            assert all(np.array_equal(base.groups[k], variant.groups[k]) for k in base.groups)
+            if spec.param in NEW_PARAMETERS:
+                assert np.max(np.linalg.norm(variant.vertices - base.vertices, axis=1)) > 0.0001
+
+    def test_new_sliders_have_real_differential_targets(self):
+        car = CarBody()
+        base = car.build().full_mesh.vertices
+        specs = {s.param: s for s in BODY_MODIFIER_SPECS}
+        assert NEW_PARAMETERS <= specs.keys()
+        for name in NEW_PARAMETERS:
+            spec = specs[name]
+            actual = car.build(modifiers={name: 1}).full_mesh.vertices
+            expected = mesh(replace(BodyParams(), **{name: getattr(BodyParams(), name) + spec.delta_plus})).vertices
+            assert np.allclose(actual, expected, atol=1e-6), name
+            assert not np.allclose(actual, base), name

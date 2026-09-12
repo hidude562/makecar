@@ -161,7 +161,7 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 9
+LIBRARY_VERSION = 11
 
 
 def _cache_dir():

@@ -18,11 +18,10 @@ edges without a variable topology.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Dict, List, Tuple
 import numpy as np
 
-from ..geometry.mesh import Mesh, Material
+from ..geometry.mesh import Mesh
 from ..geometry.curves import Profile, catmull_rom_closed, smoothstep
 from .params import BodyParams
 
@@ -52,8 +51,8 @@ def _ring_indices():
     return idx, acc
 
 
-RING, HALF_N = _ring_indices()      # RING["F"] = half-ring index of F ; HALF_N = 32
-RING_N = 2 * HALF_N                  # 64 vertices per full ring
+RING, HALF_N = _ring_indices()      # each control keeps its semantic ring index
+RING_N = 2 * HALF_N
 
 
 def mirror_index(j: int) -> int:
@@ -71,6 +70,13 @@ N_STATIONS = sum(UPPER_COUNTS) + 1              # 59 rings in the main loft
 N_FASCIA = 6                                    # corner, face, pocket rim and pocket floor
 UPPER_NAMES = ["rear", "deck", "roof_rear", "cp_r", "cp_f", "bp_r", "bp_f", "roof_front", "cowl", "front"]
 LOWER_NAMES = ["rear", "ra_start", "ra", "ra_end", "fa_start", "fa", "fa_end", "front"]
+GLASS_INTERVALS = {
+    "rear_window": ("deck", "roof_rear"),
+    "quarter": ("roof_rear", "cp_r"),
+    "rear": ("cp_f", "bp_r"),
+    "front": ("bp_f", "roof_front"),
+    "windshield": ("roof_front", "cowl"),
+}
 
 
 def _station_positions(breakpoints: List[float], counts: List[int]) -> np.ndarray:
@@ -89,6 +95,25 @@ def station_index(name: str, chain: str = "upper") -> int:
     return int(sum(counts[:k]))
 
 
+def _fascia_outline(width, lo, hi, shoulder, step=None):
+    """Corresponding rounded-rectangle samples for the end ring and its cap."""
+    radius = min(0.045, width * 0.12, (hi - lo) * 0.18)
+    if hi > shoulder:
+        radius = min(radius, (hi - shoulder) / 2)
+    pts = np.array([(0, lo), (width - radius, lo), (width, lo + radius),
+                    (width, lo + 2 * radius), (width, np.clip(shoulder, lo + 2.5 * radius, hi - radius)),
+                    (width - radius * 0.3, hi - radius * 0.3), (width - radius, hi),
+                    (width * 2 / 3, hi), (width / 3, hi), (0, hi)])
+    if step is not None:
+        # The two edges of the bumper step line up across every concentric
+        # ring. Sampling x(z) on unrelated heights makes saddle-shaped quads.
+        pts[4, 1] = min(shoulder, hi)
+        pts[5, 1] = min(shoulder + step, hi)
+    full = np.vstack([pts, pts[1:-1][::-1] * [-1, 1]])
+    counts = [n for _, _, n in SEGMENTS]
+    return catmull_rom_closed(full, counts + counts[::-1], np.ones(len(full)))
+
+
 PAINT, GLASS_ZONE, UNDERBODY, TRIM = "paint", "aperture", "underbody", "trim"
 
 
@@ -103,8 +128,7 @@ class BodyGenerator:
         # Reserve a 25 mm painted frame at both ends of every glass patch.
         # Interior samples still follow the roof curve, rather than a long quad
         # whose top edge would be a straight chord across the whole door.
-        for start, end in (("deck", "roof_rear"), ("roof_rear", "cp_r"),
-                           ("cp_f", "bp_r"), ("bp_f", "roof_front"), ("roof_front", "cowl")):
+        for start, end in GLASS_INTERVALS.values():
             a, b = station_index(start), station_index(end)
             frame = min(0.025, (self.x_hi[b] - self.x_hi[a]) * 0.18)
             self.x_hi[a + 1:b] = np.linspace(self.x_hi[a] + frame, self.x_hi[b] - frame, b - a - 1)
@@ -420,16 +444,17 @@ class BodyGenerator:
         for j in range(1, HALF_N):
             ring[mirror_index(j)] = ring[j] * [1, -1, 1]
 
-    def _glass_regions(self):
+    def _glass_regions(self, include_optional=False):
         """Rectangular aperture cells, excluding the painted perimeter bands."""
         jF, jG = RING["F"], RING["G"]
         regions = {}
         top = range(jG + 2, RING_N - jG - 2)
-        for name, start, end in (("windshield", "roof_front", "cowl"), ("rear_window", "deck", "roof_rear")):
+        for name in ("windshield", "rear_window"):
+            start, end = GLASS_INTERVALS[name]
             regions[f"aperture/{name}"] = (range(station_index(start) + 1, station_index(end) - 1), top)
-        for name, start, end in (("front", "bp_f", "roof_front"), ("rear", "cp_f", "bp_r"),
-                                  ("quarter", "roof_rear", "cp_r")):
-            if name == "quarter" and self.p.quarter_window_length <= 0.15:
+        for name in ("front", "rear", "quarter"):
+            start, end = GLASS_INTERVALS[name]
+            if name == "quarter" and self.p.quarter_window_length <= 0.15 and not include_optional:
                 continue
             rows = range(station_index(start) + 1, station_index(end) - 1)
             regions[f"aperture/glass_{name}_L"] = (rows, range(jF + 1, jG - 1))
@@ -525,12 +550,22 @@ class BodyGenerator:
         out = []
         for i, ring in enumerate(rings):
             r = ring.copy()
+            if i < 4 or i >= N_STATIONS - 4:
+                forward = i >= N_STATIONS - 4
+                distance = N_STATIONS - 1 - i if forward else i
+                weight = float(smoothstep(0, 1, 1 - distance / 4))
+                bottom = p.front_bumper_bottom - p.air_dam_height if forward else p.rear_bumper_bottom - p.rear_valance_height
+                top = p.hood_front_height if forward else p.deck_rear_height
+                crease = p.bumper_crease_height if forward else p.rear_bumper_crease_height
+                outline = _fascia_outline(np.abs(r[:, 1]).max(), bottom, top, crease, 0.025 if forward else None)
+                r[:, 1:] = r[:, 1:] * (1 - weight) + outline * weight
             # Each vertex follows its own longitudinal chain (important at arches).
             for forward, end, run in ((True, L["x_front"], p.front_corner_length),
                                       (False, L["x_rear"], p.rear_corner_length)):
                 sign = 1 if forward else -1
                 w = np.clip(1 - sign * (end - r[:, 0]) / max(run, 1e-6), 0, 1) ** 2
-                reserve = p.bumper_projection + (p.front_splitter if forward else 0.0)
+                reserve = (p.bumper_projection + p.front_splitter + p.hood_overhang if forward
+                           else p.bumper_projection + p.diffuser_step)
                 r[:, 0] -= sign * reserve * w
                 crease = p.bumper_crease_height if forward else p.rear_bumper_crease_height
                 top = p.hood_front_height if forward else p.deck_rear_height
@@ -572,42 +607,29 @@ class BodyGenerator:
         hw = max(abs(ring[:, 1]))
         zmid = (bottom + top) / 2
 
-        def outline(width, lo, hi, shoulder):
-            # Semantic samples retain the lamp corner (D..G) and flat top/bottom.
-            radius = min(0.045, width * 0.12, (hi - lo) * 0.18)
-            pts = np.array([(0, lo), (width - radius, lo), (width, lo + radius),
-                            (width, lo + 2 * radius), (width, np.clip(shoulder, lo + 2.5 * radius, hi - radius)),
-                            (width - radius * 0.3, hi - radius * 0.3), (width - radius, hi),
-                            (width * 2 / 3, hi), (width / 3, hi), (0, hi)])
-            full = np.vstack([pts, pts[1:-1][::-1] * [-1, 1]])
-            counts = [n for _, _, n in SEGMENTS]
-            return catmull_rom_closed(full, counts + counts[::-1], np.ones(len(full)))
-
-        face_yz = outline(hw * 0.985, bottom, top, crease)
+        face_yz = _fascia_outline(hw * 0.985, bottom, top, crease, 0.025 if forward else None)
         face = np.column_stack([self._fascia_x(face_yz[:, 0], face_yz[:, 1], forward), face_yz])
         # The first roll carries wraparound lamps into the face. The next roll
         # gives the bumper a rounded edge without a pillow-shaped central cap.
-        corner = ring.copy()
-        corner[:, 1] *= 0.995
-        corner[:, 2] = zmid + (corner[:, 2] - zmid) * 0.995
-        corner[:, 0] += (1 if forward else -1) * p.bumper_projection * 0.55
+        corner = (ring + face) / 2
         out = [corner, face]
-        for k, (width, lo, hi, depth) in enumerate((
-                (hw * 0.87, bottom + 0.035, top - 0.025, 0.0),
-                (0.32, zmid - 0.115, zmid + 0.115, 0.0),
-                (0.29, zmid - 0.09, zmid + 0.09, p.plate_recess),
-                (0.20, zmid - 0.06, zmid + 0.06, p.plate_recess))):
-            if forward and k > 0:
-                # Full-width upper grille landing, then the bumper crease.
-                # No artificial licence-plate-shaped dent in the front face.
-                width = hw * (0.80, 0.77, 0.46)[k - 1]
-                lo = bottom + (0.07, 0.09, 0.13)[k - 1]
-                hi = min(top - 0.04, crease + (0.025, 0.0, -0.025)[k - 1])
-                hi = max(lo + 0.02, hi)
-            yz = outline(width, lo, hi, crease if k == 0 else zmid)
-            x = self._fascia_x(yz[:, 0], yz[:, 1], forward)
-            if not forward and k >= 1:
-                x = np.full(len(yz), self.L["x_rear"] + depth)
+        wide = (hw * 0.87, bottom + 0.035, top - 0.025, 0.0)
+        if forward:
+            # Full-width upper grille landing, then the bumper crease. There
+            # is no licence-plate-shaped dent in the front face.
+            specs = [wide]
+            for ratio, rise, dz in ((0.80, 0.07, 0.025), (0.77, 0.09, 0.0), (0.46, 0.13, -0.025)):
+                lo = bottom + rise
+                specs.append((hw * ratio, lo, max(lo + 0.02, min(top - 0.04, crease + dz)), 0.0))
+        else:
+            specs = [wide, (0.32, zmid - 0.115, zmid + 0.115, 0.0),
+                     (0.29, zmid - 0.09, zmid + 0.09, p.plate_recess),
+                     (0.20, zmid - 0.06, zmid + 0.06, p.plate_recess)]
+        for k, (width, lo, hi, depth) in enumerate(specs):
+            yz = _fascia_outline(width, lo, hi, crease if forward or k == 0 else zmid,
+                                 0.025 if forward else None)
+            x = (np.full(len(yz), self.L["x_rear"] + depth) if not forward and k > 0
+                 else self._fascia_x(yz[:, 0], yz[:, 1], forward))
             out.append(np.column_stack([x, yz]))
         if forward:
             zmid = float((out[-1][:, 2].min() + out[-1][:, 2].max()) / 2)
@@ -636,15 +658,12 @@ class BodyGenerator:
         for name, (rows, cols) in self._glass_regions().items():
             add(name, range(rows.start + off, rows.stop + off), cols)
         # lights: wrap-around corner strips at the nose/tail
-        n_front = 3
-        n_rear = 3
-        jL = jE - 3  # lights extend down the fender side to mid height of the D->E strip
-        # End at the fender fold: glass/light fills must not bridge the folded
-        # hood seam, whose return face intentionally has an opposing normal.
-        add("aperture/headlight_L", range(u("front") - n_front, u("front") + 1), range(jL, jF))
-        add("aperture/headlight_R", range(u("front") - n_front, u("front") + 1), range(RING_N - jF, RING_N - jL))
-        add("aperture/taillight_L", range(off - 1, off + n_rear), range(jL, jF))
-        add("aperture/taillight_R", range(off - 1, off + n_rear), range(RING_N - jF, RING_N - jL))
+        # Lamps wrap from the last body station onto the bumper face. Their
+        # grids stay above the crease and stop before the hood return fold.
+        add("aperture/headlight_L", range(u("front") - 1, u("front") + 3), range(jF, jG))
+        add("aperture/headlight_R", range(u("front") - 1, u("front") + 3), range(RING_N - jG, RING_N - jF))
+        add("aperture/taillight_L", range(off - 1, off + 2), range(jE - 3, jF))
+        add("aperture/taillight_R", range(off - 1, off + 2), range(RING_N - jF, RING_N - jE + 3))
         # underbody / wells
         all_rows = range(off, off + N_STATIONS - 1)
         add("underbody", all_rows, list(range(0, jC)) + list(range(RING_N - jC, RING_N)))
@@ -669,6 +688,12 @@ class BodyGenerator:
             elif name == "bed":
                 mesh.set_material("bed", idx)
         mesh.meta["aperture_rects"] = {k: v for k, v in rects.items() if k.startswith("aperture/")}
+        # Targets carry displacements, not zones. Retain the optional grid so
+        # connector emission can activate it from the morphed quarter width.
+        mesh.meta["optional_aperture_rects"] = {
+            name: (rows.start + off, rows.stop - 1 + off, cols.start, cols.stop - 1)
+            for name, (rows, cols) in self._glass_regions(include_optional=True).items() if "quarter" in name
+        }
         mesh.meta["arch_rows"] = [int(r) for r in arch_rows]
 
     def _assign_groups(self, mesh: Mesh, off: int, n_rings: int, rear_apex_i: int, front_apex_i: int):
