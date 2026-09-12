@@ -412,6 +412,27 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     return out
 
 
+
+def _face_normal_from_ring(ring: np.ndarray, sign: float) -> np.ndarray:
+    """Outward normal of an end fascia, derived from the rake of its end ring.
+
+    Kept as a shared helper because `connectors_extra` mounts rear furniture
+    (reflectors, plate lamps, tow eye) against the same plane the body uses.
+    `sign` is +1 for the nose and -1 for the tail.
+    """
+    top = ring[J["H"]]
+    bot = ring[J["A"]]
+    d = top - bot  # face direction (mostly vertical, tilted by the rake)
+    n = np.array([d[2], 0.0, -d[0]])
+    norm = np.linalg.norm(n)
+    if norm < 1e-9:  # a perfectly vertical fascia
+        return np.array([float(np.sign(sign)), 0.0, 0.0])
+    n /= norm
+    if np.sign(n[0]) != np.sign(sign):
+        n = -n
+    return n
+
+
 def interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Connector]:
     V = mesh.vertices
     out: List[Connector] = []
