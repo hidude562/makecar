@@ -5,10 +5,10 @@ body:
   style: sedan
   base_params:
     wheelbase: 2.700
-    front_overhang: 1.040
-    rear_overhang: 1.040
-    width: 2.030
-    ground_clearance: 0.110
+    front_overhang: 0.998
+    rear_overhang: 0.997
+    width: 1.987
+    ground_clearance: 0.125
     wheel_diameter: 0.709
     tire_width: 0.335
     arch_gap: 0.035
@@ -35,10 +35,10 @@ body:
     hood_overhang: 0.020
     front_splitter: 0.070
     windshield_length: 0.670
-    roof_height: 1.136
-    roof_drop: 0.030
-    roof_rear_offset: 0.500
-    rear_window_length: 0.640
+    roof_height: 1.124
+    roof_drop: 0.050
+    roof_rear_offset: 0.950
+    rear_window_length: 0.950
     roof_crown: 0.020
     roof_width_ratio: 0.590
     shoulder_inset: 0.075
@@ -51,8 +51,8 @@ body:
     front_door_length: 1.350
     quarter_window_length: 0.000
     c_pillar_width: 0.080
-    deck_height: 0.790
-    deck_rear_height: 0.775
+    deck_height: 0.750
+    deck_rear_height: 0.700
     rear_bumper_bottom: 0.180
     tail_width_ratio: 0.670
     rear_corner_length: 0.180

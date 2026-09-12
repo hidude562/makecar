@@ -66,13 +66,17 @@ def main() -> None:
         measured = float(measurements[key])
         diff = (measured / published - 1) * 100
         print(f"{key:<12} {published:>12.3f} {measured:>12.3f} {diff:>+11.2f}%")
+    clearance = float(measurements["z_floor"])
+    print(f"{'clearance':<12} {0.125:>12.3f} {clearance:>12.3f} {(clearance / 0.125 - 1) * 100:>+11.2f}%")
 
     full = assembly.mesh()
     side = as_pil(Renderer(*SIDE_SIZE, supersample=2).render(full, side_camera(full, measurements, assembly)))
     side.save(HERE / "side_render.png", optimize=True)
 
     reference = Image.open(HERE / "reference_side.jpg").convert("RGB")
-    # The crop is exactly 750 pixels wide, matching the stated overall-length scale.
+    # The vehicle itself spans 690 px in the hand-checked crop (not its white margins).
+    # Resampling it to 750 px makes the reference and render share a physical scale.
+    reference = reference.resize((round(reference.width * 750 / 690), round(reference.height * 750 / 690)), Image.Resampling.LANCZOS)
     comparison = Image.new("RGB", (SIDE_SIZE[0], 28 + SIDE_SIZE[1] + 28 + reference.height), "#f8f7f3")
     comparison.paste(label(side, "CONFIG — orthographic side elevation; 4.780 m = 750 px"), (0, 0))
     comparison.paste(label(reference, "REFERENCE — 2012 Aventador LP 700-4 side profile; 4.780 m = 750 px"), (0, 28 + SIDE_SIZE[1]))
