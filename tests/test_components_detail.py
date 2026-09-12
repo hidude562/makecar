@@ -123,3 +123,28 @@ def test_mirror_and_handle_are_world_symmetric(sedan, ctx):
     mirror = get_component("mirror.side").build(sedan.connector("mirror_L"), None, ctx).mesh
     assert {"base_plinth", "housing", "mirror_pane", "turn_signal"} <= mirror.groups.keys()
     assert np.all(mirror.face_normals()[mirror.zones["mirror_pane"], 0] < 0)
+
+
+def test_visual_regressions_have_geometric_guards(sedan, ctx):
+    from makecar.components.exterior import _LampSurface
+    from makecar.geometry import primitives as P
+    m = wheel(ctx)
+    disc_top = m.vertices[m.groups["brake_disc"]][:, 2].max()
+    hat_top = m.vertices[m.groups["disc_hat"]][:, 2].max()
+    assert hat_top - disc_top == pytest.approx(.005)  # no coplanar annulus
+    for zone in ("spoke_0", "caliper", "tread_block_0_0"):
+        assert P.signed_volume(m.subset(m.zones[zone])) > 0
+    steel = wheel(ctx, component="wheel.steel")
+    web = steel.subset(steel.zones["steel_web_0"])
+    assert web.face_normals()[-2, 1] < -.99
+    end_angle = 2 * np.pi / 12 * .55
+    assert web.face_normals()[-1] @ [-np.sin(end_angle), np.cos(end_angle), 0] > .99
+    conn = sedan.connector("grille")
+    grille = get_component("grille.slats").build(conn, None, ctx).mesh
+    assert conn.frame.to_local(grille.vertices[grille.groups["back"]])[:, 2].max() > 0
+    lamp = sedan.connector("headlight_L")
+    surf = _LampSurface(lamp)
+    centre = lamp.frame.to_world(surf.at([.5, .49]))[0]
+    assert centre[2] < lamp.points[:, 2].max() - .055  # no hood-edge crowding
+    guide = surf.ribbon([[.1, .3], [.9, .3], [.9, .8], [.1, .8]], .008, "guide", closed=True)
+    assert guide.n_vertices > 6 * 80  # curved grid edges must not become four chords

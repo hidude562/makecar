@@ -181,7 +181,7 @@ class Wheel(MorphableComponent):
         _part(m, P.tube(rr * .79, .046, .014, self.N, material="brake_disc",
                         center=(0, 0, disc_z)), "brake_disc")
         _part(m, P.tube(.070, .032, .026, 24, material="rim_dark",
-                        center=(0, 0, disc_z - .006)), "disc_hat")
+                        center=(0, 0, disc_z - .001)), "disc_hat")
         for k in range(16):
             a = k * 2 * np.pi / 16
             # Radial ventilation slots on the disc's edge, not painted spoke gaps.
@@ -189,8 +189,17 @@ class Wheel(MorphableComponent):
                          center=(rr * .75, 0, disc_z))
             slot.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
             _part(m, slot, f"disc_vent_{k}")
-        _part(m, P.box(.049, rr * .65, .037, bevel=.008, material="caliper",
-                        center=(-rr * .67, 0, disc_z - .002)), "caliper")
+        # Forged caliper follows the disc arc rather than reading as a red box.
+        section = np.array([[-.019, -.016], [.017, -.016], [.025, -.008], [.025, .008],
+                            [.017, .016], [-.019, .016], [-.025, .008], [-.025, -.008]])
+        rings = [np.column_stack([(rr * .77 + section[:, 0]) * np.cos(a),
+                                  (rr * .77 + section[:, 0]) * np.sin(a),
+                                  disc_z - .008 + section[:, 1]])
+                 for a in np.linspace(np.pi - .42, np.pi + .42, 9)]
+        caliper = P.loft(rings, cap_start=True, cap_end=True, material="caliper")
+        if P.signed_volume(caliper) < 0:
+            caliper.flip_normals()
+        _part(m, caliper, "caliper")
         for k in range(5):
             a = k * 2 * np.pi / 5
             _part(m, P.cylinder(.007, .012, 6, material="rim", center=(.038 * np.cos(a), .038 * np.sin(a), zf + .019)),
@@ -222,13 +231,15 @@ class SteelWheel(Wheel):
             web = P.revolve(section, 4, angle=2 * np.pi / 12 * .55, material="rim")
             # Cap the two exposed ends of each stamped web.
             for ids in (list(range(5)), list(range(web.n_vertices - 5, web.n_vertices))):
-                web.faces.append(tuple(ids[:4]))
+                web.faces.append(tuple(ids[:4]) if ids[0] == 0 else tuple(ids[:4][::-1]))
                 web.face_materials.append("rim")
             web.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
             _part(m, web, f"steel_web_{k}")
         if opts["hubcap"]:
-            cap = P.cylinder(rr * .46, .025, 32, radius_top=rr * .35,
-                             material="rim", center=(0, 0, zf + .013))
+            rings = [np.column_stack([circle_points(radius, 32), np.full(32, z)])
+                     for radius, z in ((rr * .46, zf + .004), (rr * .43, zf + .020),
+                                       (rr * .30, zf + .035), (.018, zf + .041))]
+            cap = P.loft(rings, cap_end=True, material="rim")
             _part(m, cap, "steel_hubcap")
 
 
@@ -293,13 +304,19 @@ class _LampSurface:
         if abs(grid[-1, :, 1].mean()) < abs(grid[0, :, 1].mean()):
             grid = grid[::-1]
         self.grid = conn.frame.to_local(grid.reshape(-1, 3)).reshape(grid.shape)
-        self.width = np.linalg.norm(np.diff(grid, axis=0), axis=2).sum(axis=0).mean()
-        self.height = np.linalg.norm(np.diff(grid, axis=1), axis=2).sum(axis=1).mean()
+        du = np.linalg.norm(np.diff(grid, axis=0), axis=2).mean(axis=1)
+        dv = np.linalg.norm(np.diff(grid, axis=1), axis=2).mean(axis=0)
+        self.width, self.height = du.sum(), dv.sum()
+        self.knots = (np.r_[0., np.cumsum(du)] / self.width, np.r_[0., np.cumsum(dv)] / self.height)
 
     def at(self, uv, depth=0.0):
         uv = np.asarray(uv, dtype=float)
         shape = uv.shape[:-1]
-        ij = np.clip(uv.reshape(-1, 2), 0, 1) * (np.array(self.grid.shape[:2]) - 1)
+        # Body grid indices are semantic, not uniformly spaced. Arc-length
+        # coordinates keep projectors on the vertical fascia rather than
+        # crowding them onto the densely sampled hood-side edge of the lens.
+        flat = uv.reshape(-1, 2)
+        ij = np.column_stack([np.interp(flat[:, k], self.knots[k], np.arange(self.grid.shape[k])) for k in (0, 1)])
         base = np.minimum(ij.astype(int), np.array(self.grid.shape[:2]) - 2)
         f = ij - base
         i, j = base.T
@@ -310,7 +327,15 @@ class _LampSurface:
         return pts.reshape(*shape, 3)
 
     def ribbon(self, uv, width, material, depth=-.008, closed=False):
-        return _pipe(self.at(uv, depth), width / 2, material, closed, sides=6)
+        uv = np.asarray(uv, dtype=float)
+        dense = []
+        ends = np.roll(uv, -1, axis=0) if closed else uv[1:]
+        for a, b in zip(uv, ends):
+            count = max(1, int(np.ceil(np.linalg.norm((b - a) * [self.width, self.height]) / .008)))
+            dense.extend(a + (b - a) * t for t in np.linspace(0, 1, count, endpoint=False))
+        if not closed:
+            dense.append(uv[-1])
+        return _pipe(self.at(dense, depth), width / 2, material, closed, sides=6)
 
     def patch(self, u0, u1, v0, v1, material, depth=-.014):
         from .fills import grid_mesh
@@ -476,6 +501,9 @@ class Grille(CarComponent):
         if badge_r:
             _part(m, P.tube(badge_r, badge_r - .004, .012, 24, material="chrome", center=(0, 0, .003)), "badge_rim")
             _part(m, P.cylinder(badge_r - .005, .008, 24, material="grille_dark", center=(0, 0, .004)), "badge")
+        # These mounts sit on uncut fascia, unlike the lamp apertures. Keep the
+        # radiator backing in front of the skin so paint cannot fill the cells.
+        m.translate([0, 0, .022])
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -688,7 +716,9 @@ class SideMirror(CarComponent):
         _part(m, _surround(.202, .114, .007, .008, "trim_dark").apply_frame(rear_frame), "glass_gasket")
         glass = P.grid_fill_polygon(rounded_rect_points(.186, .098, .026, 5), material="mirror_glass", z=.003, bulge=.003)
         _part(m, glass.apply_frame(rear_frame), "mirror_pane")
-        path = [[.047, -.008, .071], [.069, -.009, .110], [.070, -.009, .161], [.058, -.004, .218]]
+        signal_edge = outline[10:20] * .77
+        path = np.column_stack([np.full(len(signal_edge), .0695), signal_edge[:, 1] + .025,
+                                signal_edge[:, 0] + .145])
         _part(m, _pipe(path, .0035, "mirror_signal"), "turn_signal")
         m.scale([1, 1 if conn.frame.y_axis[2] >= 0 else -1, 1])
         m.materials.update(mats)
@@ -795,7 +825,7 @@ class PlateLamp(_SmallLamp):
     def build_local(self, conn, opts, ctx):
         m = super().build_local(conn, opts, ctx).mesh
         # Rotate the fixture down toward the plate; retain its mounting lip.
-        m.apply_frame(Frame.identity().rotated_about_x(np.radians(35)))
+        m.apply_frame(Frame.identity().rotated_about_x(np.radians(-35)))
         return ComponentResult(m)
 
 
@@ -870,7 +900,16 @@ class ExhaustSystem(CarComponent):
                 point = main[index]
                 axis = main[index + 1] - main[index]
                 can = P.cylinder(radius, length, 16, radius_top=radius * .90, material="exhaust_steel")
-                _part(m, can.apply_frame(Frame.from_normal(point, axis)), name)
+                can.apply_frame(Frame.from_normal(point, axis))
+                # Low sports floors need an oval can, not a round muffler that
+                # almost scrapes the ground. Flatten only its vertical section.
+                if conn.meta.get("paths_space") == "world":
+                    up = conn.frame.rotation[2]
+                    height = conn.frame.to_world(point)[0, 2]
+                    vertical = (can.vertices - point) @ up
+                    factor = min(1., max(.020, height - .050) / max(-vertical.min(), 1e-6))
+                    can.vertices += vertical[:, None] * (factor - 1) * up
+                _part(m, can, name)
         m.materials["exhaust_steel"] = ctx.material("exhaust_steel", "#787e83", metallic=.7, shininess=.45)
         return ComponentResult(m)
 
