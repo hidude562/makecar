@@ -157,7 +157,9 @@ class CarAssembly:
 
 INTERIOR_TAGS = {"seat", "steering_wheel", "dashboard", "pedals", "console", "floor", "bulkhead", "shelf", "cargo_floor",
                  "headliner", "door_card", "rearview_mirror", "cluster", "screen", "vent", "glovebox", "hvac", "shifter",
-                 "cupholder", "dome_light", "grab_handle", "speaker"}
+                 "cupholder", "dome_light", "grab_handle", "speaker",
+                 # detail parts mounted on connectors from extra_interior_connectors
+                 "interior_detail"}
 
 
 def _is_interior(c: Connector) -> bool:
