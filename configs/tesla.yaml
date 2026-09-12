@@ -1,0 +1,81 @@
+name: tesla_model_3_2024
+description: Config approximation in the style of a 2024 Tesla Model 3 (Highland); not a licensed model or a replica.
+seed: 3
+body:
+  style: sedan
+  base_params:
+    wheelbase: 2.875
+    front_overhang: 0.855
+    rear_overhang: 0.955
+    width: 1.849
+    ground_clearance: 0.138
+    wheel_diameter: 0.668
+    tire_width: 0.235
+    arch_gap: 0.045
+    fender_flare: 0.012
+    sill_height: 0.350
+    rocker_height: 0.135
+    belt_height: 0.925
+    belt_rake: 0.040
+    side_bulge: 0.012
+    front_bumper_bottom: 0.265
+    hood_front_height: 0.700
+    cowl_height: 0.925
+    cowl_offset: 0.250
+    hood_crown: 0.018
+    hood_straightness: 0.78
+    fascia_slope: 0.085
+    nose_width_ratio: 0.70
+    front_corner_length: 0.300
+    front_fascia_rake: 0.070
+    bumper_projection: 0.018
+    bumper_crease_height: 0.525
+    hood_overhang: 0.012
+    front_splitter: 0.006
+    windshield_length: 0.950
+    roof_height: 1.441
+    roof_drop: 0.070
+    roof_rear_offset: 0.135
+    rear_window_length: 0.830
+    roof_crown: 0.030
+    roof_width_ratio: 0.655
+    shoulder_inset: 0.070
+    shoulder_radius: 0.035
+    a_pillar_width: 0.050
+    a_pillar_lean: 1.0
+    c_pillar_lean: 0.65
+    front_door_length: 1.275
+    b_pillar_width: 0.075
+    quarter_window_length: 0.0
+    c_pillar_width: 0.070
+    deck_height: 0.885
+    deck_rear_height: 0.855
+    rear_bumper_bottom: 0.270
+    tail_width_ratio: 0.74
+    rear_corner_length: 0.310
+    rear_fascia_rake: 0.035
+    deck_crown: 0.015
+  modifiers:
+    face/wedge: 0.28
+    plan/pointed: 0.16
+    section/tumblehome: 0.28
+  sculpt:
+    side_crease: 0.16
+    roof_bubble: 0.18
+  hints: {door_count: 4, drive: left, transmission: automatic, seat_rows: 2}
+palette:
+  paint: "#f4f5f4"
+  interior: "#262729"
+  seat: "#252628"
+  rim: "#4a4d50"
+components:
+  defaults: true
+  disable: [grille, intake, exhaust*, fuel_cap, fog, rear_reflector, tow_eye]
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 5, spoke_width: 0.62, hubcap: true, dish: 0.015}}
+    handle: {component: handle.pull, options: {chrome: false}}
+output:
+  formats: [obj, svg, png, json]
+  views: [three_quarter_front, three_quarter_rear, side, front, rear]
+  image_size: [1400, 900]
+  blueprint_theme: paper
