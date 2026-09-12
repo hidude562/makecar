@@ -73,15 +73,13 @@ def test_lamp_panes_fit_apertures_without_inverted_faces(car_body, ctx, style):
             conn = body.connector(f"{kind}_{side}")
             m = get_component(f"light.{kind}").build(conn, None, ctx).mesh
             pane = m.subset(m.zones["lens"])
-            if kind == "headlight":
-                assert np.all(pane.face_normals() @ conn.normal > 0), (style, kind, side)
-            else:
-                # Wagon/SUV/van tail grids already fold in the unmodified body.
-                # Preserve their exact geometry; never "fix" it by flipping
-                # isolated cells. Bulging must not introduce any further folds.
-                from makecar.components.fills import fill_connector
-                reference = fill_connector(conn, "reference", upsample=3)
-                assert np.all(np.einsum("ij,ij->i", pane.face_normals(), reference.face_normals()) > 0)
+            # The reshaped tail no longer needs the old folded-grid exception.
+            # Check exported triangles as well: a positive quad/Newell normal
+            # can hide an inverted triangle at a concave fascia corner.
+            assert np.all(pane.face_normals() @ conn.normal > 0), (style, kind, side)
+            triangles, _ = pane.triangulated()
+            a, b, c = pane.vertices[triangles].transpose(1, 0, 2)
+            assert np.all(np.cross(b - a, c - a) @ conn.normal > 1e-12), (style, kind, side)
             assert np.isfinite(m.vertices).all()
             assert np.all(pane.vertices >= conn.points.min(axis=0) - .01)
             assert np.all(pane.vertices <= conn.points.max(axis=0) + .01)
@@ -97,6 +95,84 @@ def test_lamp_panes_fit_apertures_without_inverted_faces(car_body, ctx, style):
             else:
                 assert {"light_guide", "reverse", "reflex_strip", "bezel"} <= m.groups.keys()
                 assert m.materials["tail_bezel"].color == ctx.material("paint").color
+
+
+@pytest.mark.parametrize("style", STYLES)
+def test_lamp_fill_keeps_a_sealed_nonoverlapping_disk(car_body, ctx, style):
+    from collections import defaultdict
+    from makecar.components.fills import fill_connector
+
+    body = car_body.build(style=style)
+    for kind in ("headlight", "taillight"):
+        for side in ("L", "R"):
+            conn = body.connector(f"{kind}_{side}")
+            original_grid, original_outline = conn.meta["grid_points"].copy(), conn.points.copy()
+            mesh = get_component(f"light.{kind}").build(conn, None, ctx).mesh
+            pane = mesh.subset(mesh.zones["lens"])
+            reference = fill_connector(conn, "reference", offset=.001,
+                                       bulge=.008 if kind == "headlight" else .006, upsample=3)
+            # No source-grid mutation or whole-pane smoothing. The only fit
+            # allowance is a <=2mm noncorner notch under the physical seal.
+            assert np.array_equal(conn.meta["grid_points"], original_grid)
+            assert np.array_equal(conn.points, original_outline)
+            displacement = np.linalg.norm(pane.vertices - reference.vertices, axis=1)
+            assert displacement.max() <= .002
+            if style != "sports" or kind != "headlight":
+                assert displacement.max() < 1e-12
+
+            triangles, _ = pane.triangulated()
+            edges = defaultdict(list)
+            for triangle in triangles:
+                for a, b in zip(triangle, np.roll(triangle, -1)):
+                    edges[tuple(sorted((a, b)))].append((a, b))
+            assert all(len(uses) in (1, 2) for uses in edges.values())
+            assert all(uses[0] == uses[1][::-1] for uses in edges.values() if len(uses) == 2)
+            assert pane.n_vertices - len(edges) + len(triangles) == 1
+            boundary, = pane.boundary_loops()
+            assert len(boundary) == sum(len(uses) == 1 for uses in edges.values())
+
+            # A consistently oriented disk with positive projected triangles
+            # and a simple projected boundary is embedded, not overlapping
+            # triangles disguised by flipping their winding independently.
+            xy = conn.frame.to_local(pane.vertices[boundary])[:, :2]
+            a, b = xy, np.roll(xy, -1, axis=0)
+            def cross(u, v):
+                return u[..., 0] * v[..., 1] - u[..., 1] * v[..., 0]
+            ab = b - a
+            c, d = a[:, None], b[:, None]
+            across = cross(ab, c - a) * cross(ab, d - a)
+            other = cross(d - c, a - c) * cross(d - c, b - c)
+            assert not np.any((across < -1e-22) & (other < -1e-22))
+
+            # The housing follows the same fit and has no hidden backfaces.
+            housing = mesh.subset(mesh.zones["housing"])
+            tris, _ = housing.triangulated()
+            a, b, c = housing.vertices[tris].transpose(1, 0, 2)
+            assert np.all(np.cross(b - a, c - a) @ conn.normal > 1e-12)
+            if kind == "headlight":
+                seal = mesh.vertices[mesh.groups["aperture_seal"]].reshape(-1, 8, 3)
+                centres = seal.mean(axis=1)
+                outline = np.vstack([conn.points, conn.points[:1]]) + conn.normal * .001
+                assert np.allclose(centres, outline)
+                assert np.allclose(np.linalg.norm(seal - centres[:, None], axis=2), .0025)
+                # The octagonal seal's INSCRIBED radius covers the entire
+                # displacement, not just its circumradius at eight vertices.
+                assert displacement[boundary].max() < .0025 * np.cos(np.pi / 8)
+
+
+@pytest.mark.parametrize("style", STYLES)
+def test_lamp_uv_axes_follow_world_height_not_aspect_ratio(car_body, style):
+    from makecar.components.exterior import _LampSurface
+    body = car_body.build(style=style)
+    for kind in ("headlight", "taillight"):
+        for side in ("L", "R"):
+            conn = body.connector(f"{kind}_{side}")
+            surf = _LampSurface(conn)
+            bottom, top, inner, outer = conn.frame.to_world(surf.at([[.5, .2], [.5, .8], [.2, .5], [.8, .5]]))
+            assert top[2] > bottom[2]
+            assert abs(outer[1]) > abs(inner[1])
+            if style == "pickup" and kind == "headlight":
+                assert surf.height > surf.width  # the original axis-swap regression
 
 
 def test_grille_variants_and_badge_clearance(sedan, ctx):

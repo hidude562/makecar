@@ -274,6 +274,88 @@ class Glass(CarComponent):
 
 
 # =============================================================== LIGHTS
+def _lamp_grid(conn):
+    """Fit only sub-2mm boundary notches under the lamp's aperture seal.
+
+    The sports fascia has a noncorner sample that doubles back by 0.8mm in
+    height. Its boundary crosses itself in the mount-plane projection, so no
+    outward pane can follow it exactly. Straighten only a crossed cell's tiny
+    boundary notch onto its neighboring chord; retain all four corners and
+    leave the body/connector grid untouched. Larger changes are not a fit.
+    """
+    source = conn.meta.get("grid_points")
+    if source is None:
+        return None
+    source = np.asarray(source, dtype=float)
+    grid = source.copy()
+    rows, cols = grid.shape[:2]
+
+    def crossed(g):
+        q = np.stack([g[:-1, :-1], g[1:, :-1], g[1:, 1:], g[:-1, 1:]], axis=-2)
+        def area(a, b, c):
+            return np.cross(q[..., b, :] - q[..., a, :], q[..., c, :] - q[..., a, :]) @ conn.normal
+        a, b, c, d = area(0, 1, 2), area(0, 2, 3), area(0, 1, 3), area(1, 2, 3)
+        sign = 1 if (a + b).sum() >= 0 else -1
+        return (np.minimum(sign * a, sign * b) <= 1e-12) & (np.minimum(sign * c, sign * d) <= 1e-12)
+
+    bad = crossed(grid)
+    while bad.any():
+        candidates = []
+        for i, j in zip(*np.where(bad)):
+            for r, c in ((i, j), (i + 1, j), (i + 1, j + 1), (i, j + 1)):
+                if c in (0, cols - 1) and 0 < r < rows - 1:
+                    a, b = grid[r - 1, c], grid[r + 1, c]
+                elif r in (0, rows - 1) and 0 < c < cols - 1:
+                    a, b = grid[r, c - 1], grid[r, c + 1]
+                else:
+                    continue  # Never move a corner or an interior sample.
+                edge = b - a
+                t = np.clip((grid[r, c] - a) @ edge / max(edge @ edge, 1e-20), 0., 1.)
+                point = a + t * edge
+                distance = np.linalg.norm(point - source[r, c])
+                if distance > .002:
+                    continue
+                trial = grid.copy()
+                trial[r, c] = point
+                remaining = crossed(trial)
+                if remaining.sum() < bad.sum():
+                    candidates.append((distance, r, c, point, remaining))
+        if not candidates:
+            break
+        _, r, c, point, bad = min(candidates, key=lambda candidate: candidate[:3])
+        grid[r, c] = point
+    return grid
+
+
+def _lamp_fill(conn, material, offset, bulge=0.0, upsample=2):
+    """Fit a pane, choosing the noncrossing diagonal of concave fascia cells."""
+    from .fills import coons_fill
+    grid = _lamp_grid(conn)
+    if grid is None:
+        return fill_connector(conn, material, offset=offset, bulge=bulge, upsample=upsample)
+    mesh = coons_fill(conn.points, *grid.shape[:2], material, conn.normal, offset=offset,
+                      bulge=bulge, upsample=upsample, grid_points=grid)
+    quads = np.asarray(mesh.faces)
+    a, b, c, d = mesh.vertices[quads].transpose(1, 0, 2)
+    default = np.minimum(np.cross(b - a, c - a) @ conn.normal,
+                         np.cross(c - a, d - a) @ conn.normal) > 1e-12
+    alternate = np.minimum(np.cross(b - a, d - a) @ conn.normal,
+                           np.cross(c - b, d - b) @ conn.normal) > 1e-12
+    if not np.all(default | alternate):
+        raise ValueError(f"{conn.name}: lamp cell exceeds aperture-seal fitting allowance")
+    faces = []
+    for keep, face in zip(default, mesh.faces):
+        if keep:
+            faces.append(face)
+        else:
+            # A concave quad's default fan can invert a triangle even when its
+            # Newell normal points out. Change the diagonal, not the winding.
+            faces.extend([(face[0], face[1], face[3]), (face[1], face[2], face[3])])
+    mesh.faces = faces
+    mesh.face_materials = [material] * len(faces)
+    return mesh
+
+
 class _LampSurface:
     """Decorations in aperture UVs, following the exact (possibly warped) grid.
 
@@ -281,7 +363,7 @@ class _LampSurface:
     handedness nor the lamp's steep corner rake is guessed from local Y.
     """
     def __init__(self, conn):
-        grid = conn.meta.get("grid_points")
+        grid = _lamp_grid(conn)
         shape = conn.meta.get("grid")
         if grid is None and shape and len(conn.points) == 2 * (shape[0] + shape[1] - 2):
             grid = coons_patch(conn.points, *shape, max(shape[0], 3), max(shape[1], 3))
@@ -296,8 +378,10 @@ class _LampSurface:
             grid = conn.frame.to_world(np.array([[[c[0] - r, c[1] - r, c[2]], [c[0] - r, c[1] + r, c[2]]],
                                                 [[c[0] + r, c[1] - r, c[2]], [c[0] + r, c[1] + r, c[2]]]]))
         grid = np.asarray(grid, dtype=float)
-        lengths = [np.linalg.norm(np.diff(grid, axis=i), axis=2).sum(axis=i).mean() for i in (0, 1)]
-        if lengths[1] > lengths[0]:
+        # The pickup's lamp is taller than it is wide. Choose the vertical
+        # axis by world elevation, not by assuming the longest axis is U.
+        rise = [np.ptp(grid[:, :, 2], axis=i).mean() for i in (0, 1)]
+        if rise[0] > rise[1]:
             grid = grid.transpose(1, 0, 2)
         if grid[:, -1, 2].mean() < grid[:, 0, 2].mean():
             grid = grid[:, ::-1]
@@ -392,7 +476,7 @@ class Headlight(CarComponent):
         }
         inv = np.linalg.inv(conn.frame.matrix)
         m = Mesh(name="headlight")
-        _part(m, fill_connector(conn, "lamp_dark", offset=-.056).transform(inv), "housing")
+        _part(m, _lamp_fill(conn, "lamp_dark", offset=-.056).transform(inv), "housing")
         surf = _LampSurface(conn)
         _part(m, surf.border("bezel"), "bezel")
         radius = min(.052, surf.height * .27, surf.width * .15)
@@ -403,7 +487,9 @@ class Headlight(CarComponent):
         uv = np.column_stack([np.linspace(.08, .84, 25), np.full(25, .85)])
         _part(m, surf.ribbon(uv, min(.008, surf.height * .065), "lamp_led"), "drl")
         _part(m, surf.patch(.86, .95, .18, .77, "indicator", -.010), "indicator")
-        _part(m, fill_connector(conn, "lens", offset=.001, bulge=.008, upsample=3).transform(inv), "lens")
+        _part(m, _lamp_fill(conn, "lens", offset=.001, bulge=.008, upsample=3).transform(inv), "lens")
+        _part(m, _pipe(conn.points + conn.normal * .001, .0025, "lamp_dark", closed=True,
+                       sides=8).transform(inv), "aperture_seal")
         m.materials.update(mats)
         return ComponentResult(m, [], {"projectors": 2 if opts["projector"] else 1})
 
@@ -427,7 +513,7 @@ class Taillight(CarComponent):
         }
         inv = np.linalg.inv(conn.frame.matrix)
         m = Mesh(name="taillight")
-        _part(m, fill_connector(conn, "lamp_dark", offset=-.038).transform(inv), "housing")
+        _part(m, _lamp_fill(conn, "lamp_dark", offset=-.038).transform(inv), "housing")
         surf = _LampSurface(conn)
         _part(m, surf.border("tail_bezel", .001), "bezel")
         uv = rounded_rect_points(.78, .54, .10, 6) + [.5, .57]
@@ -437,7 +523,7 @@ class Taillight(CarComponent):
         # Small prismatic flutes are geometry, rather than a single red patch.
         for u in np.linspace(.14, .86, 19):
             _part(m, surf.ribbon([[u, .135], [u, .215]], .0025, "tail_reflector", -.007), f"reflex_flute_{u:.2f}")
-        _part(m, fill_connector(conn, "tail_lens", offset=.001, bulge=.006, upsample=3).transform(inv), "lens")
+        _part(m, _lamp_fill(conn, "tail_lens", offset=.001, bulge=.006, upsample=3).transform(inv), "lens")
         m.materials.update(mats)
         return ComponentResult(m)
 
