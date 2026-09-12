@@ -174,6 +174,6 @@ def test_intake_backing_clears_uncut_fascia(car_body, ctx, style):
     plate_conn = body.connector("plate_front")
     plate = get_component("plate.standard").build(plate_conn, None, ctx).mesh
     fascia = body.mesh.copy().merge(intake)
-    for x in (-.20, 0, .20):
-        # At the plate's centre the insert must not occlude its printed face.
-        assert _front_depth(plate, plate_conn.frame, [x, 0]) > _front_depth(fascia, plate_conn.frame, [x, 0])
+    for x, y in itertools.product((-.24, 0, .24), (-.050, 0, .050)):
+        # Neither the printed face nor its lower border may hit the insert.
+        assert _front_depth(plate, plate_conn.frame, [x, y]) > _front_depth(fascia, plate_conn.frame, [x, y])

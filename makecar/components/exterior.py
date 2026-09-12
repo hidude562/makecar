@@ -566,9 +566,9 @@ class LicensePlate(CarComponent):
             m.merge(P.box(w * 0.08, h - 0.01, 0.002, material="plate_blue", center=(-w / 2 + w * 0.05, 0, 0.007), name="euband"))
         if conn.meta.get("position") == "front":
             # The lower intake and plate overlap in elevation on short fascias;
-            # a 50mm plinth puts the plate ahead of, not behind, the insert.
-            _part(m, P.box(w * .82, h * .72, .050, material="plate_text", center=(0, 0, -.025)), "mounting_plinth")
-            m.translate([0, 0, .050])
+            # a 65mm plinth puts the plate ahead of, not behind, the insert.
+            _part(m, P.box(w * .82, h * .72, .065, material="plate_text", center=(0, 0, -.0325)), "mounting_plinth")
+            m.translate([0, 0, .065])
         m.materials.update(mats)
         return ComponentResult(m)
 
