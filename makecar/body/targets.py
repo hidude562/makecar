@@ -40,6 +40,10 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("door_step", 0.008, 0.012, "lower_body", "door bottom hem proud of the sill"),
     ModifierSpec("shoulder_radius", 0.015, 0.015, "lower_body", "rolled shoulder radius"),
     ModifierSpec("fender_crease", 0.010, 0.012, "front", "hood-to-fender folded step"),
+    ModifierSpec("tunnel_height", 0.04, 0.045, "lower_body", "floor pan tunnel rise"),
+    ModifierSpec("tunnel_width", 0.08, 0.10, "lower_body", "floor pan tunnel width"),
+    ModifierSpec("air_dam_height", 0.025, 0.025, "front", "front skirt depth below bumper"),
+    ModifierSpec("rear_valance_height", 0.025, 0.030, "rear", "rear skirt depth below bumper"),
     ModifierSpec("sill_height", 0.06, 0.09, "lower_body", "rocker panel height"),
     ModifierSpec("belt_height", 0.08, 0.10, "lower_body", "belt line / shoulder height"),
     ModifierSpec("belt_rake", 0.03, 0.06, "lower_body", "belt line rising towards the rear"),
@@ -157,7 +161,7 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 8
+LIBRARY_VERSION = 9
 
 
 def _cache_dir():

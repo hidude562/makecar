@@ -32,6 +32,10 @@ class BodyParams:
     sill_inset: float = 0.05       # rocker sits this far inboard of the belt line
     rocker_height: float = 0.15   # flat, vertical sill face
     door_step: float = 0.012      # door hem proud of the rocker
+    tunnel_height: float = 0.065  # longitudinal floor-pan tunnel (up into cabin)
+    tunnel_width: float = 0.28    # full width, including tunnel shoulders
+    air_dam_height: float = 0.035 # front skirt below the painted bumper
+    rear_valance_height: float = 0.045  # rear skirt below the bumper
     belt_height: float = 0.93      # door shoulder / belt line height
     belt_rake: float = 0.03        # belt rises this much from front door to rear door
     side_bulge: float = 0.02       # convexity of the door skin

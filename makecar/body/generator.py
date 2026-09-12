@@ -30,7 +30,7 @@ from .params import BodyParams
 # Ring layout: semantic control points of a half section and samples/segment.
 # ----------------------------------------------------------------------------
 SEGMENTS = [
-    ("A", "B", 3),   # floor centre -> floor edge
+    ("A", "B", 4),   # tunnel crown -> tunnel shoulder -> flat floor edge
     ("B", "C", 2),   # floor edge -> sill bottom / wheel-well inner top
     ("C", "D", 3),   # sill face / wheel-well ceiling -> sill top (arch lip)
     ("D", "E", 8),   # arch flange / door hem, then door skin -> belt
@@ -166,10 +166,10 @@ class BodyGenerator:
         # underbody
         self.floor = Profile(
             [
-                (xr, p.rear_bumper_bottom),
+                (xr, p.rear_bumper_bottom - p.rear_valance_height),
                 (xr + max(0.3, p.rear_corner_length * 0.7), p.ground_clearance),
                 (xf - max(0.3, p.front_corner_length * 0.7), p.ground_clearance),
-                (xf, p.front_bumper_bottom),
+                (xf, p.front_bumper_bottom - p.air_dam_height),
             ]
         )
         # roof rail / top-corner half width
@@ -334,6 +334,14 @@ class BodyGenerator:
         p = self.p
         jC, jD, jE, jF, jG = (RING[k] for k in ("C", "D", "E", "F", "G"))
         xl, xh = self.x_lo[i], self.x_hi[i]
+        tunnel = (smoothstep(self.L["x_rear"] + 0.30, self.L["x_ra"], xl) *
+                  (1 - smoothstep(self.L["x_fa"], self.L["x_front"] - 0.30, xl)))
+        floor = ring[RING["B"]].copy()
+        half_tunnel = min(p.tunnel_width / 2, floor[1] * 0.75)
+        ring[RING["A"], 2] = floor[2] + p.tunnel_height * tunnel
+        ring[1] = [xl, half_tunnel * 0.65, floor[2] + p.tunnel_height * tunnel]
+        ring[2] = [xl, half_tunnel, floor[2]]
+        ring[3] = [xl, (half_tunnel + floor[1]) / 2, floor[2]]
         arch = self.arch(xl)[0] > 0
         D, E, F, G = ring[[jD, jE, jF, jG]].copy()
         if arch:
@@ -557,7 +565,8 @@ class BodyGenerator:
         when a recess or splitter has zero depth, preserving target topology.
         """
         p = self.p
-        bottom = p.front_bumper_bottom if forward else p.rear_bumper_bottom
+        bottom = (p.front_bumper_bottom - p.air_dam_height if forward
+                  else p.rear_bumper_bottom - p.rear_valance_height)
         top = p.hood_front_height if forward else p.deck_rear_height
         crease = p.bumper_crease_height if forward else p.rear_bumper_crease_height
         hw = max(abs(ring[:, 1]))
@@ -641,14 +650,11 @@ class BodyGenerator:
         add("underbody", all_rows, list(range(0, jC)) + list(range(RING_N - jC, RING_N)))
         arch_rows = [i + off for i in range(N_STATIONS) if self.arch(self.x_lo[i])[0] > 0]
         add("wheel_well", arch_rows, list(range(jC, jD)) + list(range(RING_N - jD, RING_N - jC)))
-        # Classify a fascia by height, not ring columns: inner rings encircle
-        # the plate, and their A..D samples are no longer under the car.
-        centers = mesh.face_centroids()
-        for (r, j), fi in face_grid.items():
-            if r < off or r >= off + N_STATIONS - 1:
-                bottom = p.rear_bumper_bottom if r < off else p.front_bumper_bottom
-                if centers[fi, 2] < bottom + 0.08:
-                    zones.setdefault("trim", []).append(fi)
+        # Only the outer skirt bands are dark. Ring columns on an inner
+        # fascia encircle the plate, so calling them "underbody" would paint
+        # triangular wedges halfway up the bumper.
+        skirt_rows = list(range(off - 3, off)) + list(range(off + N_STATIONS - 1, off + N_STATIONS + 2))
+        add("trim", skirt_rows, list(range(0, RING["C"])) + list(range(RING_N - RING["C"], RING_N)))
         if self.bed is not None:
             bed_rows = [i + off for i in range(N_STATIONS) if self.bed(self.x_hi[i]) > 0.5]
             add("bed", bed_rows, range(RING["G2"], RING_N - RING["G2"]))

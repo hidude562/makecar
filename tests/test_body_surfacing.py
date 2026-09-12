@@ -178,3 +178,35 @@ class TestGreenhouse:
         assert bead[RING["G"] + 1, 2] - r[RING["G"] + 1, 2] == pytest.approx(0.004)
         assert np.allclose(radius[RING["H"]], r[RING["H"]])
         assert np.allclose(bead[RING["H"]], r[RING["H"]])
+
+
+class TestUnderbody:
+    @pytest.mark.parametrize("height,width", [(0.025, 0.20), (0.065, 0.28), (0.11, 0.38)])
+    def test_floor_is_flat_outside_a_longitudinal_tunnel(self, height, width):
+        p = BodyParams(tunnel_height=height, tunnel_width=width)
+        g = BodyGenerator(p)
+        for i in (station_index("bp_r"), station_index("bp_f"), station_index("roof_front")):
+            r = g.ring(i)
+            assert r[0, 2] - r[RING["B"], 2] == pytest.approx(height)
+            assert r[2, 1] * 2 == pytest.approx(width)
+            assert np.allclose(r[2:RING["B"] + 1, 2], p.ground_clearance)
+        for i in (0, len(g.x_lo) - 1):
+            r = g.ring(i)
+            assert r[0, 2] == pytest.approx(r[RING["B"], 2])  # tunnel fades before the bumpers
+
+    def test_tunnel_does_not_lift_floor_or_seat_connectors(self):
+        car = CarBody()
+        a = car.build()
+        b = car.build(modifiers={"tunnel_height": 1})
+        assert b.measurements["z_floor"] == pytest.approx(a.measurements["z_floor"])
+        assert np.allclose(b.connector("seat_front_driver").origin, a.connector("seat_front_driver").origin)
+        assert np.max(b.full_mesh.vertices[:, 2] - a.full_mesh.vertices[:, 2]) == pytest.approx(0.045)
+
+    def test_air_dam_and_valance_extend_below_the_bumpers(self):
+        p = BodyParams(air_dam_height=0.05, rear_valance_height=0.07)
+        m = mesh(p)
+        nose, tail = group(m, "nose_ring"), group(m, "tail_ring")
+        assert p.front_bumper_bottom - nose[RING["A"], 2] == pytest.approx(p.air_dam_height)
+        assert p.rear_bumper_bottom - tail[RING["A"], 2] == pytest.approx(p.rear_valance_height)
+        assert group(m, "fascia/front_face")[RING["A"], 2] == pytest.approx(nose[RING["A"], 2])
+        assert group(m, "fascia/rear_face")[RING["A"], 2] == pytest.approx(tail[RING["A"], 2])

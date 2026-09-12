@@ -139,7 +139,8 @@ def measure(mesh: Mesh) -> Dict[str, float]:
     m["z_sill"] = float(np.mean([lring("ra_end")[D, 2], lring("fa_start")[D, 2]]))
     m["y_sill"] = float(lring("fa_start")[D, 1])
     cabin_st = range(station_index("bp_r") - 4, station_index("bp_f") + 4)
-    m["z_floor"] = float(np.mean([V[vidx(mesh, i, A), 2] for i in cabin_st]))
+    # A is the raised tunnel crown; the flat pan is sampled at B.
+    m["z_floor"] = float(np.mean([V[vidx(mesh, i, J["B"]), 2] for i in cabin_st]))
     m["y_floor_edge"] = float(np.mean([V[vidx(mesh, i, J["B"]), 1] for i in cabin_st]))
     # wheels
     for tag in ("front", "rear"):
