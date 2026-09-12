@@ -36,17 +36,17 @@ class _ExhaustFloor:
         self.triangles = np.concatenate([left, left * [1, -1, 1]])
         self.lo = self.triangles[:, :, :2].min(axis=1)
         self.hi = self.triangles[:, :, :2].max(axis=1)
+        self._footprints = {}
+        self._clearances = {}
 
-    def clearance(self, start, end, radius):
+    def _footprint(self, lo, hi):
         import numpy as np
 
-        lo = np.minimum(start[:2], end[:2]) - radius
-        hi = np.maximum(start[:2], end[:2]) + radius
+        key = (*lo, *hi)
+        if key in self._footprints:
+            return self._footprints[key]
         candidates = np.all((self.hi >= lo) & (self.lo <= hi), axis=1)
-        slope = (end[2] - start[2]) / (end[0] - start[0])
-        radial = radius * np.sqrt(1 + slope * slope)
-        top = max(start[2], end[2]) + radius
-        room = np.inf
+        polygons = []
         for triangle in self.triangles[candidates]:
             polygon = list(triangle)
             for axis, bound, sign in ((0, lo[0], 1), (0, hi[0], -1),
@@ -60,6 +60,26 @@ class _ExhaustFloor:
                         clipped.append(a + (b - a) * da / (da - db))
                 polygon = clipped
             if polygon:
+                polygons.append(polygon)
+        self._footprints[key] = polygons
+        return polygons
+
+    def clearance(self, start, end, radius):
+        import numpy as np
+
+        key = (*start, *end, radius)
+        if key in self._clearances:
+            return self._clearances[key]
+        lo = np.minimum(start[:2], end[:2]) - radius
+        hi = np.maximum(start[:2], end[:2]) + radius
+        top = max(start[2], end[2]) + radius
+        dx = end[0] - start[0]
+        slope = (end[2] - start[2]) / dx if abs(dx) > 1e-12 else 0.
+        radial = radius * np.sqrt(1 + slope * slope) if abs(dx) > 1e-12 else top - start[2]
+        room = np.inf
+        for vertices in self._footprint(lo, hi):
+            polygon = list(vertices)
+            if polygon:
                 if abs(slope) > 1e-12:
                     crossing = start[0] + (top - start[2] - radial) / slope
                     extra = []
@@ -72,6 +92,7 @@ class _ExhaustFloor:
                 room = min(room, (p[:, 2] - ceiling).min())
         # Every ring is inside a sphere at its centre; loft faces are in their
         # convex hull. Both the sloping and horizontal planes bound that hull.
+        self._clearances[key] = room
         return room
 
     def fit_paths(self, paths, radius):
@@ -366,8 +387,17 @@ def extra_exterior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -
             for p in (entry, (entry + 2 * point + exit) / 4, exit):
                 p[2] = min(p[2], branch_floor(p[0], p[1])[2])
                 rounded.append(p)
+        # Coalesce tiny bend samples: a 50mm tube cannot turn sharply between
+        # rings only 1–3mm apart without its inner loft faces folding back.
+        # The footprint fit below retains floor breaks even between centres.
+        spaced = [rounded[0]]
+        for point in rounded[1:]:
+            if np.linalg.norm(point - spaced[-1]) >= .04:
+                spaced.append(point)
+        while len(spaced) > 1 and np.linalg.norm(approach - spaced[-1]) < .04:
+            spaced.pop()
         # Preserve a straight collar and its exact rearward terminal tangent.
-        exhaust_paths.append([p.tolist() for p in [*rounded, approach, tip]])
+        exhaust_paths.append([p.tolist() for p in [*spaced, approach, tip]])
         tips.append(tip.tolist())
     exhaust_paths = _ExhaustFloor(floor_grid).fit_paths(exhaust_paths, .025)
     out.append(PointConnector("exhaust_system", Frame.from_normal(underfloor(midpoint), -Z, X),
