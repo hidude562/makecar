@@ -71,7 +71,7 @@ def _finish(m: Mesh, ctx: BuildContext, extra: Dict[str, Material] | None = None
 
 # =============================================================== SEATS
 def _cushion_section(w: float, t: float, b: float, drop: float = 0.0, lift: float = 0.0) -> np.ndarray:
-    """Closed (y, z) outline of a seat-cushion cross-section (14 points):
+    """Closed (y, z) outline of a seat-cushion cross-section (18 points):
     flat underside at `lift`, top at `t - drop`, side bolsters `b` higher."""
     hw = w / 2
     zt = t - drop
@@ -88,7 +88,7 @@ def _cushion_section(w: float, t: float, b: float, drop: float = 0.0, lift: floa
 
 
 def _backrest_section(w: float, front: float, back: float, b: float) -> np.ndarray:
-    """Closed (y, t) outline of a backrest cross-section (14 points); t is the
+    """Closed (y, t) outline of a backrest cross-section (18 points); t is the
     forward direction (towards the occupant)."""
     hw = w / 2
     f = front
@@ -179,7 +179,7 @@ class BucketSeat(MorphableComponent):
         r = np.radians(p.recline_deg)
         u = np.array([-np.sin(r), 0.0, np.cos(r)])
         t = np.array([np.cos(r), 0.0, np.sin(r)])
-        hinge = np.array([x0 + 0.07, 0.0, ch + 0.03])
+        hinge = np.array([x0 + 0.07, 0.0, ch - 0.035])
         bh = p.backrest_height
         secs, origins = [], []
         for f, wf, ff, bf in ((0.0, 1.0, 0.9, 1.0), (0.05, 1.0, 1.0, 1.0), (0.22, 1.0, 1.0, 1.0), (0.5, 0.97, 1.0, 1.0),
@@ -189,7 +189,7 @@ class BucketSeat(MorphableComponent):
         back = H.orient_outward(H.section_loft(secs, origins, ey, t, "int_leather", name="backrest"))
         # ---- headrest, riser, rails
         top = hinge + u * bh
-        head = _headrest(top, u, t, 0.24, p.headrest_height, 0.05)
+        head = _headrest(top, ez, np.array([1.0, 0.0, 0.0]), 0.24, p.headrest_height, 0.10)
         riser = P.box(cd * 0.55, cw * 0.55, max(zb - 0.02, 0.02), material="int_plastic",
                       center=(x0 + cd * 0.5, 0, max(zb - 0.02, 0.02) / 2 + 0.01), name="riser")
         # The two 6 mm-wide V grooves are part of the upholstery surface, not
@@ -269,10 +269,10 @@ class SportSeat(BucketSeat):
         m.prune_unused_vertices()
         r = np.radians(p.recline_deg)
         u, t = np.array([-np.sin(r), 0, np.cos(r)]), np.array([np.cos(r), 0, np.sin(r)])
-        hinge = np.array([-p.footprint_depth / 2 + 0.09, 0, p.cushion_height + 0.03])
+        hinge = np.array([-p.footprint_depth / 2 + 0.09, 0, p.cushion_height - 0.035])
         secs, origins = [], []
         for h, w in ((p.backrest_height - 0.14, 0.34), (p.backrest_height, 0.28),
-                     (p.backrest_height + 0.22, 0.25), (p.backrest_height + 0.28, 0.21)):
+                     (p.backrest_height + 0.28, 0.25), (p.backrest_height + 0.34, 0.21)):
             secs.append(rounded_rect_points(w, 0.095, 0.025, 3))
             origins.append(hinge + u * h)
         head = H.orient_outward(H.section_loft(secs, origins, np.array([0, 1, 0]), t, "int_leather"))
@@ -392,11 +392,12 @@ class BenchSeat(MorphableComponent):
         p = H.params_from_values(self, res.info["modifier_values"])
         x0, u, t, hinge = self._axes(p)
         n = opts.get("headrests", "auto")
-        n = 3 if n == "auto" else int(n)
-        ys = [-(p.width / 2 - 0.30), p.width / 2 - 0.30] if n == 2 else [-(p.width / 2 - 0.30), 0.0, p.width / 2 - 0.30]
+        n = 3 if n == "auto" else int(np.clip(int(n), 0, 3))
+        ys = [0.0] if n == 1 else np.linspace(-(p.width / 2 - 0.30), p.width / 2 - 0.30, n)
         top = hinge + u * p.backrest_height
-        for y in ys[:max(n, 0)]:
-            res.mesh.merge(_headrest(top + np.array([0.0, y, 0.0]), u, t, 0.22, 0.10, 0.04))
+        for k, y in enumerate(ys):
+            res.mesh.merge(_headrest(top + np.array([0.0, y, 0.0]), u, t, 0.22, 0.18, 0.05), group_prefix=f"headrest_{k}")
+        res.info["headrests"] = n
         _finish(res.mesh, ctx)
         res.mesh.materials = {k: v for k, v in res.mesh.materials.items() if k in set(res.mesh.face_materials)}
         return res
@@ -430,8 +431,16 @@ class PillarTrim(CarComponent):
     description = "closed A/B-pillar fabric trim following the morphed aperture and pillar"
 
     def build_local(self, conn, opts, ctx):
-        path = conn.frame.to_local(np.asarray(conn.meta["path"]))
-        m = H.ribbon(path, float(conn.meta["width"]), 0.018, "int_fabric", "pillar_trim", up=(0, 0, 1))
+        m = Mesh(name="pillar_trim")
+        if "grid_points" in conn.meta:
+            grid = np.asarray(conn.meta["grid_points"])
+            material = "int_carpet" if conn.meta["pillar"] == "lower" else "int_plastic" if conn.meta["pillar"] == "belt" else "int_fabric"
+            skin = H.patch_surface(grid, conn.normal, material, thickness=0.008, name="pillar_skin")
+            skin.transform(np.linalg.inv(conn.frame.matrix))
+            m.merge(H.named(skin, "pillar_skin"))
+        if "path" in conn.meta:
+            path = conn.frame.to_local(np.asarray(conn.meta["path"]))
+            m.merge(H.ribbon(path, float(conn.meta["width"]), 0.018, "int_fabric", "pillar_trim", up=(0, 0, 1)))
         return ComponentResult(_finish(m, ctx))
 
 
@@ -627,7 +636,10 @@ class Dashboard(MorphableComponent):
         y_vent = stack_top - 0.058
         y_screen = y_vent - 0.058 - h_s / 2 - 0.008
         y_hvac = stack_bot + 0.028
-        return dict(x_d=x_d, T=T0, B=B, yk=yk, band=(band_lo, band_hi), y_band=y_band, h_s=h_s,
+        y_cluster = y_band + 0.01
+        if sc is not None:
+            y_cluster = max(y_cluster, float(conn.frame.to_local(np.asarray(sc))[0, 1]) + 0.075)
+        return dict(x_d=x_d, T=T0, B=B, yk=yk, band=(band_lo, band_hi), y_band=y_band, y_cluster=y_cluster, h_s=h_s,
                     y_vent=y_vent, y_screen=y_screen, y_hvac=y_hvac, half=p.width / 2, s_half=p.stack_width / 2)
 
     def build_local(self, conn, opts, ctx) -> ComponentResult:
@@ -649,6 +661,17 @@ class Dashboard(MorphableComponent):
                 m.face_materials[i] = "int_accent" if opts.get("two_tone", True) else "int_plastic"
             else:
                 m.face_materials[i] = "int_plastic"          # knee bolster
+        # Passenger airbag tear seam and a continuous fascia accent.  Sample
+        # the fitted dash surface so these do not hover over its curved brow.
+        xp = -L["x_d"]
+        y0, y1 = L["T"] - 0.060, L["T"] - 0.026
+        outline = [(xp - 0.14, y0), (xp + 0.14, y0), (xp + 0.14, y1), (xp - 0.14, y1), (xp - 0.14, y0)]
+        path = [[x, y, _dash_surface_z(p, x, y) + 0.001] for x, y in outline]
+        m.merge(H.ribbon(path, 0.0015, 0.001, "int_trim", "passenger_airbag_seam"))
+        for sign in (-1, 1):
+            xs = np.linspace(sign * (L["s_half"] + 0.05), sign * (L["half"] - 0.06), 12)
+            path = [[x, _dash_top(p, x) - 0.09, _dash_surface_z(p, x, _dash_top(p, x) - 0.09) + 0.002] for x in xs]
+            m.merge(H.ribbon(path, 0.005, 0.002, "int_chrome", f"fascia_strip_{sign}"))
         _finish(m, ctx)
         m.materials = {k: v for k, v in m.materials.items() if k in set(m.face_materials)}
         return res
@@ -661,6 +684,8 @@ class Dashboard(MorphableComponent):
 
         def rect(name, x, y, w, h, tilt, tags, **meta):
             z = _dash_surface_z(p, x, y) + 0.004
+            if name == "cluster":
+                z = max(_dash_surface_z(p, x, yy) for yy in np.linspace(y - h / 2, y + h / 2, 9)) + 0.008 + abs(np.sin(tilt)) * h / 2
             fr = Frame.from_normal([x, y, z], [0.0, np.sin(tilt), np.cos(tilt)], x_hint=(1, 0, 0))
             out.append(RectangleConnector(name, fr, w, h, tags=tags, meta=meta))
 
@@ -670,8 +695,8 @@ class Dashboard(MorphableComponent):
             out.append(CircleConnector(name, fr, r, tags=tags, meta=meta))
 
         band_h = L["band"][1] - L["band"][0]
-        rect("cluster", x_d, L["y_band"] + 0.01, 0.26, min(0.12, band_h + 0.02), np.radians(12), ["cluster"],
-             hood_height=L["T"] - L["y_band"], driver_x=x_d)
+        rect("cluster", x_d, L["y_cluster"], 0.26, min(0.12, band_h + 0.02), np.radians(12), ["cluster"],
+             hood_height=L["T"] - L["y_cluster"], driver_x=x_d)
         rect("screen", 0.0, L["y_screen"], min(0.30, p.stack_width - 0.05), L["h_s"], np.radians(6), ["screen"])
         rect("hvac", 0.0, L["y_hvac"], min(0.24, p.stack_width - 0.08), 0.05, 0.0, ["hvac"])
         rect("glovebox", -x_d, 0.5 * (L["B"] + L["yk"]) + 0.005, min(0.40, L["half"] - abs(x_d) - 0.02) * 2 - 0.16,
@@ -699,14 +724,25 @@ class AnalogCluster(CarComponent):
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
         w, h = conn.width, conn.height
         m = P.rounded_box(w, h, 0.012, 0.02, material="int_gauge", center=(0, 0, 0.006), name="cluster_plate")
+        m.merge(P.rounded_box(w + 0.014, h + 0.012, 0.065, 0.02, material="int_plastic", center=(0, 0, -0.027), name="cluster_pod"))
         rg = min(h * 0.42, w * 0.2)
         for k, (x, ang) in enumerate(((-w * 0.24, -0.7), (w * 0.24, 0.45))):
             m.merge(P.tube(rg + 0.006, rg - 0.004, 0.012, 24, material="int_chrome", center=(x, 0, 0.018), name="bezel"))
-            m.merge(P.cylinder(rg - 0.004, 0.003, 24, material="int_gauge", center=(x, 0, 0.0135), name="face"))
+            face = P.cylinder(rg - 0.004, 0.003, 24, material="int_gauge", center=(x, 0, 0.0135), name="face")
+            m.merge(H.named(face, "tachometer_face" if k == 0 else "speedometer_face"))
+            for j, a in enumerate(np.linspace(-2.35, 2.35, 25)):
+                length = 0.006 if j % 2 == 0 else 0.003
+                tick = P.box(0.0015, length, 0.001, material="int_lens", center=(0, rg - 0.012 - length / 2, 0.018))
+                m.merge(H.named(tick.transform(H.rot_z(a)).translate((x, 0, 0)), f"gauge_{k}_tick_{j}"))
+            for j, a in enumerate(np.linspace(-2.15, 2.15, 5)):
+                marking = str(j * (2 if k == 0 else 40))
+                # Labels read upright across the instrument, not rotated text.
+                at = (x + (rg - 0.025) * np.sin(a), (rg - 0.025) * np.cos(a), 0.018)
+                m.merge(H.digits(marking, 0.0055, center=at))
             m.merge(P.tube(rg - 0.006, rg - 0.010, 0.001, 24, material="int_lens", center=(x, 0, 0.0155), name="lit_ring"))
             needle = P.box(0.003, rg * 0.85, 0.002, material="int_needle", center=(0, rg * 0.32, 0.0165), name="needle")
             needle.transform(H.rot_z(ang)).translate((x, 0, 0))
-            m.merge(needle)
+            m.merge(H.named(needle, f"needle_{k}"))
             m.merge(P.cylinder(0.006, 0.003, 12, material="int_chrome", center=(x, 0, 0.017), name="cap"))
         m.merge(P.box(w * 0.2, h * 0.5, 0.003, material="int_screen", center=(0, 0, 0.0135), name="centre_display"))
         if opts.get("hood", True):
@@ -721,8 +757,16 @@ class AnalogCluster(CarComponent):
             for z, sx, dy in ((-0.03, 1.0, 0.0), (0.04, 1.02, 0.004), (depth, 0.95, -0.012)):
                 secs.append(prof * np.array([sx, 1.0]) + np.array([0.0, dy]))
                 origins.append(np.array([0.0, 0.0, z]))
-            hood = H.section_loft(secs, origins, np.array([1.0, 0, 0]), np.array([0, 1.0, 0]), "int_soft", name="hood")
-            m.merge(H.orient_outward(hood))
+            hood = H.section_loft(secs, origins, np.array([1.0, 0, 0]), np.array([0, 1.0, 0]), "int_soft",
+                                  cap_start=False, cap_end=False, name="hood")
+            # A C-shaped profile is concave: a fan cap would bridge its opening
+            # and hide the gauges.  Join each outer arc segment to its inner one.
+            for off, sign in ((0, -1), (2 * len(prof), 1)):
+                for j in range(len(th) - 1):
+                    face = (off + j, off + j + 1, off + len(prof) - 2 - j, off + len(prof) - 1 - j)
+                    hood.faces.append(face if sign < 0 else tuple(reversed(face)))
+                    hood.face_materials.append("int_soft")
+            m.merge(H.named(H.orient_outward(hood), "binnacle_hood"))
         return ComponentResult(_finish(m, ctx))
 
 
@@ -797,12 +841,14 @@ class HvacKnobs(CarComponent):
         w, h = conn.width, conn.height
         m = P.rounded_box(w, h, 0.01, 0.012, material="int_trim", center=(0, 0, 0.005), name="hvac_panel")
         n = int(opts["knobs"])
-        rk = min(0.02, h * 0.38)
+        rk = min(0.014, h * 0.28)
         for k in range(n):
             x = (k - (n - 1) / 2) * (w * 0.68 / max(n - 1, 1))
-            m.merge(H.knob(rk, 0.018, "int_plastic", "int_chrome", 20, center=(x, 0, 0.01), pointer="int_lens"))
-        for x in (-w * 0.17, w * 0.17):
-            m.merge(H.button_row(3, 0.014, (0.010, 0.006), 0.004, "int_plastic", center=(x, -h * 0.05, 0.01)))
+            m.merge(H.knob(rk, 0.018, "int_plastic", "int_chrome", 20, center=(x, 0.008, 0.01), pointer="int_lens"))
+        for k, x in enumerate(np.linspace(-w * 0.38, w * 0.38, 6)):
+            button = P.box(0.012, 0.010, 0.004, material="int_plastic", center=(x, -0.016, 0.012))
+            m.merge(H.named(button, f"hvac_button_{k}"))
+            m.merge(P.box(0.004, 0.0015, 0.001, material="int_lens", center=(x, -0.016, 0.0145)))
         return ComponentResult(_finish(m, ctx))
 
 
@@ -862,7 +908,7 @@ class CenterConsole(CarComponent):
     name = "console.center"
     accepts = (RectangleConnector,)
     default_for = ("console",)
-    options = {"armrest": True, "panel_material": "int_wood"}
+    options = {"armrest": True, "panel_material": "int_wood", "cup_cover": 0.35}
     description = "centre console with armrest lid and trim panel; emits shifter and cupholder connectors"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
@@ -885,9 +931,25 @@ class CenterConsole(CarComponent):
         m.merge(panel)
         if opts.get("armrest", True):
             arm = P.rounded_box(0.30, Wc - 0.04, 0.06, 0.028, material="int_leather", center=(xr + 0.16, 0, hc - 0.02 + 0.03), name="armrest")
-            m.merge(arm)
-        # small switch bank in front of the cupholders
-        m.merge(H.button_row(2, 0.03, (0.022, 0.014), 0.004, "int_trim", center=(0.10, 0.0, hc), along="x"))
+            m.merge(H.named(P.rounded_box(0.306, Wc - 0.034, 0.006, 0.028, material="int_gauge",
+                                          center=(xr + 0.16, 0, hc - 0.020)), "armrest_seam"))
+            m.merge(H.named(arm, "armrest_lid"))
+        # Sliding tambour cover: a partly retracted shutter on two guide rails.
+        fraction = float(np.clip(opts["cup_cover"], 0, 1))
+        for sign in (-1, 1):
+            m.merge(P.box(0.21, 0.007, 0.012, material="int_plastic", center=(-0.045, sign * 0.056, hc + 0.006)))
+        if fraction > 0:
+            length = 0.20 * fraction
+            cover = P.box(length, 0.104, 0.004, material="int_trim", center=(-0.145 + length / 2, 0, hc + 0.016))
+            for x in np.arange(-0.14, -0.145 + length, 0.01):
+                cover.merge(P.box(0.0012, 0.10, 0.001, material="int_metal", center=(x, 0, hc + 0.0185)))
+            cover.merge(P.box(0.006, 0.045, 0.006, material="int_chrome", center=(-0.15 + length, 0, hc + 0.021)))
+            m.merge(H.named(cover, "cup_sliding_cover"))
+        side = 1 if conn.meta.get("driver_y", 0.42) > 0 else -1
+        m.merge(H.named(P.rounded_box(0.025, 0.021, 0.004, 0.004, material="int_gauge", center=(0.15, side * 0.085, hc + 0.006)), "ebrake_surround"))
+        m.merge(H.named(P.box(0.014, 0.012, 0.006, material="int_plastic", center=(0.15, side * 0.085, hc + 0.010)), "ebrake_switch"))
+        m.merge(P.box(0.005, 0.002, 0.001, material="int_lens", center=(0.15, side * 0.085, hc + 0.0135)))
+        m.merge(H.button_row(2, 0.025, (0.014, 0.012), 0.004, "int_trim", center=(0.10, 0.0, hc), along="x"))
         subs = [
             PointConnector("shifter", Frame.from_normal([0.27, 0.0, hc + 0.006], [0, 0, 1], x_hint=(1, 0, 0)), tags=["shifter"],
                            meta={"transmission": conn.meta.get("transmission", "automatic")}),
@@ -962,6 +1024,15 @@ class CarpetFloor(CarComponent):
             return 0.01 + tunnel * hfac + toe
 
         m = H.heightfield_slab(xs, ys, z_top, -0.01, "int_carpet", name="carpet")
+        xh = ctx.measurements.get("x_cowl", conn.origin[0] + Lx / 2) - float(ctx.hints.get("front_h_point_offset", 0.95))
+        lateral = min(0.42, Wy / 2 - 0.30)
+        for row, (ahead, length) in enumerate(((0.58, 0.50), (-0.28, 0.40))):
+            x = float(np.clip(xh + ahead - conn.origin[0], -Lx / 2 + length / 2 + 0.02, Lx / 2 - length / 2 - 0.02))
+            for side, sign in (("L", 1), ("R", -1)):
+                mat = P.rounded_box(length, 0.36, 0.005, 0.035, material="int_rubber", center=(x, sign * lateral, 0.003))
+                mat.merge(P.rounded_box(length - 0.016, 0.344, 0.001, 0.03, material="int_carpet", center=(x, sign * lateral, 0.0065)))
+                mat.vertices[:, 2] += z_top(mat.vertices[:, 0], mat.vertices[:, 1]) + 0.002
+                m.merge(H.named(mat, f"floor_mat_{row + 1}_{side}"))
         return ComponentResult(_finish(m, ctx))
 
 
@@ -977,6 +1048,18 @@ class BulkheadTrim(CarComponent):
         t = float(opts["thickness"])
         m = P.rounded_box(conn.width - 0.01, conn.height - 0.01, t, 0.03, material="int_carpet" if conn.meta.get("position") == "front" else "int_plastic",
                           center=(0, 0, t / 2), name="bulkhead")
+        if conn.meta.get("position") == "front":
+            # Original mount only covers the lower 320 mm.  Continue behind the
+            # dashboard to the windshield base, with returns closing its ends.
+            top = ctx.measurements["z_cowl"] - 0.025 - conn.origin[2]
+            bottom = -conn.height / 2
+            upper_bottom = conn.height / 2 - 0.015
+            if top > upper_bottom:
+                m.merge(H.named(P.box(conn.width, top - upper_bottom, t, material="int_plastic",
+                                      center=(0, (top + upper_bottom) / 2, t / 2)), "upper_firewall"))
+            for sign in (-1, 1):
+                m.merge(H.named(P.box(0.024, top - bottom, 0.16, material="int_plastic",
+                                      center=(sign * (conn.width / 2 - 0.012), (top + bottom) / 2, 0.08)), f"firewall_return_{sign}"))
         return ComponentResult(_finish(m, ctx))
 
 
@@ -993,8 +1076,7 @@ class ParcelShelf(CarComponent):
         m = P.box(w, h, 0.03, material="int_carpet", center=(0, 0, 0.015), name="shelf")
         if opts.get("speakers", True) and h > 0.9:
             for y in (-(h / 2 - 0.30), h / 2 - 0.30):
-                m.merge(P.cylinder(0.075, 0.006, 24, material="int_grille", center=(0, y, 0.033), name="shelf_speaker"))
-                m.merge(P.tube(0.085, 0.074, 0.008, 24, material="int_plastic", center=(0, y, 0.034), name="shelf_speaker_ring"))
+                m.merge(H.grille(0.075, f"shelf_speaker_{y:+.2f}").translate((0, y, 0.035)))
         return ComponentResult(_finish(m, ctx))
 
 
@@ -1004,11 +1086,38 @@ class CargoFloor(CarComponent):
     accepts = (RectangleConnector,)
     default_for = ("cargo_floor",)
     options = {}
-    description = "carpeted trunk / cargo floor slab"
+    description = "lined cargo floor, side returns and closed inner rear wheel houses"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
-        m = P.box(conn.width, conn.height, 0.03, material="int_carpet", center=(0, 0, 0.015), name="cargo_floor")
+        length, width = conn.width, conn.height
+        m = P.box(length, width, 0.03, material="int_carpet", center=(0, 0, 0.015), name="cargo_floor")
+        height = max(0.20, ctx.measurements["z_belt"] - conn.origin[2] - 0.04)
+        for sign in (-1, 1):
+            m.merge(H.named(P.box(length, 0.025, height, material="int_carpet",
+                                  center=(0, sign * (width / 2 - 0.0125), height / 2)), f"cargo_side_{sign}"))
+        m.merge(H.named(P.box(0.025, width, height, material="int_plastic",
+                              center=(-length / 2 + 0.0125, 0, height / 2)), "cargo_rear_return"))
         return ComponentResult(_finish(m, ctx))
+
+
+@register
+class CargoWheelhouse(CarComponent):
+    name = "cargo.wheelhouse"
+    accepts = (PointConnector,)
+    default_for = ("cargo_wheelhouse",)
+    description = "closed carpeted inner wheel house fitted to the measured rear arch"
+
+    def build_local(self, conn, opts, ctx):
+        radius, height = float(conn.meta["radius"]), float(conn.meta["height"])
+        sign = 1 if conn.meta["side"] == "L" else -1
+        a = np.linspace(np.pi, 0, 17)
+        profile = np.column_stack([radius * np.cos(a), height * np.sin(a)])
+        secs, origins = [], []
+        for inset, scale in ((float(conn.meta["depth"]), 0.86), (0.21, 0.98), (0.0, 1.0)):
+            secs.append(profile * [1, scale])
+            origins.append([0, -sign * inset, 0])
+        m = H.orient_outward(H.section_loft(secs, origins, np.array([1, 0, 0]), np.array([0, 0, 1]), "int_carpet"))
+        return ComponentResult(_finish(H.named(m, "inner_wheelhouse"), ctx))
 
 
 @register
@@ -1072,8 +1181,13 @@ class Headliner(CarComponent):
                 y = y_mid + s * min(0.40, y_half - 0.20)
                 x = x_max - 0.17
                 z = H.grid_local_z(grid, conn.frame, x, y)
-                m.merge(P.rounded_box(0.30, 0.14, 0.012, 0.02, material="int_fabric", center=(x, y, z + 0.010), name="visor"))
-                m.merge(P.box(0.03, 0.03, 0.03, material="int_plastic", center=(x + 0.13, y - s * 0.05, z + 0.012), name="visor_clip"))
+                visor = P.rounded_box(0.14, 0.30, 0.012, 0.02, material="int_fabric", center=(x, y, z + 0.010), name="visor")
+                visor.merge(P.rounded_box(0.075, 0.18, 0.002, 0.008, material="int_plastic", center=(x, y, z + 0.017)))
+                visor.merge(H.named(P.box(0.060, 0.16, 0.001, material="int_mirror", center=(x, y, z + 0.0185)),
+                                    "vanity_mirror_L" if s < 0 else "vanity_mirror_R"))
+                m.merge(H.named(visor, "visor_L" if s < 0 else "visor_R"))
+                for dy in (-0.11, 0.11):
+                    m.merge(P.box(0.025, 0.025, 0.026, material="int_plastic", center=(x + 0.065, y + dy, z + 0.012), name="visor_clip"))
         extra = {}
         if opts.get("color"):
             extra["int_fabric"] = ctx.material("int_fabric", opts["color"], shininess=0.05)
@@ -1107,7 +1221,8 @@ class GrabHandle(CarComponent):
     def build_local(self, conn: PointConnector, opts, ctx) -> ComponentResult:
         L = float(opts["length"])
         m = P.rounded_box(L, 0.026, 0.02, 0.008, material="int_fabric", center=(0, 0, 0.045), name="grab_bar")
-        for x in (-L / 2 + 0.02, L / 2 - 0.02):
+        for i, x in enumerate((-L / 2 + 0.02, L / 2 - 0.02)):
+            m.merge(H.named(P.rounded_box(0.045, 0.038, 0.01, 0.010, material="int_plastic", center=(x, 0, 0.005)), f"grab_base_{i}"))
             m.merge(P.box(0.03, 0.026, 0.04, material="int_fabric", center=(x, 0, 0.02), name="grab_post"))
         return ComponentResult(_finish(m, ctx))
 
@@ -1195,12 +1310,31 @@ class DoorCard(CarComponent):
         z_l = zs(x_l, y_l)
         m.merge(P.rounded_box(0.12, 0.045, 0.004, 0.015, material="int_gauge", center=(x_l, y_l, z_l + 0.002), name="lever_recess"))
         m.merge(P.rounded_box(0.09, 0.018, 0.012, 0.006, material="int_chrome", center=(x_l - 0.005, y_l, z_l + 0.01), name="lever"))
-        # map pocket (front doors)
-        if opts.get("pocket", True) and span > 1.0:
+        # Open map pocket: front wall, bottom and end cheeks; no top cap.
+        if opts.get("pocket", True) and span > 0.45:
+            width = min(0.32, span * 0.32)
+            x_k = x_min + width / 2 + 0.08
             y_k = yl(z_bot + 0.10)
-            m.merge(P.rounded_box(0.36, 0.11, 0.05, 0.02, material="int_plastic", center=(x_a - 0.05, y_k, zs(x_a, y_k) + 0.025), name="pocket"))
-        # speaker connector low on the panel
-        x_sp = x_a + La / 2 + 0.20 if (x_a + La / 2 + 0.32) < x_max else x_a
+            z_k = zs(x_k, y_k)
+            pocket = P.rounded_box(width, 0.10, 0.008, 0.014, material="int_plastic", center=(x_k, y_k, z_k + 0.060))
+            pocket.merge(P.box(width, 0.008, 0.06, material="int_plastic", center=(x_k, y_k - sgn * 0.046, z_k + 0.030)))
+            for sign in (-1, 1):
+                pocket.merge(P.box(0.008, 0.10, 0.06, material="int_plastic", center=(x_k + sign * (width / 2 - 0.004), y_k, z_k + 0.030)))
+            pocket.merge(P.box(width - 0.016, 0.002, 0.046, material="int_gauge", center=(x_k, y_k - sgn * 0.039, z_k + 0.031)))
+            m.merge(H.named(pocket, "map_pocket"))
+        # Sill return closes the carpet-to-door gap; the metal scuff plate is
+        # horizontal in world space even on the right-hand door's inverted Y.
+        floor_z = ctx.measurements.get("z_floor", z_bot - 0.15) + 0.05
+        sill_h = max(z_bot - floor_z, 0.02)
+        xc = (x_min + x_max) / 2
+        z_sill = zs(xc, yl(z_bot))
+        m.merge(H.named(P.box(span, sill_h, 0.07, material="int_plastic",
+                              center=(xc, yl(z_bot - sill_h / 2), z_sill + 0.025)), "sill_return"))
+        plate = P.box(min(0.65, span * 0.8), 0.004, 0.065, material="int_metal",
+                      center=(xc, yl(z_bot + 0.005), z_sill + 0.030))
+        m.merge(H.named(plate, "sill_scuff_plate"))
+        # speaker connector low and forward, clear of the map-pocket opening
+        x_sp = x_max - 0.15
         z_w = max(belt - 0.48, z_bot + 0.12)
         y_sp = yl(z_w)
         sp = CircleConnector("speaker", Frame.from_normal([x_sp, y_sp, zs(x_sp, y_sp) + 0.004], [0, 0, 1], x_hint=(1, 0, 0)), 0.08,
@@ -1217,11 +1351,7 @@ class RoundSpeaker(CarComponent):
     description = "round speaker grille with a trim ring"
 
     def build_local(self, conn: CircleConnector, opts, ctx) -> ComponentResult:
-        r = conn.radius
-        m = P.cylinder(r, 0.006, 32, material="int_grille", center=(0, 0, 0.003), name="grille")
-        m.merge(P.tube(r + 0.012, r - 0.002, 0.012, 32, material="int_plastic", center=(0, 0, 0.006), name="speaker_ring"))
-        m.merge(P.tube(r * 0.62, r * 0.58, 0.002, 32, material="int_gauge", center=(0, 0, 0.007), name="groove"))
-        m.merge(P.cylinder(r * 0.22, 0.004, 16, material="int_gauge", center=(0, 0, 0.008), name="dust_cap"))
+        m = H.grille(conn.radius, "speaker_grille")
         return ComponentResult(_finish(m, ctx))
 
 
@@ -1246,4 +1376,8 @@ class RearviewMirror(CarComponent):
         cy, cz = 0.10 * np.sin(np.radians(40)) + 0.02, 0.10 * np.cos(np.radians(40)) + 0.02
         m.merge(P.rounded_box(w, h, 0.025, 0.02, material="int_plastic", center=(0, cy, cz), name="mirror_housing"))
         m.merge(P.box(w - 0.02, h - 0.012, 0.003, material="int_mirror", center=(0, cy, cz + 0.014), name="mirror_glass"))
-        return ComponentResult(_finish(m, ctx))
+        # Legacy body mount is at the rear roof ring.  Keep its public frame
+        # intact, but fit the actual mirror to the measured windshield header.
+        mount = np.array([ctx.measurements["x_roof_front"] + 0.015, 0, ctx.measurements["z_roof_front"] - 0.055])
+        m.translate(conn.frame.to_local(mount)[0])
+        return ComponentResult(_finish(m, ctx), info={"header_mount_world": mount.tolist()})

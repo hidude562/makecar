@@ -296,6 +296,22 @@ def grille(radius: float, name="grille") -> Mesh:
     return named(m, name)
 
 
+def digits(text: str, height: float, center=(0, 0, 0), material="int_lens") -> Mesh:
+    """Tiny seven-segment instrument markings, using geometry rather than fonts."""
+    segments = {"0": "abcdef", "1": "bc", "2": "abdeg", "3": "abcdg", "4": "bcfg",
+                "5": "acdfg", "6": "acdefg", "7": "abc", "8": "abcdefg", "9": "abcdfg"}
+    locations = {"a": (0, 0.5, True), "b": (0.25, 0.25, False), "c": (0.25, -0.25, False),
+                 "d": (0, -0.5, True), "e": (-0.25, -0.25, False), "f": (-0.25, 0.25, False), "g": (0, 0, True)}
+    m = Mesh(name="digits")
+    for i, char in enumerate(text):
+        x = (i - (len(text) - 1) / 2) * height * 0.7
+        for key in segments[char]:
+            dx, dy, horizontal = locations[key]
+            sx, sy = (height * 0.40, height * 0.10) if horizontal else (height * 0.10, height * 0.36)
+            m.merge(P.box(sx, sy, 0.0005, material=material, center=(x + dx * height, dy * height, 0)))
+    return m.translate(center)
+
+
 def button_row(n: int, pitch: float, size: Tuple[float, float], height: float, material: str,
                center=(0.0, 0.0, 0.0), along="x") -> Mesh:
     """A row of n small rounded buttons."""
