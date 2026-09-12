@@ -50,6 +50,7 @@ class WheelParams:
     rim_ratio: float = 0.62    # rim radius / tyre radius
     dish: float = 0.04         # how deep the spokes sit inside the rim
     sidewall_bulge: float = 0.012
+    groove_depth: float = 0.004
 
 
 @register
@@ -62,7 +63,10 @@ class Wheel(MorphableComponent):
     default_for = ("wheel",)
     params_cls = WheelParams
     options = {"spokes": 5, "spoke_width": 0.55, "hubcap": True, "tread_grooves": 3,
-               "tread_blocks": 40, "dish": 0.04, "caliper_color": "#b52d22"}
+               "tread_blocks": 40, "dish": 0.04, "caliper_color": "#b52d22",
+               "aspect_ratio": None, "tread_pattern": "asymmetric_block", "groove_depth": None,
+               "shoulder_blocks": None, "lettering": False, "spoke_family": "five_spoke",
+               "disc_pattern": "plain", "disc_vanes": 16}
     description = "tyre with alloy rim; radius/width/rim size fitted from the hub connector"
     modifier_specs = [
         ModifierSpec("radius", 0.10, 0.14, "size", "tyre radius"),
@@ -71,153 +75,453 @@ class Wheel(MorphableComponent):
         ModifierSpec("dish", 0.03, 0.05, "style", "spoke dish depth"),
     ]
 
-    N = 48
+    N = 64
+    SPOKE_FAMILIES = ("mesh", "five_spoke", "twin_five", "multi_spoke", "turbine", "dish", "steel_cap")
+    TREAD_PATTERNS = ("directional_v", "asymmetric_block", "all_terrain", "slick")
 
     def generate(self, p: WheelParams) -> Mesh:
-        # Only the carcass, barrel, lips and hub belong to the target library.
-        # Count-dependent tread/spokes/hardware are fitted AFTER morphing it.
+        # Fixed topology: bead seats, rounded sidewalls and a recessed tread bed.
+        # The visible tread is fitted later, so groove depth never changes OD.
         R, w, rr = p.radius, p.width, p.rim_ratio * p.radius
         gap = R - rr
-        profile = np.array([
-            [rr + .004, -w / 2 + .016], [rr + gap * .18, -w / 2 + .006],
-            [rr + gap * .60, -w / 2], [R - .025, -w / 2 + .009],
-            [R - .008, -w * .37], [R - .007, -w * .32],
-            [R - .007, w * .32], [R - .008, w * .37],
-            [R - .025, w / 2 - .009], [rr + gap * .60, w / 2],
-            [rr + gap * .18, w / 2 - .006], [rr + .004, w / 2 - .016],
-        ])
+        side = [[rr, w * .40], [rr + gap * .05, w * .435],
+                [rr + gap * .18, w * .475], [rr + gap * .40, w * .50],
+                [rr + gap * .65, w * .485], [R - gap * .12, w * .44],
+                [R - gap * .055, w * .39], [R - p.groove_depth, w * .35]]
+        profile = [[r, -z] for r, z in side] + side[::-1]
         m = Mesh(name="wheel")
         _part(m, P.revolve(profile, self.N, material="tyre"), "carcass")
-        _part(m, P.tube(rr + .004, rr - .012, w - .035, self.N, material="rim"), "barrel")
+        # Rolled lips are integral with the open barrel; a drop centre clears
+        # the tyre bead during mounting. No circular plate covers the openings.
+        barrel = [[rr - .010, -w * .42], [rr + .004, -w * .45],
+                  [rr + .008, -w * .43], [rr - .009, -w * .22],
+                  [rr - .009, w * .22], [rr + .008, w * .43],
+                  [rr + .004, w * .45], [rr - .010, w * .42],
+                  [rr - .015, w * .22], [rr - .015, -w * .22],
+                  [rr - .010, -w * .42]]
+        shell = P.revolve(barrel, 48, material="rim")
+        shell.set_material("rim_dark", [i for i in range(shell.n_faces) if i % 10 in (7, 8, 9)])
         for side in (-1, 1):
-            _part(m, P.torus(rr + .004, .007, self.N, 6, material="rim",
-                            center=(0, 0, side * (w / 2 - .019))), f"lip_{side}")
+            shell.add_group(f"lip_{side}", np.flatnonzero(shell.vertices[:, 2] * side >= w * .42 - 1e-9))
+            shell.add_zone(f"lip_{side}", np.flatnonzero(shell.face_centroids()[:, 2] * side >= w * .42 - 1e-9))
+        _part(m, shell, "barrel")
         zf = w / 2 - .024 - p.dish
-        _part(m, P.cylinder(.052, .028, 24, material="rim_dark", center=(0, 0, zf)), "face_ring")
+        _part(m, P.tube(.061, .026, .018, 8, material="rim_dark", center=(0, 0, zf)), "face_ring")
         return m
 
+    def _fitted_params(self, conn, opts):
+        R = float(conn.radius)
+        w = float(conn.meta.get("tire_width", .225))
+        if not np.isfinite([R, w]).all() or R <= .12 or w <= .06:
+            raise ValueError("wheel needs a finite tyre radius > .12m and section width > .06m")
+        aspect = opts.get("aspect_ratio")
+        if aspect is not None:
+            aspect = float(aspect)
+            if not np.isfinite(aspect) or not 20 <= aspect <= 90:
+                raise ValueError("aspect_ratio is a percentage in [20, 90], e.g. 35 for 245/35")
+            rr = R - w * aspect / 100
+        else:
+            rr = R * float(opts.get("rim_ratio", .62 + (R - .33) * .6))
+        if not np.isfinite(rr) or not .085 < rr < R - .018:
+            raise ValueError("tyre size leaves no usable rim or sidewall; check connector and aspect_ratio")
+        dish = float(opts["dish"])
+        depth = float(opts["groove_depth"] if opts["groove_depth"] is not None
+                      else (.010 if opts["tread_pattern"] == "all_terrain" else .004))
+        if not np.isfinite([dish, depth]).all():
+            raise ValueError("dish and groove_depth must be finite metres")
+        # Negative dish makes a convex face; connector OD/section width win over
+        # the finite slider library range, including staggered synthetic mounts.
+        return WheelParams(R, w, rr / R, float(np.clip(dish, -.025, .09)),
+                           groove_depth=float(np.clip(depth, 0, min(.018, (R - rr) * .25))))
+
     def fit(self, conn: CircleConnector, opts, ctx) -> Dict[str, float]:
-        v = {"radius": self.value_for("radius", conn.radius)}
-        tw = conn.meta.get("tire_width")
-        if tw:
-            v["width"] = self.value_for("width", tw)
-        # bigger wheels get lower profile tyres
-        v["rim_ratio"] = self.value_for("rim_ratio", float(opts.get("rim_ratio", 0.62 + (conn.radius - 0.33) * 0.6)))
-        v["dish"] = self.value_for("dish", float(opts["dish"]))
-        return v
+        p = self._fitted_params(conn, opts)
+        return {key: self.value_for(key, getattr(p, key)) for key in ("radius", "width", "rim_ratio", "dish")}
 
     def materials(self, ctx, opts):
         return {
-            "tyre": ctx.material("tyre", "#1a1a1c", shininess=0.08),
+            "tyre": ctx.material("tyre", "#282a2d", shininess=0.08),
             "rim": ctx.material("rim", opts.get("rim_color", ctx.palette.rim), shininess=0.7, metallic=0.8),
             "rim_dark": ctx.material("rim_dark", "#3a3c40", shininess=0.4),
-            "brake_disc": ctx.material("brake_disc", "#777a7d", metallic=.8, shininess=.5),
+            "brake_disc": ctx.material("brake_disc", "#8a8e92", metallic=.8, shininess=.5),
+            "brake_hat": ctx.material("brake_hat", "#454a50", metallic=.6, shininess=.35),
+            "brake_pad": ctx.material("brake_pad", "#303237", shininess=.15),
+            "brake_shield": ctx.material("brake_shield", "#383d44", metallic=.5, shininess=.3),
             "caliper": ctx.material("caliper", opts["caliper_color"], shininess=.5),
         }
 
     def build_local(self, conn, opts, ctx) -> ComponentResult:
+        for option, choices in (("tread_pattern", self.TREAD_PATTERNS), ("spoke_family", self.SPOKE_FAMILIES),
+                                ("disc_pattern", ("plain", "drilled", "slotted"))):
+            if opts[option] not in choices:
+                raise ValueError(f"{option} must be one of {', '.join(choices)}")
+        p = self._fitted_params(conn, opts)
+        if opts["tread_pattern"] == "slick":
+            p.groove_depth = 0.
         res = super().build_local(conn, opts, ctx)
-        p = self.canonical()
-        for key, value in res.info["modifier_values"].items():
-            spec = self.spec(key)
-            setattr(p, key, getattr(p, key) + value * (spec.delta_plus if value >= 0 else spec.delta_minus))
-        # Differential targets add independently; use the same fitted rim radius
-        # as the library (rather than introducing a radius*ratio cross-term).
-        rr = .33 * p.rim_ratio + (p.radius - .33) * .62
+        # Targets remain useful for editing/preview, but radius*rim_ratio and
+        # width*aspect are coupled physical quantities. Correct the fitted
+        # vertices analytically (same topology), not with the old missing
+        # cross-term or clipped large/small axle dimensions.
+        res.mesh.vertices = self.generate(p).vertices
+        rr = p.radius * p.rim_ratio
         self._tread(res.mesh, p, opts)
+        if opts["lettering"]:
+            self._sidewall_lettering(res.mesh, p)
         self._wheel_face(res.mesh, p, rr, opts)
         self._hardware(res.mesh, p, rr, opts)
         res.info.update({"tread_blocks": int(np.clip(opts["tread_blocks"], 0, 64)),
-                         "spokes": int(np.clip(opts["spokes"], 3, 12)), "rim_radius": rr})
+                         "spokes": int(np.clip(opts["spokes"], 3, 12)), "rim_radius": rr,
+                         "radius": p.radius, "section_width": p.width,
+                         "sidewall_height": p.radius - rr,
+                         "aspect_ratio": (p.radius - rr) / p.width * 100,
+                         "rim_diameter_inches": 2 * rr / .0254,
+                         "dish": p.dish, "groove_depth": p.groove_depth,
+                         "tread_pattern": opts["tread_pattern"], "spoke_family": opts["spoke_family"]})
         return res
+
+    @staticmethod
+    def _rubber_block(angles, zz, bottom, top):
+        angles, zz = np.asarray(angles), np.asarray(zz)
+        rings = [np.column_stack([r * np.cos(angles), r * np.sin(angles), zz]) for r in (bottom, top)]
+        block = P.loft(rings, material="tyre")
+        block.faces += [(3, 2, 1, 0), (4, 5, 6, 7)]
+        block.face_materials += ["tyre", "tyre"]
+        return block
 
     def _tread(self, m, p, opts):
         blocks = int(np.clip(opts["tread_blocks"], 0, 64))
         grooves = int(np.clip(opts["tread_grooves"], 0, 4))
-        lane = p.width * .70 / (grooves + 1)
-        for j in range(grooves + 1):
-            z = -p.width * .35 + (j + .5) * lane
-            half = (lane - min(.006, lane * .18)) / 2
-            prof = [[p.radius - .007, z - half], [p.radius - .003, z - half],
-                    [p.radius - .003, z + half], [p.radius - .007, z + half]]
-            _part(m, P.revolve(prof, self.N, material="tyre"), f"tread_rib_{j}")
+        pattern, depth = opts["tread_pattern"], p.groove_depth
+        if pattern == "slick" or depth == 0:
+            # With zero depth the carcass itself reaches the connector radius.
+            return
+        lanes = grooves + 1 if pattern != "all_terrain" else 3
+        weights = np.linspace(.88, 1.12, lanes) if pattern == "asymmetric_block" else np.ones(lanes)
+        edges = np.r_[0., np.cumsum(weights / weights.sum())] * p.width * .70 - p.width * .35
+        for j, (lo, hi) in enumerate(zip(edges, edges[1:])):
+            z = (lo + hi) / 2
+            half = ((hi - lo) * .34 if pattern == "all_terrain"
+                    else (hi - lo - min(.006, (hi - lo) * .18)) / 2)
+            crest = p.radius if blocks == 0 else p.radius - depth * .75
+            prof = [[p.radius - depth, z - half], [crest, z - half],
+                    [crest, z + half], [p.radius - depth, z + half]]
+            if pattern != "all_terrain" or blocks == 0:
+                rib = P.revolve(prof, self.N, material="tyre")
+                # Match the carcass circumference: a coarser crest disappears
+                # into it between samples. Adjacent COPLANAR side-wall quads
+                # can share one hexagon without changing any triangles/curves.
+                faces = [rib.faces[i * 3 + 1] for i in range(self.N)]
+                for wall in (0, 2):
+                    for i in range(0, self.N, 2):
+                        pair = [rib.faces[i * 3 + wall], rib.faces[(i + 1) * 3 + wall]]
+                        edges = [(a, b) for face in pair for a, b in zip(face, face[1:] + face[:1])]
+                        boundary = {a: b for a, b in edges if (b, a) not in edges}
+                        start = (i + 1) * 4 + (0 if wall == 0 else 3)
+                        loop = [start]
+                        while boundary[loop[-1]] != start:
+                            loop.append(boundary[loop[-1]])
+                        faces.append(tuple(loop))
+                rib.faces, rib.face_materials = faces, ["tyre"] * len(faces)
+                _part(m, rib, f"tread_rib_{j}")
             for k in range(blocks):
-                a = 2 * np.pi * (k + .5 * (j % 2)) / blocks
-                da = 2 * np.pi / blocks * .40
-                skew = .018 / p.radius * (1 if j % 2 else -1)
-                # Four-sided angled tread blocks, with an actual 4mm valley.
-                angles = np.array([a - da - skew, a + da - skew, a + da + skew, a - da + skew])
-                zz = np.array([z - half, z - half, z + half, z + half])
-                rings = [np.column_stack([r * np.cos(angles), r * np.sin(angles), zz])
-                         for r in (p.radius - .004, p.radius)]
-                block = P.loft(rings, cap_start=False, cap_end=False, material="tyre")
-                block.faces += [(3, 2, 1, 0), (4, 5, 6, 7)]
-                block.face_materials += ["tyre", "tyre"]
-                _part(m, block, f"tread_block_{j}_{k}")
+                phase = .5 * (j % 2) if pattern != "directional_v" else 0
+                a = 2 * np.pi * (k + phase) / blocks
+                da = 2 * np.pi / blocks * (.34 if pattern == "all_terrain" else .43)
+                skew = (.022 if pattern == "all_terrain" else .014) / p.radius * (1 if j % 2 else -1)
+                if pattern == "directional_v":
+                    a += abs(z) * .85 / p.radius
+                    skew = half * .85 / p.radius * np.sign(z)
+                angles = [a - da - skew, a + da - skew, a + da + skew, a - da + skew]
+                zz = [z - half, z - half, z + half, z + half]
+                _part(m, self._rubber_block(angles, zz, p.radius - depth, p.radius), f"tread_block_{j}_{k}")
+        # Shoulder lugs wrap onto the sidewall instead of stopping at a square
+        # tread edge. Their outer surfaces remain inside the section envelope.
+        shoulders = int(np.clip(opts["shoulder_blocks"] if opts["shoulder_blocks"] is not None
+                                else (32 if pattern == "all_terrain" else 16), 0, 40))
+        gap = p.radius * (1 - p.rim_ratio)
+        for side in (-1, 1):
+            for k in range(shoulders):
+                a = 2 * np.pi * (k + .25 * side) / shoulders
+                da = 2 * np.pi / shoulders * (.32 if pattern == "all_terrain" else .39)
+                angles = np.array([a - da, a + da, a + da + .018, a - da + .018])
+                zz = p.width * np.array([.35, .35, .435, .435])
+                top = p.radius - gap * np.array([.018, .018, .11, .11])
+                block = self._rubber_block(angles, zz, top - min(depth, .004), top)
+                _part(m, block.scale([1, 1, side]), f"shoulder_{side}_{k}")
+
+    def _sidewall_lettering(self, m, p):
+        # Tiny moulded block glyphs, not textures/fonts or a runtime dependency.
+        glyphs = {"0": "111101101101111", "1": "010110010010111", "2": "110001010100111",
+                  "3": "110001010001110", "4": "101101111001001", "5": "111100110001110",
+                  "6": "011100111101111", "7": "111001010010010", "8": "111101111101111",
+                  "9": "111101111001110", "R": "110101110101101", "A": "010101111101101",
+                  "D": "110101101101110", "I": "111010010010111", "L": "100100100100111",
+                  "/": "001001010100100", " ": "000000000000000"}
+        rr, gap = p.radius * p.rim_ratio, p.radius * (1 - p.rim_ratio)
+        cell = min(.0032, gap * .045)
+        radius = rr + gap * .40
+        size = f"{round(p.width * 1000)}/{round(gap / p.width * 100)} R{round(rr * 2 / .0254)}"
+        for label, text, direction in (("brand", "RADIAL", -1), ("size", size, 1)):
+            part = Mesh()
+            for i, char in enumerate(text):
+                for row in range(5):
+                    for col in range(3):
+                        if glyphs[char][row * 3 + col] != "1":
+                            continue
+                        r = radius - direction * (2 - row) * cell
+                        a = direction * np.pi / 2 + direction * (i * 4 + col - len(text) * 2) * cell / radius
+                        z = p.width * np.interp((r - rr) / gap, [.18, .40, .65], [.475, .50, .485])
+                        pixel = P.box(cell * .88, cell * .88, .0008, material="tyre",
+                                      center=(0, 0, z + .0003))
+                        pixel.apply_frame(Frame.from_normal([r * np.cos(a), r * np.sin(a), 0],
+                                                            [0, 0, 1], [np.cos(a), np.sin(a), 0]))
+                        part.merge(pixel)
+            _part(m, part, f"sidewall_{label}")
 
     def _wheel_face(self, m, p, rr, opts):
         n = int(np.clip(opts["spokes"], 3, 12))
         width = float(np.clip(opts["spoke_width"], .2, .85))
-        zf = p.width / 2 - .024 - p.dish
-        for k in range(n):
+        family = opts["spoke_family"]
+        if family == "steel_cap":
+            self._steel_face(m, p, rr, opts)
+            return
+        zf, lip_z = p.width / 2 - .024 - p.dish, p.width / 2 - .028
+        if family == "dish":
+            radii = np.linspace(.054, rr * .76, 4)
+            front = [[r, zf + .010 + (p.dish - .004) * t] for r, t in zip(radii, (0., .3, .8, 1.))]
+            # Both skins follow the same radial graph; a constant axial wall
+            # cannot cross itself when the dish becomes convex.
+            profile = front + [[r, z - .012] for r, z in front[::-1]] + [front[0]]
+            _part(m, P.revolve(profile, self.N, material="rim"), "aero_dish")
+        count = {"five_spoke": n, "twin_five": 10, "multi_spoke": 18,
+                 "mesh": 24, "turbine": 9, "dish": 8}[family]
+        for k in range(count):
+            if family == "twin_five":
+                a, branch = (k // 2) * 2 * np.pi / 5, (-1 if k % 2 else 1)
+            elif family == "mesh":
+                a, branch = (k // 2) * 2 * np.pi / 12, (-1 if k % 2 else 1)
+            else:
+                a, branch = k * 2 * np.pi / count, 0
             rings = []
-            for r, sweep, z in ((.042, -.02, zf), (rr * .52, .04, zf - .008),
-                                (rr - .008, .075, p.width / 2 - .028)):
-                half = min(.026, r * np.pi / n * width)
-                # A radial loft with a 22mm section and swept outer attachment.
-                rings.append(np.array([[r, -half + sweep * r, z - .012],
-                                       [r, half + sweep * r, z - .012],
-                                       [r, half + sweep * r, z + .010],
-                                       [r, -half + sweep * r, z + .010]]))
+            for t, flare in ((0., 1.45), (.12, 1.05), (.48, 1.), (.87, 1.12), (1., 1.7)):
+                start = rr * .735 if family == "dish" else .054
+                r = start + t * (rr - .006 - start)
+                sweep = .055 * t
+                half = min(.026, r * np.pi / n * width) * flare
+                if family in ("twin_five", "multi_spoke", "mesh"):
+                    half = {"twin_five": .009, "multi_spoke": .007, "mesh": .0045}[family] * flare * width / .55
+                    sweep = branch * (.035 + .105 * t) if family == "twin_five" else branch * .37 * t
+                elif family == "turbine":
+                    sweep, half = .40 * t ** .8, (.010 + .024 * t) * flare
+                elif family == "dish":
+                    half = .022 * flare
+                # Smooth dish rise and widening roots approximate forged
+                # fillets. The octagon has a 2mm edge break and 12% wall draft,
+                # not a rectangular slab with painted shading.
+                z = zf + (lip_z - zf) * (t * t * (3 - 2 * t))
+                if family == "dish":
+                    z = lip_z - .008 + .004 * t
+                h, bevel = .010, min(.002, half * .22)
+                yz = np.array([[-half + bevel, -h], [half - bevel, -h],
+                               [half, -h + bevel], [half * .88, h - bevel],
+                               [half * .88 - bevel, h], [-half * .88 + bevel, h],
+                               [-half * .88, h - bevel], [-half, -h + bevel]])
+                angle = a + sweep
+                rings.append(np.column_stack([r * np.cos(angle) - yz[:, 0] * np.sin(angle),
+                                              r * np.sin(angle) + yz[:, 0] * np.cos(angle), z + yz[:, 1]]))
             spoke = P.loft(rings, cap_start=True, cap_end=True, material="rim")
-            a = k * 2 * np.pi / n
-            spoke.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
             _part(m, spoke, f"spoke_{k}")
+
+    @staticmethod
+    def _pierced_ring(inner, outer, bottom, top, count, hole, material, *, pocket=0., taper=1., phase=0.,
+                      round_outer=False, inner_wall=True, outer_wall=True):
+        """Annulus tiled around real octagonal holes (or blind machined slots).
+
+        Shared sector boundaries are welded; no coplanar discs hide the holes.
+        The same construction makes conical lug seats without a boolean library.
+        """
+        m = Mesh()
+        middle = (inner + outer) / 2
+        for k in range(count):
+            a = 2 * np.pi * k / count + phase
+            da = np.pi / count
+            radii = np.array([inner, middle, outer, outer, outer, middle, inner, inner])
+            angles = a + np.array([-da, -da, -da, 0, da, da, da, 0])
+            boundary = np.column_stack([radii * np.cos(angles), radii * np.sin(angles)])
+            phi = np.arange(8) * np.pi / 4 + 5 * np.pi / 4
+            xy = np.column_stack([hole[0] * np.cos(phi), hole[1] * np.sin(phi)])
+            rotation = np.array([[np.cos(a), -np.sin(a)], [np.sin(a), np.cos(a)]])
+            center = middle * np.array([np.cos(a), np.sin(a)])
+            opening = center + xy @ rotation.T
+            floor = center + taper * xy @ rotation.T
+            rings = [np.column_stack([xy, np.full(8, z)]) for xy, z in
+                     ((boundary, bottom), (boundary, top), (opening, top),
+                      (floor, top - pocket if pocket else bottom), (boundary, bottom))]
+            tile = P.loft(rings, material=material)
+            # Adjacent cells share these radial walls; omit them altogether.
+            drop = {0, 1, 4, 5}
+            if not outer_wall:
+                drop.update((2, 3))
+            if not inner_wall:
+                drop.update((6, 7))
+            if pocket:
+                # Replace the diagonal pocket-to-back strip with its floor and
+                # an uninterrupted back face. Both loops are star-shaped.
+                drop.update(range(24, 32))
+            tile.remove_faces(list(drop))
+            if pocket:
+                for ring, flip in ((24, True), (0, True)):
+                    ids = list(range(ring, ring + 8))
+                    if ring == 24:
+                        flip = False  # pocket floor faces into the opening (+Z)
+                    center_id = tile.n_vertices
+                    tile.vertices = np.vstack([tile.vertices, tile.vertices[ids].mean(axis=0)])
+                    tile.faces.extend((center_id, ids[(j + 1) % 8], ids[j]) if flip
+                                      else (center_id, ids[j], ids[(j + 1) % 8]) for j in range(8))
+                    tile.face_materials.extend([material] * 8)
+            m.merge(tile)
+        _, first, inverse = np.unique(np.round(m.vertices, 12), axis=0, return_index=True, return_inverse=True)
+        m.vertices = m.vertices[first]
+        m.faces = [tuple(inverse[list(face)]) for face in m.faces]
+        if round_outer:
+            # A five-bolt hub still needs a round perimeter, not a decagon.
+            # Refine the curved wall and its planar annulus boundary together.
+            vertices, faces, midpoints = m.vertices.tolist(), [], {}
+            outer_ids = set(np.flatnonzero(np.isclose(np.linalg.norm(m.vertices[:, :2], axis=1), outer)))
+            def midpoint(a, b):
+                key = tuple(sorted((a, b)))
+                if key not in midpoints:
+                    v = (m.vertices[a] + m.vertices[b]) / 2
+                    v[:2] *= outer / np.linalg.norm(v[:2])
+                    midpoints[key] = len(vertices)
+                    vertices.append(v.tolist())
+                return midpoints[key]
+            for face in m.faces:
+                edges = [(a, b) for a, b in zip(face, face[1:] + face[:1])]
+                refine = [a in outer_ids and b in outer_ids and abs(m.vertices[a, 2] - m.vertices[b, 2]) < 1e-12
+                          for a, b in edges]
+                if all(v in outer_ids for v in face):
+                    i = refine.index(True)
+                    a, b, c, d = face[i:] + face[:i]
+                    ab, cd = midpoint(a, b), midpoint(c, d)
+                    faces.extend([(a, ab, cd, d), (ab, b, c, cd)])
+                else:
+                    faces.append(tuple(v for (a, b), split in zip(edges, refine)
+                                       for v in ((a, midpoint(a, b)) if split else (a,))))
+            m.vertices, m.faces = np.asarray(vertices), faces
+            m.face_materials = [material] * len(faces)
+        return m
+
+    @staticmethod
+    def _arc(inner, outer, bottom, top, material, angle=.72, start=np.pi - .36, n=9):
+        profile = [[inner, bottom], [outer, bottom], [outer, top], [inner, top], [inner, bottom]]
+        m = P.revolve(profile, n, angle=angle, material=material)
+        m.faces.extend([(0, 1, 2, 3), tuple(range(m.n_vertices - 2, m.n_vertices - 6, -1))])
+        m.face_materials.extend([material, material])
+        m.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(start), np.sin(start), 0]))
+        if P.signed_volume(m) < 0:
+            m.flip_normals()
+        return m
 
     def _hardware(self, m, p, rr, opts):
         zf = p.width / 2 - .024 - p.dish
-        # Disc and caliper stay behind even the deepest part of each spoke.
-        disc_z = zf - .033
-        _part(m, P.tube(rr * .79, .046, .014, self.N, material="brake_disc",
-                        center=(0, 0, disc_z)), "brake_disc")
-        _part(m, P.tube(.070, .032, .026, 24, material="rim_dark",
-                        center=(0, 0, disc_z - .001)), "disc_hat")
-        for k in range(16):
-            a = k * 2 * np.pi / 16
-            # Radial ventilation slots on the disc's edge, not painted spoke gaps.
-            slot = P.box(.010, .018, .010, material="rim_dark",
-                         center=(rr * .75, 0, disc_z))
-            slot.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
-            _part(m, slot, f"disc_vent_{k}")
-        # Forged caliper follows the disc arc rather than reading as a red box.
-        section = np.array([[-.019, -.016], [.017, -.016], [.025, -.008], [.025, .008],
-                            [.017, .016], [-.019, .016], [-.025, .008], [-.025, -.008]])
-        rings = [np.column_stack([(rr * .77 + section[:, 0]) * np.cos(a),
-                                  (rr * .77 + section[:, 0]) * np.sin(a),
-                                  disc_z - .008 + section[:, 1]])
-                 for a in np.linspace(np.pi - .42, np.pi + .42, 9)]
-        caliper = P.loft(rings, cap_start=True, cap_end=True, material="caliper")
-        if P.signed_volume(caliper) < 0:
-            caliper.flip_normals()
+        # Reserve a 6mm air gap even between the convex face and the caliper.
+        spoke_back = min(zf, p.width / 2 - .028) - .010
+        disc_z, rd = spoke_back - .036, rr * .79
+        inner = min(.066, rd * .47)
+        disc = Mesh()
+        pattern = opts["disc_pattern"]
+        lo, hi = disc_z + .004, disc_z + .010
+        if pattern == "plain":
+            plate = P.tube(rd, inner, .006, 32, material="brake_disc", center=(0, 0, (lo + hi) / 2))
+        else:
+            plate = Mesh()
+            spans = np.linspace(inner, rd, 3) if pattern == "drilled" else [inner, rd]
+            for j, (ri, ro) in enumerate(zip(spans, spans[1:])):
+                hole = (.003, .003) if pattern == "drilled" else ((ro - ri) * .32, .0022)
+                band = self._pierced_ring(ri, ro, lo, hi, 12, hole, "brake_disc",
+                                         pocket=.0015 if pattern == "slotted" else 0,
+                                         phase=j * np.pi / 12, inner_wall=j == 0,
+                                         outer_wall=j == len(spans) - 2)
+                plate.merge(band)
+            # Join adjacent drilled bands without internal coincident walls.
+            _, first, inverse = np.unique(np.round(plate.vertices, 12), axis=0, return_index=True, return_inverse=True)
+            plate.vertices = plate.vertices[first]
+            plate.faces = [tuple(inverse[list(face)]) for face in plate.faces]
+        _part(disc, plate.copy().scale([1, 1, -1]).translate([0, 0, 2 * disc_z]), "disc_face_-1")
+        _part(disc, plate, "disc_face_1")
+        _part(m, disc, "brake_disc")
+        _part(m, P.tube(inner + .004, .027, .020, 16, material="brake_hat",
+                        center=(0, 0, disc_z + .005)), "disc_hat")
+        for k in range(int(np.clip(opts["disc_vanes"], 0, 48))):
+            a = k * 2 * np.pi / int(np.clip(opts["disc_vanes"], 0, 48))
+            vane = P.box(rd - inner - .008, .003, .008, material="brake_hat",
+                         center=((rd + inner) / 2, 0, disc_z))
+            vane.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
+            _part(m, vane, f"disc_vane_{k}")
+        shield = P.revolve([[.031, disc_z - .030], [rd * .91, disc_z - .030],
+                            [rd + .006, disc_z - .024], [rd + .006, disc_z - .026],
+                            [rd * .91, disc_z - .032], [.031, disc_z - .032], [.031, disc_z - .030]],
+                           18, angle=2 * np.pi - .94, material="brake_shield")
+        # Leave an actual caliper cutout; the rolled edge must not pass through
+        # the inboard cheek. Cap the two thin bent sections with simple quads.
+        end = shield.n_vertices - 7
+        shield.faces.extend([(5, 4, 1, 0), (4, 3, 2, 1),
+                             (end, end + 1, end + 4, end + 5),
+                             (end + 1, end + 2, end + 3, end + 4)])
+        shield.face_materials.extend(["brake_shield"] * 4)
+        a = np.pi + .47
+        shield.apply_frame(Frame.from_normal([0, 0, 0], [0, 0, 1], [np.cos(a), np.sin(a), 0]))
+        _part(m, shield, "dust_shield")
+        # A U-shaped casting: cheeks sit outside both friction faces; only the
+        # outer-radius bridge crosses the rotor's axial interval. It is NOT a
+        # red toroidal box passing through the swept friction surface.
+        caliper = Mesh()
+        for side in (-1, 1):
+            lo, hi = sorted((disc_z + side * .015, disc_z + side * .024))
+            cheek = self._arc(rd - .036, rd + .014, lo, hi, "caliper")
+            rings = cheek.vertices.reshape(9, 5, 3)
+            for i, inset in enumerate((.009, .003, 0., 0., 0., 0., 0., .003, .009)):
+                radii = np.linalg.norm(rings[i, :, :2], axis=1)
+                change = np.array([inset, -inset, -inset, inset, inset])
+                rings[i, :, :2] *= ((radii + change) / radii)[:, None]
+            _part(caliper, cheek, f"caliper_cheek_{side}")
+            lo, hi = sorted((disc_z + side * .012, disc_z + side * .014))
+            _part(m, self._arc(rd - .035, rd - .005, lo, hi, "brake_pad", angle=.56,
+                               start=np.pi - .28, n=7), f"pad_backing_{side}")
+            lo, hi = sorted((disc_z + side * .0106, disc_z + side * .012))
+            _part(m, self._arc(rd - .034, rd - .006, lo, hi, "brake_pad", angle=.54,
+                               start=np.pi - .27, n=7), f"brake_pad_{side}")
+        bridge = self._arc(rd + .004, rd + .014, disc_z - .015, disc_z + .015,
+                           "caliper", angle=.48, start=np.pi - .24, n=7)
+        rings = bridge.vertices.reshape(7, 5, 3)
+        for i, inset in enumerate((.003, 0., .003, .006, .003, 0., .003)):
+            radii = np.linalg.norm(rings[i, :, :2], axis=1)
+            rings[i, [1, 2], :2] *= ((radii[[1, 2]] - inset) / radii[[1, 2]])[:, None]
+        _part(caliper, bridge, "caliper_bridge")
+        for k, a in enumerate((np.pi - .18, np.pi + .18)):
+            # Raised piston-housing bosses break up the forged cheek. Their
+            # tops stay inside the existing brake/spoke clearance envelope.
+            boss = P.cylinder(.016, .005, 8, radius_top=.012, material="caliper",
+                              center=((rd - .018) * np.cos(a), (rd - .018) * np.sin(a), disc_z + .0265))
+            _part(caliper, boss, f"caliper_boss_{k}")
         _part(m, caliper, "caliper")
+        # Machined bolt-circle recesses, with the hex heads below the mouths.
+        hub = self._pierced_ring(.026, .067, zf + .004, zf + .018, 5, (.010, .010), "rim",
+                                 taper=.64, round_outer=True)
+        _part(m, hub, "lug_seats")
         for k in range(5):
             a = k * 2 * np.pi / 5
-            _part(m, P.cylinder(.007, .012, 6, material="rim", center=(.038 * np.cos(a), .038 * np.sin(a), zf + .019)),
-                  f"lug_{k}")
+            _part(m, P.cylinder(.0055, .007, 6, material="rim_dark",
+                                center=(.0465 * np.cos(a), .0465 * np.sin(a), zf + .0105)), f"lug_{k}")
         if opts["hubcap"]:
             _part(m, P.cylinder(.025, .009, 24, material="rim", center=(0, 0, zf + .022)), "centre_cap")
-            _part(m, P.cylinder(.016, .003, 16, material="rim_dark", center=(0, 0, zf + .028)), "cap_badge")
+            _part(m, P.cylinder(.016, .003, 12, material="rim_dark", center=(0, 0, zf + .028)), "cap_badge")
         _part(m, P.cylinder(.004, .024, 8, material="rim_dark",
                             center=(rr * .70, -rr * .60, p.width / 2 - .022)), "valve_stem")
 
-
-@register
-class SteelWheel(Wheel):
-    name = "wheel.steel"
-    default_for = ()
-    description = "stamped steel wheel with open ventilation slots and a domed hubcap"
-
-    def _wheel_face(self, m, p, rr, opts):
+    def _steel_face(self, m, p, rr, opts):
         zf = p.width / 2 - .024 - p.dish
         # Pressed dish: annular inner web plus separated outer webs. The gaps
         # between them are ventilation holes, open all the way to the brake.
@@ -241,6 +545,14 @@ class SteelWheel(Wheel):
                                        (rr * .30, zf + .035), (.018, zf + .041))]
             cap = P.loft(rings, cap_end=True, material="rim")
             _part(m, cap, "steel_hubcap")
+
+
+@register
+class SteelWheel(Wheel):
+    name = "wheel.steel"
+    default_for = ()
+    options = dict(Wheel.options, spoke_family="steel_cap")
+    description = "stamped steel wheel with open ventilation slots and a domed hubcap"
 
 
 # =============================================================== GLASS

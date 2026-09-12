@@ -1,0 +1,221 @@
+{
+  "source_sha256": "259363d8c97549dcb33e547b80a979527d10ca55a8c94daeb47d5453e9efdb78",
+  "timing_scope": "Wall time on this machine; body target cache warm, no rendering or file export.",
+  "families": {
+    "mesh": {
+      "faces": 5428,
+      "triangles": 10824,
+      "four_wheel_faces": 21712,
+      "spoke_solids": 24
+    },
+    "five_spoke": {
+      "faces": 4516,
+      "triangles": 9304,
+      "four_wheel_faces": 18064,
+      "spoke_solids": 5
+    },
+    "twin_five": {
+      "faces": 4756,
+      "triangles": 9704,
+      "four_wheel_faces": 19024,
+      "spoke_solids": 10
+    },
+    "multi_spoke": {
+      "faces": 5140,
+      "triangles": 10344,
+      "four_wheel_faces": 20560,
+      "spoke_solids": 18
+    },
+    "turbine": {
+      "faces": 4708,
+      "triangles": 9624,
+      "four_wheel_faces": 18832,
+      "spoke_solids": 9
+    },
+    "dish": {
+      "faces": 5172,
+      "triangles": 10568,
+      "four_wheel_faces": 20688,
+      "spoke_solids": 8
+    },
+    "steel_cap": {
+      "faces": 4892,
+      "triangles": 10104,
+      "four_wheel_faces": 19568,
+      "spoke_solids": 0
+    }
+  },
+  "legacy_max": {
+    "wheel.alloy": 23760,
+    "wheel.steel": 23920
+  },
+  "assembly_runs": {
+    "default": {
+      "cars": [
+        {
+          "style": "sedan",
+          "faces": 64401,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "hatchback",
+          "faces": 64081,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "wagon",
+          "faces": 65213,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "suv",
+          "faces": 64193,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "pickup",
+          "faces": 67889,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "coupe",
+          "faces": 61659,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "sports",
+          "faces": 59851,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "van",
+          "faces": 65777,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "sedan",
+          "faces": 64473,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "hatchback",
+          "faces": 64081,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "wagon",
+          "faces": 65189,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "suv",
+          "faces": 64231,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "pickup",
+          "faces": 67889,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "coupe",
+          "faces": 61587,
+          "wheel_faces": 18064
+        },
+        {
+          "style": "sports",
+          "faces": 59851,
+          "wheel_faces": 18064
+        }
+      ],
+      "seconds": 8.2046,
+      "wheel_options": {}
+    },
+    "low_detail": {
+      "cars": [
+        {
+          "style": "sedan",
+          "faces": 59409,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "hatchback",
+          "faces": 59089,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "wagon",
+          "faces": 60221,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "suv",
+          "faces": 59201,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "pickup",
+          "faces": 62897,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "coupe",
+          "faces": 56667,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "sports",
+          "faces": 54859,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "van",
+          "faces": 60785,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "sedan",
+          "faces": 59481,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "hatchback",
+          "faces": 59089,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "wagon",
+          "faces": 60197,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "suv",
+          "faces": 59239,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "pickup",
+          "faces": 62897,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "coupe",
+          "faces": 56595,
+          "wheel_faces": 13072
+        },
+        {
+          "style": "sports",
+          "faces": 54859,
+          "wheel_faces": 13072
+        }
+      ],
+      "seconds": 7.5312,
+      "wheel_options": {
+        "tread_blocks": 0,
+        "shoulder_blocks": 0,
+        "disc_vanes": 0,
+        "lettering": false
+      }
+    }
+  }
+}
