@@ -33,10 +33,10 @@ SEGMENTS = [
     ("A", "B", 3),   # floor centre -> floor edge
     ("B", "C", 2),   # floor edge -> sill bottom / wheel-well inner top
     ("C", "D", 3),   # sill face / wheel-well ceiling -> sill top (arch lip)
-    ("D", "E", 6),   # body side (door skin) -> belt line
-    ("E", "F", 3),   # shoulder -> glass base / hood edge
-    ("F", "G", 6),   # side glass / pillar -> roof rail
-    ("G", "G2", 2),  # roof rail -> roof (or bed rail inner)
+    ("D", "E", 8),   # arch flange / door hem, then door skin -> belt
+    ("E", "F", 5),   # three-sample shoulder radius -> glass base / hood crease
+    ("F", "G", 10),  # frame, recessed glass / pillar, frame -> roof rail
+    ("G", "G2", 4),  # roof edge radius / A-pillar band -> roof (or bed rail inner)
     ("G2", "G3", 3),
     ("G3", "H", 4),  # -> roof centre
 ]
@@ -251,7 +251,7 @@ class BodyGenerator:
         zc = float(self.z_center(xh))
         cr = float(self.crown(xh))
         z_belt = min(float(self.belt(xm)), zc - cr - 0.02)
-        z_shoulder = min(z_belt + p.shoulder_rise, zc - cr - 0.005)
+        z_shoulder = min(z_belt + max(p.shoulder_rise, p.shoulder_radius), zc - cr - 0.005)
         y_belt = yb_mid + (p.side_bulge if w_arch == 0 else 0.0) * 0.5
         y_F = yb_hi - p.shoulder_inset
         y_G = min(float(self.roof_edge(xh)), yb_hi - p.shoulder_inset - 0.04)
@@ -266,7 +266,7 @@ class BodyGenerator:
             C = (xl, y_fe, z_arch - 0.01)
             D = (xl, y_sill + p.fender_flare * arch_prof, z_arch)
         else:
-            C = (xl, y_sill - 0.01, zf + 0.02)
+            C = (xl, y_sill, max(zf + 0.015, z_sill_base - p.rocker_height))
             D = (xl, y_sill, z_sill_base)
         E = (xm, y_belt, z_belt)
         F = (xh + lean, y_F, z_shoulder)
@@ -287,7 +287,7 @@ class BodyGenerator:
         else:
             G2, G3, H = G2a, G3a, (xh, 0.0, zc)
         pts = np.array([A, B, C, D, E, F, G, G2, G3, H], dtype=float)
-        sharp = np.array([1.0, 1.0, 0.5 if w_arch == 0 else 0.75, 0.35 + 0.6 * w_arch, 0.25, 0.7,
+        sharp = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0,
                           0.45 + 0.55 * bed_w, bed_w, bed_w, 1.0])
         return pts, sharp
 
@@ -310,10 +310,73 @@ class BodyGenerator:
             xs.append(full[k, 0] + (full[k2, 0] - full[k, 0]) * t)
         x = np.concatenate(xs)
         ring = np.column_stack([x, yz[:, 0], yz[:, 1]])
+        self._section_details(ring, i)
         # force exact symmetry and exact centre points
         ring[0, 1] = 0.0
         ring[HALF_N, 1] = 0.0
         return ring
+
+    def _section_details(self, ring: np.ndarray, i: int):
+        """Explicit small-radius sheet-metal details, sampled at fixed indices.
+
+        Splines suit the big panels, but overshoot a folded flange or a sill.
+        Those sections use straight faces and circular arcs instead.
+        """
+        p = self.p
+        jC, jD, jE, jF, jG = (RING[k] for k in ("C", "D", "E", "F", "G"))
+        xl, xh = self.x_lo[i], self.x_hi[i]
+        arch = self.arch(xl)[0] > 0
+        D, E, F, G = ring[[jD, jE, jF, jG]].copy()
+        if arch:
+            axle = min((self.L["x_ra"], self.L["x_fa"]), key=lambda x: abs(xl - x))
+            radial = D[[0, 2]] - [axle, p.axle_height]
+            radial /= max(np.linalg.norm(radial), 1e-9)
+            # D remains the inner lip circle used by wheel connectors. The
+            # first strip is a flange of uniform radial width; the next returns
+            # inward to the fender skin rather than inflating the whole arch.
+            outer = D.copy()
+            outer[[0, 2]] += p.arch_lip_width * radial
+            ring[jD + 1] = outer
+            root = outer.copy()
+            root[1] -= p.arch_lip_width * 0.6
+            root[[0, 2]] += 0.004 * radial
+            ring[jD + 2] = root
+        else:
+            # Vertical rocker, then the small outward step of the door hem.
+            for k in range(jC + 1, jD):
+                t = (k - jC) / (jD - jC)
+                ring[k] = ring[jC] * (1 - t) + D * t
+            ring[jD + 1] = D + [0, p.door_step, 0.009]
+            ring[jD + 2] = D + [0, p.door_step + 0.008, 0.030]
+            root = ring[jD + 2].copy()
+        for k in range(jD + 3, jE):
+            t = (k - jD - 2) / (jE - jD - 2)
+            ring[k] = root * (1 - t) + E * t
+            ring[k, 1] += p.side_bulge * np.sin(np.pi * t) * (0.0 if arch else 0.5)
+
+        radius = max(0.001, min(p.shoulder_radius, F[2] - E[2], E[1] - F[1]))
+        # Quarter circle turning the vertical door skin onto the shoulder.
+        for k, angle in enumerate((np.pi / 6, np.pi / 3, np.pi / 2), start=1):
+            t = k / (jF - jE)
+            ring[jE + k] = E * (1 - t) + F * t
+            ring[jE + k, 1] = E[1] - radius * (1 - np.cos(angle))
+            ring[jE + k, 2] = E[2] + radius * np.sin(angle)
+        ring[jF - 1] = (ring[jE + 3] + F) / 2
+
+        on_hood = xh >= self.L["u_cowl"]
+        on_deck = xh <= self.L["u_deck"] and self.bed is None
+        if on_hood or on_deck:
+            ring[jF, 2] += p.fender_crease
+            # A 6 mm-wide fold, followed by a smooth hood/deck crown.
+            root = F.copy()
+            root[1] -= 0.006
+            ring[jF + 1] = root
+            for k in range(jF + 2, jG):
+                t = (k - jF - 1) / (jG - jF - 1)
+                ring[k] = root * (1 - t) + G * t
+        # Do not let independent spline evaluation introduce asymmetric flanges.
+        for j in range(1, HALF_N):
+            ring[mirror_index(j)] = ring[j] * [1, -1, 1]
 
     # --------------------------------------------------------------- build
     def build(self) -> Mesh:
@@ -508,10 +571,12 @@ class BodyGenerator:
         n_front = 3
         n_rear = 3
         jL = jE - 3  # lights extend down the fender side to mid height of the D->E strip
-        add("aperture/headlight_L", range(u("front") - n_front, u("front") + 1), range(jL, jG))
-        add("aperture/headlight_R", range(u("front") - n_front, u("front") + 1), range(RING_N - jG, RING_N - jL))
-        add("aperture/taillight_L", range(off - 1, off + n_rear), range(jL, jG))
-        add("aperture/taillight_R", range(off - 1, off + n_rear), range(RING_N - jG, RING_N - jL))
+        # End at the fender fold: glass/light fills must not bridge the folded
+        # hood seam, whose return face intentionally has an opposing normal.
+        add("aperture/headlight_L", range(u("front") - n_front, u("front") + 1), range(jL, jF))
+        add("aperture/headlight_R", range(u("front") - n_front, u("front") + 1), range(RING_N - jF, RING_N - jL))
+        add("aperture/taillight_L", range(off - 1, off + n_rear), range(jL, jF))
+        add("aperture/taillight_R", range(off - 1, off + n_rear), range(RING_N - jF, RING_N - jL))
         # underbody / wells
         all_rows = range(off, off + N_STATIONS - 1)
         add("underbody", all_rows, list(range(0, jC)) + list(range(RING_N - jC, RING_N)))

@@ -26,9 +26,12 @@ class BodyParams:
     tire_width: float = 0.225
     arch_gap: float = 0.06         # radial gap between tyre and arch lip
     fender_flare: float = 0.025    # outward bulge of the arch lip
+    arch_lip_width: float = 0.020  # radial width of the folded arch flange
     # ---- lower body ----------------------------------------------------------
     sill_height: float = 0.36      # top of the rocker panel
     sill_inset: float = 0.05       # rocker sits this far inboard of the belt line
+    rocker_height: float = 0.15   # flat, vertical sill face
+    door_step: float = 0.012      # door hem proud of the rocker
     belt_height: float = 0.93      # door shoulder / belt line height
     belt_rake: float = 0.03        # belt rises this much from front door to rear door
     side_bulge: float = 0.02       # convexity of the door skin
@@ -59,6 +62,8 @@ class BodyParams:
     roof_width_ratio: float = 0.68     # roof rail half width / body half width
     shoulder_inset: float = 0.06       # glass base sits inboard of the belt line
     shoulder_rise: float = 0.03
+    shoulder_radius: float = 0.025    # definite rolled shoulder, not a spline bulge
+    fender_crease: float = 0.012       # hood skin below fender top
     a_pillar_lean: float = 0.45        # as fraction of windshield_length
     c_pillar_lean: float = 0.35        # as fraction of rear_window_length
     front_door_length: float = 1.32    # cowl -> B pillar centre

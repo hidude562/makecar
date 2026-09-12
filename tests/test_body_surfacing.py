@@ -76,3 +76,46 @@ class TestFascia:
         b = car.build(modifiers={"plate_recess": 1})
         assert b.connector("plate_rear").origin[0] - a.connector("plate_rear").origin[0] == pytest.approx(0.025, abs=1e-6)
         assert a.connector("plate_rear").normal.tolist() == [-1, 0, 0]
+
+
+class TestSheetMetal:
+    def test_rocker_is_vertical_with_a_measured_door_hem(self):
+        p = BodyParams()
+        gen = BodyGenerator(p)
+        r = gen.ring(station_index("bp_f"))
+        sill = r[RING["C"]:RING["D"] + 1]
+        assert np.ptp(sill[:, 1]) < 1e-9
+        assert np.ptp(sill[:, 2]) == pytest.approx(p.rocker_height)
+        assert r[RING["D"] + 1, 1] - r[RING["D"], 1] == pytest.approx(p.door_step)
+        assert r[RING["E"], 1] > sill[0, 1] + 0.03
+        assert r[RING["B"], 1] < sill[0, 1]  # lower flare-in
+
+    @pytest.mark.parametrize("height", [0.11, 0.15, 0.19])
+    def test_rocker_height_changes_the_flat_face(self, height):
+        r = BodyGenerator(BodyParams(rocker_height=height)).ring(station_index("bp_f"))
+        assert r[RING["D"], 2] - r[RING["C"], 2] == pytest.approx(height)
+
+    @pytest.mark.parametrize("width", [0.008, 0.020, 0.035])
+    def test_arch_lip_is_a_uniform_radial_flange(self, width):
+        p = BodyParams(arch_lip_width=width)
+        g = BodyGenerator(p)
+        for i in range(station_index("fa_start", "lower") + 1, station_index("fa_end", "lower")):
+            r = g.ring(i)
+            inner, outer, root = r[RING["D"]:RING["D"] + 3]
+            assert np.linalg.norm(outer[[0, 2]] - inner[[0, 2]]) == pytest.approx(width)
+            assert outer[1] - root[1] == pytest.approx(width * 0.6)
+            assert np.hypot(inner[0] - p.wheelbase / 2, inner[2] - p.axle_height) == pytest.approx(p.arch_radius)
+
+    @pytest.mark.parametrize("radius", [0.01, 0.025, 0.04])
+    def test_shoulder_is_a_circular_quarter_radius(self, radius):
+        r = BodyGenerator(BodyParams(shoulder_radius=radius)).ring(station_index("bp_f"))
+        e = r[RING["E"], 1:]
+        center = e + [-radius, 0]
+        arc = r[RING["E"]:RING["E"] + 4, 1:]
+        assert np.allclose(np.linalg.norm(arc - center, axis=1), radius)
+
+    @pytest.mark.parametrize("depth", [0.002, 0.012, 0.024])
+    def test_fender_crease_has_a_real_fold_not_a_seam_line(self, depth):
+        r = BodyGenerator(BodyParams(fender_crease=depth)).ring(station_index("cowl") + 3)
+        assert r[RING["F"], 2] - r[RING["F"] + 1, 2] == pytest.approx(depth)
+        assert r[RING["F"], 1] - r[RING["F"] + 1, 1] == pytest.approx(0.006)

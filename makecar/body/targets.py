@@ -35,6 +35,11 @@ BODY_MODIFIER_SPECS: List[ModifierSpec] = [
     ModifierSpec("wheel_diameter", 0.08, 0.14, "stance", "wheel/tyre diameter and arch size"),
     ModifierSpec("tire_width", 0.05, 0.06, "stance", "tyre width / wheel-well depth"),
     ModifierSpec("fender_flare", 0.02, 0.05, "stance", "arch lip flare"),
+    ModifierSpec("arch_lip_width", 0.012, 0.015, "stance", "radial width of the folded wheel arch flange"),
+    ModifierSpec("rocker_height", 0.04, 0.04, "lower_body", "height of the flat vertical sill face"),
+    ModifierSpec("door_step", 0.008, 0.012, "lower_body", "door bottom hem proud of the sill"),
+    ModifierSpec("shoulder_radius", 0.015, 0.015, "lower_body", "rolled shoulder radius"),
+    ModifierSpec("fender_crease", 0.010, 0.012, "front", "hood-to-fender folded step"),
     ModifierSpec("sill_height", 0.06, 0.09, "lower_body", "rocker panel height"),
     ModifierSpec("belt_height", 0.08, 0.10, "lower_body", "belt line / shoulder height"),
     ModifierSpec("belt_rake", 0.03, 0.06, "lower_body", "belt line rising towards the rear"),
@@ -147,7 +152,7 @@ def _generate(params: BodyParams) -> Mesh:
     return BodyGenerator(params).build()
 
 
-LIBRARY_VERSION = 5
+LIBRARY_VERSION = 6
 
 
 def _cache_dir():
