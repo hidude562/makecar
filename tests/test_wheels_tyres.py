@@ -210,7 +210,8 @@ def _assert_closed_solid(mesh):
 def test_brake_parts_are_closed_outward_solids_without_internal_band_walls(ctx, pattern):
     m = build(ctx, disc_pattern=pattern).mesh
     for name in ("disc_face_1", "disc_face_-1", "caliper_cheek_1", "caliper_cheek_-1",
-                 "caliper_bridge", "pad_backing_1", "brake_pad_-1", "dust_shield", "lug_seats", "barrel"):
+                 "caliper_bridge", "caliper_boss_0", "caliper_boss_1", "pad_backing_1", "brake_pad_-1",
+                 "dust_shield", "lug_seats", "barrel"):
         _assert_closed_solid(m.subset(m.zones[name]))
     shield = m.vertices[m.groups["dust_shield"]]
     assert np.abs(np.arctan2(shield[:, 1], -shield[:, 0])).min() >= .47 - 1e-10

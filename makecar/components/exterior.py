@@ -66,7 +66,7 @@ class Wheel(MorphableComponent):
                "tread_blocks": 40, "dish": 0.04, "caliper_color": "#b52d22",
                "aspect_ratio": None, "tread_pattern": "asymmetric_block", "groove_depth": None,
                "shoulder_blocks": None, "lettering": False, "spoke_family": "five_spoke",
-               "disc_pattern": "plain", "disc_vanes": 24}
+               "disc_pattern": "plain", "disc_vanes": 16}
     description = "tyre with alloy rim; radius/width/rim size fitted from the hub connector"
     modifier_specs = [
         ModifierSpec("radius", 0.10, 0.14, "size", "tyre radius"),
@@ -479,8 +479,13 @@ class Wheel(MorphableComponent):
         # red toroidal box passing through the swept friction surface.
         caliper = Mesh()
         for side in (-1, 1):
-            lo, hi = sorted((disc_z + side * .015, disc_z + side * .029))
+            lo, hi = sorted((disc_z + side * .015, disc_z + side * .024))
             cheek = self._arc(rd - .036, rd + .014, lo, hi, "caliper")
+            rings = cheek.vertices.reshape(9, 5, 3)
+            for i, inset in enumerate((.009, .003, 0., 0., 0., 0., 0., .003, .009)):
+                radii = np.linalg.norm(rings[i, :, :2], axis=1)
+                change = np.array([inset, -inset, -inset, inset, inset])
+                rings[i, :, :2] *= ((radii + change) / radii)[:, None]
             _part(caliper, cheek, f"caliper_cheek_{side}")
             lo, hi = sorted((disc_z + side * .012, disc_z + side * .014))
             _part(m, self._arc(rd - .035, rd - .005, lo, hi, "brake_pad", angle=.56,
@@ -488,8 +493,19 @@ class Wheel(MorphableComponent):
             lo, hi = sorted((disc_z + side * .0106, disc_z + side * .012))
             _part(m, self._arc(rd - .034, rd - .006, lo, hi, "brake_pad", angle=.54,
                                start=np.pi - .27, n=7), f"brake_pad_{side}")
-        _part(caliper, self._arc(rd + .004, rd + .014, disc_z - .015, disc_z + .015,
-                                 "caliper"), "caliper_bridge")
+        bridge = self._arc(rd + .004, rd + .014, disc_z - .015, disc_z + .015,
+                           "caliper", angle=.48, start=np.pi - .24, n=7)
+        rings = bridge.vertices.reshape(7, 5, 3)
+        for i, inset in enumerate((.003, 0., .003, .006, .003, 0., .003)):
+            radii = np.linalg.norm(rings[i, :, :2], axis=1)
+            rings[i, [1, 2], :2] *= ((radii[[1, 2]] - inset) / radii[[1, 2]])[:, None]
+        _part(caliper, bridge, "caliper_bridge")
+        for k, a in enumerate((np.pi - .18, np.pi + .18)):
+            # Raised piston-housing bosses break up the forged cheek. Their
+            # tops stay inside the existing brake/spoke clearance envelope.
+            boss = P.cylinder(.016, .005, 8, radius_top=.012, material="caliper",
+                              center=((rd - .018) * np.cos(a), (rd - .018) * np.sin(a), disc_z + .0265))
+            _part(caliper, boss, f"caliper_boss_{k}")
         _part(m, caliper, "caliper")
         # Machined bolt-circle recesses, with the hex heads below the mouths.
         hub = self._pierced_ring(.026, .067, zf + .004, zf + .018, 5, (.010, .010), "rim",
