@@ -652,9 +652,21 @@ class LicensePlate(CarComponent):
             # bracket reaches back through the mount's 12mm skin clearance;
             # the old 65mm pedestal needlessly floated the plate off the car.
             projection = .006
-            if h > conn.height:
-                # A taller US plate can overlap the intake. Clear its full
-                # 41mm insert depth even at the foremost bumper step.
+            # A raised bumper can bring even the EU plate into the intake's
+            # footprint. Recover its fitted vertical span from the measured
+            # bottom and this plate's crease-relative mount (not a style name).
+            intake_z = ctx.measurements.get("nose_z_bottom", -np.inf) + .105
+            crease_z = conn.origin[2] + .075
+            intake_h = max(.05, min(.14, 2 * (crease_z - .145 - intake_z)))
+            grille_lo = crease_z + .030
+            grille_hi = ctx.measurements.get("nose_z_top", np.inf) - .045
+            grille_z = (grille_lo + grille_hi) / 2
+            grille_h = max(.045, min(.17, grille_hi - grille_lo))
+            overlaps_lower = conn.origin[2] - h / 2 < intake_z + intake_h / 2 + .005
+            overlaps_upper = conn.origin[2] + h / 2 > grille_z - grille_h / 2 - .005
+            if h > conn.height or overlaps_lower or overlaps_upper:
+                # Clear the entire 41mm insert depth, including its foremost
+                # bumper step, when either plate format overlaps an insert.
                 projection = max(projection, ctx.measurements.get("x_front", conn.origin[0])
                                  - conn.origin[0] + .050)
             depth = projection + .012

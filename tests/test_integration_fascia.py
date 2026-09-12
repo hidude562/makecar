@@ -69,6 +69,26 @@ def test_front_plate_regions_clear_skin_and_intake(fitted):
             assert np.ptp(plinth[:, 2]) == pytest.approx(.018)
 
 
+@pytest.mark.parametrize("style,modifiers", [
+    ("pickup", {"front_bumper_bottom": 1}),
+    ("suv", {"front_bumper_bottom": 1}),
+    ("sports", {"hood_front_height": -.25}),
+    ("sports", {"hood_front_height": -1}),
+])
+def test_plate_bracket_clears_morphed_upper_and_lower_inserts(car_body, style, modifiers):
+    body = car_body.build(style, modifiers=modifiers)
+    ctx = BuildContext(body.measurements, body.hints, Palette(), np.random.default_rng(0))
+    fascia = body.mesh.copy()
+    for name, component in (("intake", "grille.intake"), ("grille", "grille.slats")):
+        fascia.merge(get_component(component).build(body.connector(name), None, ctx).mesh)
+    conn = body.connector("plate_front")
+    for region, width, height in (("eu", .52, .11), ("us", .305, .152)):
+        plate = get_component("plate.standard").build(conn, {"region": region}, ctx).mesh
+        xy = footprint(width, height)
+        assert np.all(front_depths(plate, conn.frame, xy)
+                      > front_depths(fascia, conn.frame, xy) + .002)
+
+
 def test_single_default_nose_badge_and_optional_grille_badge(fitted):
     body, ctx = fitted
     conn = body.connector("grille")
