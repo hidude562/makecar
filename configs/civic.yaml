@@ -1,0 +1,80 @@
+name: civic
+description: Config approximation in the style of a 2022 Honda Civic Si Sedan, not a licensed model.
+seed: 22
+body:
+  style: sedan
+  base_params:
+    wheelbase: 2.7356
+    front_overhang: 0.8941
+    rear_overhang: 1.0439
+    width: 1.8009
+    ground_clearance: 0.134
+    wheel_diameter: 0.6452
+    tire_width: 0.235
+    arch_gap: 0.035
+    fender_flare: 0.015
+    arch_lip_width: 0.016
+    sill_height: 0.330
+    rocker_height: 0.135
+    belt_height: 0.885
+    belt_rake: 0.048
+    side_bulge: 0.012
+    front_bumper_bottom: 0.275
+    hood_front_height: 0.690
+    cowl_height: 0.940
+    cowl_offset: 0.250
+    hood_crown: 0.020
+    nose_width_ratio: 0.710
+    front_corner_length: 0.250
+    front_fascia_rake: 0.045
+    bumper_projection: 0.030
+    bumper_crease_height: 0.560
+    hood_overhang: 0.018
+    front_splitter: 0.012
+    windshield_length: 0.680
+    roof_height: 1.408
+    roof_drop: 0.055
+    roof_rear_offset: 0.400
+    rear_window_length: 0.690
+    roof_crown: 0.020
+    roof_width_ratio: 0.670
+    shoulder_inset: 0.072
+    shoulder_rise: 0.020
+    shoulder_radius: 0.018
+    fender_crease: 0.008
+    a_pillar_lean: 0.995
+    a_pillar_width: 0.060
+    front_door_length: 1.220
+    b_pillar_width: 0.095
+    quarter_window_length: 0.015
+    c_pillar_width: 0.110
+    deck_height: 0.940
+    deck_rear_height: 0.900
+    rear_bumper_bottom: 0.285
+    tail_width_ratio: 0.740
+    rear_corner_length: 0.250
+    rear_fascia_rake: -0.060
+    deck_crown: 0.012
+  modifiers:
+    face/wedge: 0.14
+    plan/pointed: 0.08
+    section/tumblehome: 0.15
+  sculpt:
+    side_crease: 0.20
+  hints: {door_count: 4, drive: left, transmission: automatic}
+  random: {amount: 0.0}
+palette:
+  paint: "#5d6870"
+  interior: "#242526"
+  seat: "#303234"
+  rim: "#26292b"
+components:
+  defaults: true
+  disable: [badge]
+  assign:
+    wheel: {component: wheel.alloy, options: {spokes: 10, spoke_width: 0.32, hubcap: false}}
+    plate: {component: plate.standard, options: {region: us}}
+output:
+  formats: [obj, svg, png, json]
+  views: [side, three_quarter_front]
+  image_size: [1200, 800]
