@@ -97,7 +97,12 @@ def station_index(name: str, chain: str = "upper") -> int:
 
 def _fascia_outline(width, lo, hi, shoulder, step=None, roundness=0.0):
     """Corresponding rounded-rectangle samples for the end ring and its cap."""
-    radius = min(0.045 + roundness, width * 0.35, (hi - lo) * 0.35) if roundness else min(0.045, width * 0.12, (hi - lo) * 0.18)
+    if roundness:
+        # Leave room between the corner and the fixed one-third top samples,
+        # even when a pointed target is added to an already rounded style.
+        radius = min(0.045 + roundness, width * 0.15, (hi - lo) * 0.35)
+    else:
+        radius = min(0.045, width * 0.12, (hi - lo) * 0.18)
     bottom_radius = radius
     if hi > shoulder:
         radius = min(radius, (hi - shoulder) / 2)
@@ -307,7 +312,8 @@ class BodyGenerator:
         rear_corner = 1 - smoothstep(self.L["x_rear"], self.L["x_rear"] + 2 * p.rear_corner_length, xh)
         # Let the rear shoulder open out into the lamp roll instead of hooking
         # sharply inboard where the deck and arch chains separate.
-        y_F = yb_hi - p.shoulder_inset * (1 - 0.35 * rear_corner)
+        y_F = (yb_hi * (1 - rear_corner) + yb_mid * rear_corner
+               - p.shoulder_inset * (1 - 0.70 * rear_corner))
         y_G = min(float(self.roof_edge(xh)), yb_hi - p.shoulder_inset - 0.04)
         z_G = zc - cr
         lean = float(self.lean(xh))

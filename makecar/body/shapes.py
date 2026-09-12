@@ -73,7 +73,8 @@ def normalize_shape_values(values: dict) -> dict:
     """Copy, clamp, and normalize each family independently; preserve other keys."""
     resolved = dict(values)
     for family in SHAPE_FAMILIES:
-        names = [name for name in SHAPE_DELTAS if name.startswith(family + "/") and name in resolved]
+        names = [name for name in SHAPE_DELTAS if name.startswith(family + "/")
+                 and name in resolved and resolved[name] is not None]
         weights = {name: max(0.0, min(1.0, float(resolved[name]))) for name in names}
         total = max(1.0, sum(weights.values()))
         resolved.update({name: weight / total for name, weight in weights.items()})
@@ -84,7 +85,7 @@ def shape_params(base: BodyParams, values: dict) -> BodyParams:
     """Apply normalized dimensional archetype deltas to a generator preset."""
     changes = {}
     for name, weight in normalize_shape_values(values).items():
-        if name not in SHAPE_DELTAS:
+        if name not in SHAPE_DELTAS or weight is None:
             continue
         for field, delta in SHAPE_DELTAS[name].items():
             changes[field] = changes.get(field, getattr(base, field)) + weight * delta
@@ -101,9 +102,13 @@ def resolve_shape_values(values: dict) -> dict:
 
     inherited = {}
     for style, defaults in STYLE_SHAPE_DEFAULTS.items():
-        weight = max(0.0, min(1.0, float(values.get("style/" + style, 0.0))))
+        requested = values.get("style/" + style, 0.0)
+        weight = 0.0 if requested is None else max(0.0, min(1.0, float(requested)))
         if weight:
             for name, value in defaults.items():
                 inherited[name] = inherited.get(name, 0.0) + weight * value
-    inherited.update(values)
+    # None means unspecified in the morph engine; only an explicit zero removes
+    # a default. Keep non-shape entries intact for the generic engine to handle.
+    inherited.update({name: weight for name, weight in values.items()
+                      if weight is not None or name not in SHAPE_DELTAS})
     return normalize_shape_values(inherited)

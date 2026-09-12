@@ -252,6 +252,22 @@ class TestShapeTargetSemantics:
                                    MorphableMesh.displacement(car_body.library, expected), atol=1e-12, rtol=0)
         assert values == original
 
+    @pytest.mark.parametrize("values", [{"style/sports": None}, {"face/wedge": None},
+                                        {"plan/square": None, "section/domed": None, "width": None}])
+    def test_unspecified_weights_keep_generic_morph_none_semantics(self, car_body, values):
+        np.testing.assert_array_equal(car_body.library.displacement(values),
+                                      np.zeros_like(car_body.library.base.vertices))
+
+    def test_none_does_not_remove_an_inherited_shape(self, car_body):
+        values = {"style/sports": 1, "face/wedge": None}
+        np.testing.assert_array_equal(car_body.library.displacement(values),
+                                      car_body.library.displacement({"style/sports": 1}))
+        assert values["face/wedge"] is None
+
+    def test_parameter_helper_ignores_unspecified_shapes(self):
+        base = BodyParams()
+        assert shape_params(base, {"face/wedge": None}) == base
+
     def test_parameter_helper_copies_custom_base_and_combines_normalized_deltas(self):
         base = BodyParams(width=2.01, hood_crown=0.047)
         before = base.to_dict()
@@ -377,6 +393,30 @@ class TestStyleDefaultsAndOverrides:
         effective = resolve_shape_values({"style/sports": weight})
         for name, default in STYLE_SHAPE_DEFAULTS["sports"].items():
             assert effective.get(name, 0) == pytest.approx(inherited_weight * default)
+
+    @pytest.mark.parametrize("style, modifiers", [
+        ("wagon", {"plan/pointed": 0}),
+        ("wagon", {"plan/square": 1}),
+        ("wagon", {"section/domed": 1}),
+        ("hatchback", {"plan/pointed": 1}),
+    ])
+    def test_overrides_keep_real_lamp_components_buildable(self, style, modifiers):
+        from makecar.config import CarConfig
+        from makecar.pipeline import build_car
+
+        _, assembly, _ = build_car(CarConfig.from_dict({"body": {"style": style, "modifiers": modifiers}}))
+        assert np.isfinite(assembly.mesh().vertices).all()
+
+    def test_pointed_override_keeps_rounded_hatch_fascia_cells_ordered(self, car_body):
+        from makecar.body.generator import N_STATIONS
+
+        mesh = car_body.library.morph({"style/hatchback": 1, "plan/pointed": 1})
+        off = mesh.meta["ring_offset"]
+        rows = list(range(off)) + list(range(off + N_STATIONS - 1, mesh.meta["n_rings"] - 1))
+        quads = np.array([mesh.faces[r * RING_N + j] for r in rows for j in range(RING_N)])
+        a, b, c, d = mesh.vertices[quads].transpose(1, 0, 2)
+        dot = np.sum(np.cross(b - a, c - a) * np.cross(c - a, d - a), axis=1)
+        assert np.all(dot >= -1e-12)
 
     @pytest.mark.parametrize("style, modifiers", [
         ("sedan", {"face/wedge": 1, "face/upright": 1, "plan/square": 0.3}),
