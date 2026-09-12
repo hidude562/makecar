@@ -5,3 +5,5 @@ output/
 *.egg-info/
 build/
 dist/
+logs/
+popo-wt/
