@@ -213,6 +213,74 @@ def test_console_floor_doors_and_ceiling_all_styles(cabin):
         assert {"grab_base_0", "grab_base_1"} <= set(parts[f"headliner/grab_handle_{side}"].result.mesh.groups)
 
 
+def _seat_section_gap(front, rear):
+    """Compare actual seat solids along X at shared Y/Z cross sections.
+
+    Reclined headrests overlap a following cushion's X bounds at entirely
+    different heights, so whole-seat AABBs cannot measure the seating gap.
+    """
+    flo, fhi = front.bounds()
+    rlo, rhi = rear.bounds()
+    lo, hi = np.maximum(flo[1:], rlo[1:]), np.minimum(fhi[1:], rhi[1:])
+    yy, zz = np.meshgrid(np.linspace(lo[0], hi[0], 35), np.linspace(lo[1], hi[1], 100))
+    yz = np.column_stack([yy.ravel(), zz.ravel()])
+
+    def extents(mesh):
+        triangles, _ = mesh.triangulated()
+        a, b, c = mesh.vertices[triangles].transpose(1, 0, 2)
+        u, v = b[:, 1:] - a[:, 1:], c[:, 1:] - a[:, 1:]
+        det = u[:, 0] * v[:, 1] - u[:, 1] * v[:, 0]
+        valid = abs(det) > 1e-12
+        a, b, c, u, v, det = (x[valid] for x in (a, b, c, u, v, det))
+        low, high = [], []
+        for samples in np.array_split(yz, 35):
+            q = samples[:, None] - a[:, 1:]
+            s = (q[:, :, 0] * v[:, 1] - q[:, :, 1] * v[:, 0]) / det
+            t = (u[:, 0] * q[:, :, 1] - u[:, 1] * q[:, :, 0]) / det
+            inside = (s >= -1e-8) & (t >= -1e-8) & (s + t <= 1 + 1e-8)
+            x = a[:, 0] + s * (b[:, 0] - a[:, 0]) + t * (c[:, 0] - a[:, 0])
+            low.extend(np.where(inside, x, np.inf).min(axis=1))
+            high.extend(np.where(inside, x, -np.inf).max(axis=1))
+        return np.array(low), np.array(high)
+
+    front_rear, _ = extents(front)
+    _, rear_front = extents(rear)
+    gaps = front_rear - rear_front
+    assert np.isfinite(gaps).any()
+    return gaps.min()
+
+
+@pytest.mark.parametrize("rows", ["auto", 3])
+def test_pickup_rear_mounts_clear_the_trimmed_cab_wall_without_losing_rows(rows):
+    cabin = assemble(CarBody().build("pickup", hints={"seat_rows": rows}))
+    parts = instances(cabin)
+    assert {n for n in parts if n.startswith("seat_row")} == {"seat_row2", "seat_row3"}
+    wall_front = parts["rear_bulkhead"].result.mesh.bounds()[1][0]
+    for name in ("seat_row2", "seat_row3"):
+        assert parts[name].result.mesh.bounds()[0][0] - wall_front >= 0.02
+    front = parts["seat_front_driver"].connector
+    second, third = parts["seat_row2"].connector, parts["seat_row3"].connector
+    # Front mounts keep their old offsets; only the two rear mounts move.
+    x_h1 = cabin.body.measurements["x_cowl"] - 0.95
+    assert front.origin[0] == pytest.approx(x_h1 + 0.12)
+    pitch = second.origin[0] - third.origin[0]
+    assert 0.70 < pitch < 0.86
+    assert x_h1 + 0.10 - second.origin[0] == pytest.approx(pitch)
+    assert second.meta["legroom"] == pytest.approx(pitch)
+    assert third.meta["legroom"] == pytest.approx(pitch)
+    for leading, following in (("seat_front_driver", "seat_row2"),
+                               ("seat_front_passenger", "seat_row2"), ("seat_row2", "seat_row3")):
+        assert _seat_section_gap(parts[leading].result.mesh, parts[following].result.mesh) > 0.25
+
+
+def test_explicit_two_row_pickup_keeps_original_mounts_and_pitch():
+    body = CarBody().build("pickup", hints={"seat_rows": 2})
+    seat = body.connector("seat_row2")
+    assert not any(c.name == "seat_row3" for c in body.connectors)
+    assert seat.origin[0] == pytest.approx(body.measurements["x_cowl"] - 0.95 - 0.86 + 0.10)
+    assert seat.meta["legroom"] == pytest.approx(0.86)
+
+
 def test_cargo_wheelhouses_track_rear_axle(cabin):
     if cabin.body.measurements["has_bed"]:
         return

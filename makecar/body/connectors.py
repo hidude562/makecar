@@ -463,6 +463,17 @@ def interior_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List
         rows_cfg = int(rows_cfg)
         row_x = [x_h1 - k * pitch for k in range(max(1, rows_cfg))]
     n_rows = len(row_x)
+    if has_bed and n_rows > 1:
+        # The pickup's rear wall is a genuine cab/bed boundary. The default
+        # reclined bench (including its raised headrests) reaches 551 mm behind
+        # its floor mount, not the 300 mm cushion allowance in auto allocation.
+        # Reserve 560 mm, the 20 mm bulkhead trim and a 20 mm free gap. Preserve
+        # all requested/emitted rows and the front mounts; compress rear pitch
+        # only when the last complete seat would otherwise enter the bed.
+        last_mount_min = x_cab_rear + 0.56 + 0.02 + 0.02
+        if row_x[-1] + 0.10 < last_mount_min:
+            pitch = (x_h1 + 0.10 - last_mount_min) / (n_rows - 1)
+            row_x = [x_h1 - k * pitch for k in range(n_rows)]
     seat_w, seat_d = 0.52, 0.55
     for r, xh in enumerate(row_x):
         if r == 0:
