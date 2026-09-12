@@ -101,12 +101,14 @@ def test_lamp_panes_fit_apertures_without_inverted_faces(car_body, ctx, style):
 
 def test_grille_variants_and_badge_clearance(sedan, ctx):
     conn = sedan.connector("grille")
-    slats = get_component("grille.slats").build(conn, None, ctx).mesh
+    slats = get_component("grille.slats").build(conn, {"badge": True}, ctx).mesh
+    rim = conn.frame.to_local(slats.vertices[slats.groups["badge_rim"]])
+    badge_radius = np.linalg.norm(rim[:, :2], axis=1).max()
     for name, ids in slats.groups.items():
         if name.startswith("slat_"):
             pts = conn.frame.to_local(slats.vertices[ids])
             assert np.ptp(pts[:, 2]) == pytest.approx(.030)
-            assert np.linalg.norm(pts[:, :2], axis=1).min() >= .046 - 1e-9
+            assert np.linalg.norm(pts[:, :2], axis=1).min() >= badge_radius + .006 - 1e-9
     for name, prefix in (("grille.honeycomb", "cell_"), ("grille.mesh", "wire_")):
         mesh = get_component(name).build(conn, None, ctx).mesh
         assert any(k.startswith(prefix) for k in mesh.groups)
@@ -169,7 +171,10 @@ def test_intake_backing_clears_uncut_fascia(car_body, ctx, style):
     conn = body.connector("intake")
     intake = get_component("grille.intake").build(conn, None, ctx).mesh
     back = intake.subset(intake.zones["back"])
-    for x, y in itertools.product((-.35 * conn.width, 0, .35 * conn.width), (-.06, 0, .06)):
+    # The new bumper fits 70–140mm inserts; ±60mm misses the smaller ones.
+    # Sample their actual footprint, retaining the original 2mm clearance.
+    for x, y in itertools.product((-.35 * conn.width, 0, .35 * conn.width),
+                                  (-.43 * conn.height, 0, .43 * conn.height)):
         assert _front_depth(back, conn.frame, [x, y]) > _front_depth(body.mesh, conn.frame, [x, y]) + .002
     plate_conn = body.connector("plate_front")
     plate = get_component("plate.standard").build(plate_conn, None, ctx).mesh

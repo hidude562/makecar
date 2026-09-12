@@ -448,7 +448,7 @@ class Grille(CarComponent):
     name = "grille.slats"
     accepts = (RectangleConnector,)
     default_for = ("grille",)
-    options = {"slats": 5, "frame": True, "mesh": False, "badge": True}
+    options = {"slats": 5, "frame": True, "mesh": False, "badge": False}
     description = "deep horizontal slats interrupted around an inset roundel, with an open surround"
     pattern = "slats"
 
@@ -470,7 +470,7 @@ class Grille(CarComponent):
             for k in range(n):
                 y = -ih / 2 + (k + .5) * ih / n
                 thick = min(.012, ih / n * .32)
-                cut = np.sqrt(max(0, (badge_r + .006) ** 2 - max(0, abs(y) - thick / 2) ** 2))
+                cut = np.sqrt(max(0, (badge_r + .006) ** 2 - max(0, abs(y) - thick / 2) ** 2)) if badge_r else 0
                 spans = [(-iw / 2, -cut), (cut, iw / 2)] if cut else [(-iw / 2, iw / 2)]
                 for j, (lo, hi) in enumerate(spans):
                     _part(m, P.box(hi - lo, thick, .030, material="chrome", bevel=.002,
@@ -501,16 +501,10 @@ class Grille(CarComponent):
         if badge_r:
             _part(m, P.tube(badge_r, badge_r - .004, .012, 24, material="chrome", center=(0, 0, .003)), "badge_rim")
             _part(m, P.cylinder(badge_r - .005, .008, 24, material="grille_dark", center=(0, 0, .004)), "badge")
-        # These mounts sit on uncut fascia, unlike the lamp apertures. Keep the
-        # radiator backing in front of the skin so paint cannot fill the cells.
-        m.translate([0, 0, .022])
-        if conn.meta.get("lower"):
-            # The rounded lower bumper projects past the average fascia plane.
-            # Rake the insert's backing and cells together, anchored at its top,
-            # rather than leaving blue bodywork visible through the lower rows.
-            rake = .75 * abs(conn.normal[2]) / max(abs(conn.normal[0]), .5)
-            down = -1 if conn.frame.y_axis[2] > 0 else 1
-            m.vertices[:, 2] += .007 + rake * (down * m.vertices[:, 1] + h / 2)
+        # These mounts clear the WHOLE stepped fascia footprint. Seat the back
+        # of the 10mm radiator backing at the mount, with no obsolete rake or
+        # negative offset burying it in the uncut skin.
+        m.translate([0, 0, .027])
         m.materials.update(mats)
         return ComponentResult(m)
 
@@ -565,10 +559,18 @@ class LicensePlate(CarComponent):
         if opts.get("region", "eu") == "eu":
             m.merge(P.box(w * 0.08, h - 0.01, 0.002, material="plate_blue", center=(-w / 2 + w * 0.05, 0, 0.007), name="euband"))
         if conn.meta.get("position") == "front":
-            # The lower intake and plate overlap in elevation on short fascias;
-            # a 65mm plinth puts the plate ahead of, not behind, the insert.
-            _part(m, P.box(w * .82, h * .72, .065, material="plate_text", center=(0, 0, -.0325)), "mounting_plinth")
-            m.translate([0, 0, .065])
+            # The new bumper separates the EU plate from both inserts. Its
+            # bracket reaches back through the mount's 12mm skin clearance;
+            # the old 65mm pedestal needlessly floated the plate off the car.
+            projection = .006
+            if h > conn.height:
+                # A taller US plate can overlap the intake. Clear its full
+                # 41mm insert depth even at the foremost bumper step.
+                projection = max(projection, ctx.measurements.get("x_front", conn.origin[0])
+                                 - conn.origin[0] + .050)
+            depth = projection + .012
+            _part(m, P.box(w * .82, h * .72, depth, material="plate_text", center=(0, 0, -depth / 2)), "mounting_plinth")
+            m.translate([0, 0, projection])
         m.materials.update(mats)
         return ComponentResult(m)
 
