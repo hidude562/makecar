@@ -245,8 +245,12 @@ def _skeleton(params: BodyParams) -> BodyMorphableMesh:
 
 
 @lru_cache(maxsize=4)
-def _cached_library(params_key: tuple) -> BodyMorphableMesh:
-    params = BodyParams(**dict(params_key))
+def _cached_library(params_key) -> BodyMorphableMesh:
+    """`params_key` is the JSON of the params (nested reference curves are not
+    tuple-hashable); the legacy sorted-items tuple is still accepted."""
+    import json
+
+    params = BodyParams(**(json.loads(params_key) if isinstance(params_key, str) else dict(params_key)))
     cache_file = _cache_dir() / f"body_targets_{_cache_key(params)}.npz"
     mm = _skeleton(params)
     if cache_file.exists() and _load_library(mm, cache_file):
@@ -278,6 +282,8 @@ def _cached_library(params_key: tuple) -> BodyMorphableMesh:
 
 def body_library(params: BodyParams | None = None) -> BodyMorphableMesh:
     """Morphable body for the given base parameters (cached)."""
+    import json
+
     params = params or BodyParams()
-    key = tuple(sorted(params.to_dict().items()))
+    key = json.dumps(params.to_dict(), sort_keys=True)  # nested reference curves are not tuple-hashable
     return _cached_library(key)

@@ -233,6 +233,7 @@ class BodyGenerator:
             ],
             sharp=[True] * 8,  # a narrow pillar must not fold back at the cowl
         )
+        self._apply_reference_profiles()
         # pickup bed weight/depth
         if p.bed_depth > 0:
             x0, x1 = xr + 0.06, L["u_deck"] - 0.04
@@ -241,11 +242,35 @@ class BodyGenerator:
         else:
             self.bed = None
 
+    REFERENCE_PROFILES = ("z_center", "floor", "belt", "sill", "crown", "roof_edge", "lean", "half_width")
+
+    def _apply_reference_profiles(self):
+        """Replace analytic profiles with measured curves from `params.reference`."""
+        self._ref_half_width = None
+        self._ref_center = False
+        ref = ((self.p.reference or {}).get("profiles")) or {}
+        unknown = set(ref) - set(self.REFERENCE_PROFILES)
+        if unknown:
+            raise KeyError(f"unknown reference profiles {sorted(unknown)}; allowed {self.REFERENCE_PROFILES}")
+        for name, pts in ref.items():
+            pts = [(float(a), float(b)) for a, b in pts]
+            if len(pts) < 2:
+                raise ValueError(f"reference profile {name!r} needs at least two samples")
+            prof = Profile(pts)
+            if name == "half_width":
+                self._ref_half_width = prof
+            else:
+                setattr(self, name, prof)
+                if name == "z_center":
+                    self._ref_center = True
+
     # ------------------------------------------------------------ helpers
     def plan_half_width(self, x) -> np.ndarray:
         """Half width of the body at belt height, including nose/tail taper."""
         p, L = self.p, self.L
         x = np.asarray(x, dtype=float)
+        if getattr(self, "_ref_half_width", None) is not None:
+            return np.asarray(self._ref_half_width(x), dtype=float)
         hw = p.width / 2
         y = np.full_like(x, hw)
         # gentle mid-body taper towards the ends (2%)
@@ -270,6 +295,8 @@ class BodyGenerator:
         """Original silhouette with an independently straightened hood plane."""
         p, L = self.p, self.L
         x = np.asarray(x, dtype=float)
+        if getattr(self, "_ref_center", False):
+            return np.asarray(self.z_center(x), dtype=float)
         t = np.clip((x - L["u_cowl"]) / max(L["x_front"] - L["u_cowl"], 0.02), 0, 1)
         plane = p.cowl_height * (1 - t) + p.hood_front_height * t
         blend = np.where(x >= L["u_cowl"], p.hood_straightness, 0.0)

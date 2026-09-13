@@ -34,7 +34,7 @@ _BODY_CACHE: Dict[tuple, CarBody] = {}
 def car_body_for(cfg: CarConfig) -> CarBody:
     params = cfg.base_params()
     ct = cfg.custom_targets_dir()
-    key = (tuple(sorted(params.to_dict().items())), str(ct) if ct else None)
+    key = (json.dumps(params.to_dict(), sort_keys=True), str(ct) if ct else None)
     if key not in _BODY_CACHE:
         _BODY_CACHE[key] = CarBody(params, custom_targets_dir=ct)
     return _BODY_CACHE[key]

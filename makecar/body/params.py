@@ -9,7 +9,7 @@ the middle of the wheelbase.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, asdict, fields
+from dataclasses import dataclass, asdict, fields, field
 import math
 
 
@@ -101,6 +101,14 @@ class BodyParams:
     bed_depth: float = 0.0             # >0 turns the deck into an open pickup bed
     # ---- non-geometric hints (do not affect topology) -------------------------
     door_count: int = 4
+
+    # ---- measured reference (optional) ---------------------------------------
+    # Densely sampled curves that replace the analytic longitudinal profiles, e.g.
+    # {"profiles": {"z_center": [[x, z], ...], "floor": [...], "belt": [...],
+    #               "crown": [...], "sill": [...], "roof_edge": [[x, y], ...],
+    #               "half_width": [[x, y], ...], "lean": [[x, dx], ...]},
+    #  "source": {...provenance...}}
+    reference: dict | None = None
 
     # ------------------------------------------------------------------ helpers
     def to_dict(self) -> dict:
