@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 
 from .geometry.mesh import Mesh
-from .connectors import Connector
+from .connectors import Connector, apply_override
 from .body.body import BodyResult
 from .components import (REGISTRY, get_component, default_component_for, BuildContext, Palette, ComponentResult)
 
@@ -167,8 +167,9 @@ def _is_interior(c: Connector) -> bool:
 
 
 def assemble(body: BodyResult, components_cfg: Optional[dict] = None, palette: Optional[Palette] = None,
-             seed: int = 0, max_depth: int = 4) -> CarAssembly:
+             seed: int = 0, max_depth: int = 4, connectors_cfg: Optional[dict] = None) -> CarAssembly:
     cfg = dict(components_cfg or {})
+    overrides: Dict[str, dict] = dict((connectors_cfg or {}).get("overrides") or {})
     use_defaults = bool(cfg.get("defaults", True))
     disable = list(cfg.get("disable", []))
     rules: List[AssignRule] = []
@@ -192,6 +193,8 @@ def assemble(body: BodyResult, components_cfg: Optional[dict] = None, palette: O
     queue: List[tuple] = [(c, None, 0) for c in body.connectors]
     while queue:
         conn, parent, depth = queue.pop(0)
+        if conn.name in overrides:
+            conn = apply_override(conn, overrides[conn.name])
         all_connectors.append(conn)
         if any(conn.matches(sel) for sel in disable):
             disabled.append(conn.name)

@@ -33,9 +33,10 @@ _BODY_CACHE: Dict[tuple, CarBody] = {}
 
 def car_body_for(cfg: CarConfig) -> CarBody:
     params = cfg.base_params()
-    key = tuple(sorted(params.to_dict().items()))
+    ct = cfg.custom_targets_dir()
+    key = (tuple(sorted(params.to_dict().items())), str(ct) if ct else None)
     if key not in _BODY_CACHE:
-        _BODY_CACHE[key] = CarBody(params)
+        _BODY_CACHE[key] = CarBody(params, custom_targets_dir=ct)
     return _BODY_CACHE[key]
 
 
@@ -66,7 +67,7 @@ def build_car(cfg: CarConfig) -> tuple[BodyResult, CarAssembly, Dict[str, float]
                      paint=cfg.palette().paint)
     timings["body"] = time.time() - t
     t = time.time()
-    asm = assemble(res, cfg.components, cfg.palette(), cfg.seed)
+    asm = assemble(res, cfg.components, cfg.palette(), cfg.seed, connectors_cfg=cfg.raw.get("connectors"))
     timings["assembly"] = time.time() - t
     return res, asm, timings
 

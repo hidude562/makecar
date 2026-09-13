@@ -225,6 +225,59 @@ class CircleConnector(PolygonConnector):
         return d
 
 
+def apply_override(conn: "Connector", override: dict) -> "Connector":
+    """Return a copy of `conn` with a config/viewer override applied.
+
+    Override keys (all optional):
+      translate   [dx, dy, dz]   world-space offset in metres
+      rotate_deg  [rx, ry, rz]   rotation about the connector's own local axes, degrees
+      scale       float          scales a rectangle's width/height, a circle's radius,
+                                 or a free polygon about its centroid
+      radius / width / height    absolute sizes for circle / rectangle connectors
+    Point connectors ignore size keys.  The result keeps name, tags, meta and owner.
+    """
+    if not override:
+        return conn
+    frame = conn.frame
+    rot = override.get("rotate_deg")
+    if rot:
+        rx, ry, rz = (np.radians(float(v)) for v in rot)
+        if rx:
+            frame = frame.rotated_about_x(rx)
+        if ry:
+            frame = frame.rotated_about_y(ry)
+        if rz:
+            frame = frame.rotated_about_z(rz)
+    tr = override.get("translate")
+    if tr:
+        frame = frame.translated(np.asarray(tr, dtype=float))
+    scale = float(override.get("scale", 1.0) or 1.0)
+    meta = dict(conn.meta)
+    meta["override"] = {k: v for k, v in override.items()}
+    if isinstance(conn, RectangleConnector):
+        w = float(override.get("width", conn.width * scale))
+        h = float(override.get("height", conn.height * scale))
+        return RectangleConnector(conn.name, frame, w, h, tags=conn.tags, meta=meta, owner=conn.owner)
+    if isinstance(conn, CircleConnector):
+        r = float(override.get("radius", conn.radius * scale))
+        return CircleConnector(conn.name, frame, r, tags=conn.tags, meta=meta, owner=conn.owner,
+                               segments=len(conn.points))
+    if isinstance(conn, PolygonConnector):
+        pts = conn.points
+        if tr or rot or scale != 1.0:
+            local = conn.frame.to_local(pts)
+            local[:, :2] *= scale
+            pts = frame.to_world(local)
+        if "grid_points" in meta and (tr or rot or scale != 1.0):
+            g = np.asarray(meta["grid_points"], dtype=float)
+            shp = g.shape
+            gl = conn.frame.to_local(g.reshape(-1, 3))
+            gl[:, :2] *= scale
+            meta["grid_points"] = frame.to_world(gl).reshape(shp)
+        return PolygonConnector(conn.name, frame, pts, tags=conn.tags, meta=meta, owner=conn.owner)
+    return PointConnector(conn.name, frame, tags=conn.tags, meta=meta, owner=conn.owner)
+
+
 def _jsonable(v):
     if isinstance(v, np.ndarray):
         return np.round(v, 5).tolist()

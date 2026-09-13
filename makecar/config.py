@@ -55,9 +55,11 @@ DEFAULT_CONFIG: Dict[str, Any] = {
                   "fuel_side": "left", "column_angle": 24.0},
         "random": {"amount": 0.0, "groups": ["proportions", "greenhouse", "front", "rear", "stance", "lower_body"],
                    "exclude": ["bed_depth", "quarter_window_length"]},
+        "custom_targets": None,   # directory of .target files -> custom/<name> modifiers (relative to the config)
     },
     "palette": {},
     "components": {"defaults": True, "disable": [], "assign": {}},
+    "connectors": {"overrides": {}},   # per-connector edits made in the viewer (see connectors.apply_override)
     "output": {"formats": ["obj", "svg", "png", "json"], "views": DEFAULT_VIEWS, "image_size": [1200, 800],
                "connector_map": True, "write_body": True, "blueprint_theme": "blueprint", "blueprint_connectors": False},
     "variants": [],
@@ -96,16 +98,44 @@ def load_config_file(path) -> dict:
 @dataclass
 class CarConfig:
     raw: Dict[str, Any]
+    path: Optional[Path] = None
 
     @classmethod
-    def from_dict(cls, d: dict) -> "CarConfig":
+    def from_dict(cls, d: dict, path=None) -> "CarConfig":
         cfg = deep_merge(DEFAULT_CONFIG, d)
         validate(cfg)
-        return cls(cfg)
+        return cls(cfg, Path(path) if path else None)
 
     @classmethod
     def load(cls, path) -> "CarConfig":
-        return cls.from_dict(load_config_file(path))
+        return cls.from_dict(load_config_file(path), path=path)
+
+    def custom_targets_dir(self) -> Optional[Path]:
+        d = self.body.get("custom_targets")
+        if not d:
+            return None
+        d = Path(d)
+        if not d.is_absolute() and self.path is not None:
+            d = self.path.parent / d
+        return d
+
+    def connector_overrides(self) -> Dict[str, dict]:
+        return dict((self.raw.get("connectors") or {}).get("overrides") or {})
+
+    def to_yaml(self) -> str:
+        import yaml  # type: ignore
+
+        clean = _strip_defaults(self.raw, DEFAULT_CONFIG)
+        return yaml.safe_dump(clean, sort_keys=False, default_flow_style=None, allow_unicode=True)
+
+    def save(self, path=None) -> Path:
+        path = Path(path or self.path)
+        if path.suffix.lower() == ".json":
+            path.write_text(json.dumps(_strip_defaults(self.raw, DEFAULT_CONFIG), indent=2))
+        else:
+            path.write_text(self.to_yaml())
+        self.path = path
+        return path
 
     # accessors ---------------------------------------------------------------
     @property
@@ -164,8 +194,30 @@ class CarConfig:
         return json.dumps(self.raw, indent=2, default=str)
 
 
+def _strip_defaults(value, default):
+    """Drop keys that still equal DEFAULT_CONFIG so saved files stay readable."""
+    if isinstance(value, dict) and isinstance(default, dict):
+        out = {}
+        for k, v in value.items():
+            if k in default:
+                if v == default[k]:
+                    continue
+                out[k] = _strip_defaults(v, default[k])
+            else:
+                out[k] = v
+        return out
+    return value
+
+
 def validate(cfg: dict) -> None:
     from .body.styles import style_names
+
+    for name, ov in ((cfg.get("connectors") or {}).get("overrides") or {}).items():
+        if not isinstance(ov, dict):
+            raise ValueError(f"connectors.overrides.{name} must be a mapping")
+        for key in ov:
+            if key not in ("translate", "rotate_deg", "scale", "radius", "width", "height"):
+                raise ValueError(f"connectors.overrides.{name}: unknown key {key!r}")
 
     body = cfg["body"]
     style = body.get("style", "sedan")

@@ -153,6 +153,32 @@ body's curvature exactly (windshields stay double-curved; lamps wrap the corner)
 Register your own with `@register` and set `default_for` to the tags it should
 take over by default, or select it explicitly in the config.
 
+## Interactive viewer
+
+```bash
+python -m makecar viewer configs/sedan.yaml      # opens http://127.0.0.1:8765
+```
+
+A local web app (Python `http.server` + a vendored three.js, no other
+dependencies) for editing a car the way MakeHuman's GUI edits a human:
+
+* **Shape** — every modifier as a slider, grouped (style macros, face/plan/section
+  archetypes, proportions, greenhouse, sculpts, custom).  The body re-morphs on
+  drag; components re-fit on a debounce.
+* **Connectors** — every connector drawn in place, colour-coded by kind, with a
+  translate/rotate/scale gizmo (`g`/`r`/`s`).  Moving, rotating or resizing one
+  writes a `connectors.overrides` entry into the config, so the edit is real
+  state that `makecar build` reproduces.  Per connector you can also pick the
+  component, set its options, or disable it.
+* **Sculpt** — a brush that pushes or pulls the shell along its normal, mirrored
+  across the centreline.  *Save as target* writes a MakeHuman-style `.target`
+  file into `body.custom_targets` and registers it as a `custom/<name>` slider.
+* **Config** — the live YAML, editable and applied in place; *Save* writes the
+  file, *Export* runs the normal OBJ/JSON output.
+
+Toolbar: view presets, flat/wire/x-ray shading, a cutaway clip height, seams
+and label toggles.  Everything the viewer changes is visible in the Config tab.
+
 ## Output folder
 
 Each car gets `output/<name>/` with:

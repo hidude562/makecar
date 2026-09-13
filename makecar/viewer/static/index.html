@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>makecar viewer</title>
+<link rel="stylesheet" href="/static/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "/static/vendor/three.module.js",
+  "three/addons/controls/OrbitControls.js": "/static/vendor/OrbitControls.js",
+  "three/addons/controls/TransformControls.js": "/static/vendor/TransformControls.js"
+} }
+</script>
+</head>
+<body>
+<header id="topbar">
+  <div class="brand">makecar <span class="muted" id="cfg-name">untitled</span><span id="dirty" class="dirty" hidden>●</span></div>
+  <div class="tools">
+    <div class="seg" title="View presets">
+      <button data-view="3q">¾</button><button data-view="front">F</button><button data-view="side">S</button><button data-view="top">T</button><button data-view="rear">R</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="opt-connectors" checked> connectors</label>
+    <label class="chk" title="Show every connector label (selected and hovered ones always show)"><input type="checkbox" id="opt-labels"> all labels</label>
+    <label class="chk"><input type="checkbox" id="opt-seams" checked> seams</label>
+    <label class="chk"><input type="checkbox" id="opt-flat"> flat</label>
+    <label class="chk"><input type="checkbox" id="opt-wire"> wire</label>
+    <label class="chk"><input type="checkbox" id="opt-xray"> x-ray body</label>
+    <label class="chk">cut <input type="range" id="opt-cut" min="0" max="2.2" step="0.01" value="2.2"></label>
+    <label class="chk"><input type="checkbox" id="opt-auto" checked> auto-assemble</label>
+    <button id="btn-assemble" title="Rebuild all components on the current body">Assemble</button>
+    <button id="btn-save" class="primary" title="Write the config file">Save</button>
+  </div>
+</header>
+
+<aside id="sidebar">
+  <nav class="tabs">
+    <button data-tab="shape" class="active">Shape</button>
+    <button data-tab="connectors">Connectors</button>
+    <button data-tab="components">Parts</button>
+    <button data-tab="sculpt">Sculpt</button>
+    <button data-tab="config">Config</button>
+  </nav>
+
+  <section id="tab-shape" class="tab active">
+    <div class="row">
+      <input id="mod-filter" type="search" placeholder="filter modifiers…">
+      <button id="btn-reset-mods" title="All sliders to their defaults">Reset</button>
+      <button id="btn-random" title="Randomise the shape sliders">Random</button>
+    </div>
+    <div id="modifiers"></div>
+  </section>
+
+  <section id="tab-connectors" class="tab">
+    <div class="row"><input id="conn-filter" type="search" placeholder="filter connectors…"></div>
+    <div id="conn-list"></div>
+    <div id="conn-detail" class="detail" hidden></div>
+  </section>
+
+  <section id="tab-components" class="tab">
+    <p class="hint">Registered components and what they accept. Assign one to a connector from the Connectors tab.</p>
+    <div id="comp-list"></div>
+  </section>
+
+  <section id="tab-sculpt" class="tab">
+    <p class="hint">Left-drag on the body to sculpt along the surface normal. Right-drag orbits. The result is saved as a MakeHuman-style <code>.target</code> and appears as a <code>custom/…</code> slider.</p>
+    <label class="chk big"><input type="checkbox" id="sc-enable"> sculpt mode</label>
+    <div class="field"><span>radius</span><input type="range" id="sc-radius" min="0.03" max="0.6" step="0.01" value="0.18"><output id="sc-radius-v">0.18</output></div>
+    <div class="field"><span>strength</span><input type="range" id="sc-strength" min="0.001" max="0.03" step="0.001" value="0.006"><output id="sc-strength-v">0.006</output></div>
+    <div class="field"><span>mode</span><select id="sc-mode"><option value="1">push out</option><option value="-1">pull in</option></select></div>
+    <label class="chk"><input type="checkbox" id="sc-mirror" checked> mirror across centreline</label>
+    <div class="row"><button id="sc-undo">Undo stroke</button><button id="sc-clear">Clear</button></div>
+    <div class="row"><input id="sc-name" placeholder="target name, e.g. rear_haunch"><button id="sc-save" class="primary">Save as target</button></div>
+    <div id="sc-status" class="hint"></div>
+  </section>
+
+  <section id="tab-config" class="tab">
+    <div class="row"><button id="cfg-reload">Reload</button><button id="cfg-apply" class="primary">Apply</button><button id="cfg-export">Export OBJ+JSON</button></div>
+    <textarea id="cfg-text" spellcheck="false"></textarea>
+    <div id="cfg-status" class="hint"></div>
+  </section>
+</aside>
+
+<main id="viewport"><canvas id="c"></canvas><div id="hud"></div></main>
+
+<footer id="status">
+  <span id="meas"></span><span id="faces"></span><span id="timing"></span><span id="msg"></span>
+</footer>
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>

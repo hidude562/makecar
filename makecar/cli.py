@@ -120,6 +120,12 @@ def cmd_random(args):
         run_config(cfg, out_root)
 
 
+def cmd_viewer(args):
+    from .viewer.server import serve
+
+    serve(args.config, host=args.host, port=args.port, open_browser=not args.no_browser, output_dir=args.out)
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="makecar", description="MakeHuman-style procedural car generator")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -145,6 +151,13 @@ def main(argv=None):
     c = sub.add_parser("connectors", help="list the connectors a config produces")
     c.add_argument("config")
     c.set_defaults(fn=cmd_connectors)
+    v = sub.add_parser("viewer", help="interactive 3-D viewer/editor for targets and connectors")
+    v.add_argument("config", nargs="?", help="config file to edit (default: a new untitled sedan)")
+    v.add_argument("--host", default="127.0.0.1")
+    v.add_argument("--port", type=int, default=8765)
+    v.add_argument("-o", "--out", default="output", help="folder for exports from the viewer")
+    v.add_argument("--no-browser", action="store_true")
+    v.set_defaults(fn=cmd_viewer)
     sub.add_parser("list-modifiers", help="list body modifiers (sliders)").set_defaults(fn=cmd_list_modifiers)
     sub.add_parser("list-components", help="list registered components").set_defaults(fn=cmd_list_components)
     sub.add_parser("list-styles", help="list body styles (macro targets)").set_defaults(fn=cmd_list_styles)

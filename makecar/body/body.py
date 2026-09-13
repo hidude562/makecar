@@ -33,9 +33,60 @@ class BodyResult:
 class CarBody:
     """Build bodies from style macros + modifier sliders (+ optional base overrides)."""
 
-    def __init__(self, base_params: Optional[BodyParams] = None):
+    def __init__(self, base_params: Optional[BodyParams] = None, custom_targets_dir=None):
+        import copy
+
         self.base_params = base_params or BodyParams()
-        self.library = body_library(self.base_params)
+        shared = body_library(self.base_params)
+        # a shallow per-instance copy so custom targets never leak into the shared cache
+        self.library = copy.copy(shared)
+        self.library.modifiers = dict(shared.modifiers)
+        self.library.targets = dict(shared.targets)
+        self.custom_targets_dir = None
+        if custom_targets_dir:
+            self.load_custom_targets(custom_targets_dir)
+
+    # ----------------------------------------------------- custom targets
+    def load_custom_targets(self, directory) -> List[str]:
+        """Register every `<name>.target` file in `directory` as modifier `custom/<name>`."""
+        from pathlib import Path
+        from ..morph.target import Target, Modifier
+
+        directory = Path(directory)
+        self.custom_targets_dir = directory
+        loaded: List[str] = []
+        if not directory.exists():
+            return loaded
+        for path in sorted(directory.glob("*.target")):
+            t = Target.load(path, self.library.base.n_vertices, name=f"custom-{path.stem}")
+            self.add_custom_target(path.stem, t)
+            loaded.append(path.stem)
+        return loaded
+
+    def add_custom_target(self, name: str, target) -> str:
+        from ..morph.target import Modifier
+
+        key = f"custom/{name}"
+        target.name = f"custom-{name}"
+        self.library.add_modifier(Modifier(key, target, None, -1.0, 1.0, 0.0, "custom",
+                                           target.description or f"custom target {name}"))
+        return key
+
+    def save_custom_target(self, name: str, offsets: np.ndarray, description: str = "") -> str:
+        """Persist a sculpted displacement field as `<dir>/<name>.target` and register it."""
+        from pathlib import Path
+        from ..morph.target import Target
+
+        if self.custom_targets_dir is None:
+            raise ValueError("no custom_targets directory configured (body.custom_targets)")
+        offsets = np.asarray(offsets, dtype=float).reshape(-1, 3)
+        if offsets.shape[0] != self.library.base.n_vertices:
+            raise ValueError(f"target has {offsets.shape[0]} rows, body has {self.library.base.n_vertices}")
+        d = Path(self.custom_targets_dir)
+        d.mkdir(parents=True, exist_ok=True)
+        t = Target(f"custom-{name}", offsets, description or f"sculpted in the viewer")
+        t.save(d / f"{name}.target")
+        return self.add_custom_target(name, t)
 
     # ------------------------------------------------------------ queries
     def modifiers(self) -> List[dict]:
