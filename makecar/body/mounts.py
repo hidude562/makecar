@@ -31,17 +31,25 @@ def _grid_loop(grid: np.ndarray) -> np.ndarray:
     return np.asarray(loop)
 
 
-def _side_panel(mesh: Mesh, name: str, x0: float, x1: float, ys: float, tags: List[str], rows: Optional[int] = None,
+def _side_panel(mesh: Mesh, name: str, x0: float, x1: float, ys: float, tags: List[str],
                 j_lo: int = J["D"], j_hi: int = J["E"], **meta) -> Optional[PolygonConnector]:
     """Grid on the outer skin between x0 < x1, from ring index j_lo (sill top) up to j_hi (belt)."""
     length = x1 - x0
     if length < 0.25:
         return None
     mir = (lambda j: j) if ys > 0 else mirror_index
-    rows = rows or int(np.clip(round(length / 0.09), 4, 16))
-    grid = np.array([surface_line_at_x(mesh, x, mir(j_lo), mir(j_hi)) for x in np.linspace(x0, x1, rows)])
+    js = [mir(j) for j in range(j_lo, j_hi + 1)]
+    # rows are the loft's own stations between the edges (exact vertices), plus the two edges on
+    # mesh edges, so the grid is the skin itself and a decal never sinks into a curve between samples
+    lines = [surface_line_at_x(mesh, x0, mir(j_lo), mir(j_hi))]
+    for i in range(N_STATIONS):
+        pts = mesh.vertices[[vidx(mesh, i, j) for j in js]]
+        if x0 + 0.015 < pts[:, 0].mean() < x1 - 0.015:
+            lines.append(pts)
+    lines.append(surface_line_at_x(mesh, x1, mir(j_lo), mir(j_hi)))
+    grid = np.array(lines)
     loop = _grid_loop(grid)
-    meta = {"grid": [rows, grid.shape[1]], "grid_points": grid, "side": "left" if ys > 0 else "right",
+    meta = {"grid": [len(lines), grid.shape[1]], "grid_points": grid, "side": "left" if ys > 0 else "right",
             "panel": True, **meta}
     return PolygonConnector.from_points(name, loop, normal_hint=[0.0, ys, 0.0], x_hint=[1.0, 0.0, 0.0],
                                         tags=["panel"] + tags, meta=meta)

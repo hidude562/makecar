@@ -36,8 +36,8 @@ for name in ("backend.js", "worker.js"):
     shutil.copy(ROOT / "web" / name, web / name)
 
 with zipfile.ZipFile(web / "makecar.zip", "w", zipfile.ZIP_DEFLATED) as zf:
-    for p in sorted((ROOT / "makecar").rglob("*.py")):
-        if "__pycache__" not in p.parts:
+    for p in sorted((ROOT / "makecar").rglob("*")):
+        if p.is_file() and "__pycache__" not in p.parts and p.suffix in (".py", ".json", ".txt"):
             zf.write(p, p.relative_to(ROOT).as_posix())
 
 os.environ["MAKECAR_CACHE"] = str(web / "cache")

@@ -7,7 +7,7 @@ import pytest
 from makecar.assembly import assemble
 from makecar.body.panels import ZONES, apply_livery, panel_faces
 from makecar.components import Palette, get_component
-from makecar.components.equipment import SurfaceGrid, glyph_runs
+from makecar.components.equipment import SurfaceGrid
 from makecar.config import CarConfig
 
 MOUNTS = {"roof_mount", "bumper_front", "spotlight_L", "spotlight_R", "antenna_aux_L", "antenna_aux_R"}
@@ -190,12 +190,6 @@ class TestEquipment:
 
 # ---------------------------------------------------------------- decals
 class TestDecals:
-    def test_glyph_runs_merge_pixels(self):
-        runs = glyph_runs("I")
-        assert (0, 5, 6, 7) in runs and (0, 5, 0, 1) in runs and (2, 3, 3, 4) in runs
-        assert glyph_runs(" ") == []
-        assert len(glyph_runs("AB")) > len(glyph_runs("A"))
-
     def test_surface_grid_uses_arc_length(self):
         # rows bunched near the start: half the parameter range covers a quarter of the length
         xs = np.concatenate([np.linspace(0, 1, 5), np.linspace(2, 4, 4)])
@@ -218,7 +212,7 @@ class TestDecals:
             # facing the driver's door the hood is on your left, so the text runs rearwards there
             assert sign * (last - first) > 0.3, side
             z = m.vertices[:, 2]
-            assert 0.12 < z.max() - z.min() < 0.16
+            assert 0.13 < z.max() - z.min() < 0.15   # cap height 0.14 plus the raised thickness
             panel = sedan.connector(f"panel_door_front_{side}")
             assert abs(m.vertices[:, 1]).max() < abs(panel.meta["grid_points"][..., 1]).max() + 0.006
 
@@ -230,7 +224,7 @@ class TestDecals:
         lo, hi = m.bounds()
         panel = sedan.connector("panel_fender_L")
         assert hi[2] - lo[2] < 0.09 and hi[0] - lo[0] > 0.9 * panel.width
-        assert set(m.face_materials) == {"decal_stripe"}
+        assert set(m.face_materials) == {"stripe_1b3a8a"}   # named by colour so merged cars keep every decal's colour
 
     def test_decal_needs_a_panel_and_something_to_draw(self, sedan, ctx):
         with pytest.raises(ValueError):

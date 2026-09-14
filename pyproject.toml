@@ -19,5 +19,8 @@ makecar = "makecar.cli:main"
 [tool.setuptools.packages.find]
 include = ["makecar*"]
 
+[tool.setuptools.package-data]
+makecar = ["data/fonts/*.json", "data/fonts/LICENSE*"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]

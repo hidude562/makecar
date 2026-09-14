@@ -180,7 +180,26 @@ components:
     panel_door_front: {component: decal.panel, options: {text: POLICE, stripe: true}}
 ```
 
-The lettering is a 5x7 dot font. Each dot is a thin box that sits on the panel's surface grid, so the text follows the curve of the door. `configs/police_marked.yaml`, `police_unmarked.yaml` and `police_undercover.yaml` are three cars the generator made. They open in the web editor too.
+`configs/police_marked.yaml`, `police_unmarked.yaml` and `police_undercover.yaml` are three cars the generator made. They open in the web editor too.
+
+## Text
+
+```yaml
+components:
+  assign:
+    panel_door_front: {component: text.box, options: {text: "TAXI", font: serif-bold, size: 0.12}}
+    plate_front: {component: text.box, options: {text: "PD-400", size: 0.05, color: "#f4f4f0"}}
+```
+
+`text.box` puts real text on any polygon connector. On a body panel it follows the curve of the skin. On a plain rectangle (a plate, the roof mount) it lies flat in the plane. `size` is the cap height in metres. `x` and `y` place the block on the panel, x along the car and y up the panel. There is `align`, `line_spacing`, `letter_spacing`, `slant_deg` (a fake italic), `case`, `kerning` and `fit`, which shrinks the text so it stays on the panel. Newlines in `text` make more lines. `decal.panel` uses the same engine and adds a stripe.
+
+Four fonts ship in `makecar/data/fonts`: `sans`, `sans-bold`, `sans-condensed-bold` and `serif-bold`. They come from the DejaVu fonts. To add one, run this on any TrueType file (it needs fonttools):
+
+```bash
+python -m scripts.extract_font MyFont.ttf -o makecar/data/fonts/my-font.json
+```
+
+Then use `font: my-font`, or give the path to the json. The letters are geometry, not a texture. The font json has the glyph outlines. Each glyph is cut into thin trapezoids with the nonzero winding rule, so the hole in an O comes out right. Then the trapezoids and the outline walls get lifted onto the panel through its surface grid, which is sampled at the loft's own stations so the letters sit on the skin.
 
 ## Turntable Gif
 
@@ -198,10 +217,11 @@ makecar/
   geometry/    mesh, frames, curves, primitives
   morph/       Target, Modifier, MorphableMesh
   body/        params, the loft generator, styles, targets, connectors, mounts, panels, CarBody
-  components/  exterior, interior and fleet equipment parts, decals
+  components/  exterior, interior and fleet equipment parts, decals, text
   reference/   photo tracing for the measured cars
   viewer/      the viewer (session.py is the api, server.py serves it locally)
   police.py    the police car generator
+  data/fonts/  glyph outlines for the text engine
   export/      obj, svg blueprint, png renderer
 configs/       sample configs
 references/    reference photos and credits

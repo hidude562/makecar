@@ -152,22 +152,25 @@ def police_config(tier: str, seed: int = 0, name: Optional[str] = None, features
 
     stripe = bool(f["stripe"])
     stripe_opts = {"stripe": True, "stripe_color": stripe_color, "stripe_accent": stripe_accent} if stripe else {}
+    font = rng.choice(["sans-bold", "sans-bold", "sans-condensed-bold", "serif-bold"])
+    if len(agency) > 9 and font == "sans-bold":
+        font = "sans-condensed-bold"
     if f["lettering"]:
         assign["panel_door_front"] = {"component": "decal.panel",
-                                      "options": {"text": agency, "text_height": 0.14, "text_color": text_color, **stripe_opts}}
+                                      "options": {"text": agency, "font": font, "text_height": 0.14, "text_color": text_color, **stripe_opts}}
         rear_text = "EMERGENCY 911" if rng.random() < 0.3 else None
         if rear_text or stripe:
             assign["panel_door_rear"] = {"component": "decal.panel",
-                                         "options": {"text": rear_text, "text_height": 0.06, "text_y": 0.3, "text_color": text_color, **stripe_opts}}
-        assign["panel_deck"] = {"component": "decal.panel", "options": {"text": agency, "text_height": 0.10, "text_color": text_color_on("deck")}}
+                                         "options": {"text": rear_text, "font": font, "text_height": 0.06, "text_y": 0.3, "text_color": text_color, **stripe_opts}}
+        assign["panel_deck"] = {"component": "decal.panel", "options": {"text": agency, "font": font, "text_height": 0.10, "text_color": text_color_on("deck")}}
         if rng.random() < 0.35:
             assign["panel_hood"] = {"component": "decal.panel",
-                                    "options": {"text": agency, "text_height": 0.16, "text_x": 0.55, "text_color": text_color_on("hood")}}
+                                    "options": {"text": agency, "font": font, "text_height": 0.16, "text_x": 0.55, "text_color": text_color_on("hood")}}
     if f["unit_number"]:
         assign["panel_quarter"] = {"component": "decal.panel",
-                                   "options": {"text": unit, "text_height": 0.09, "text_y": 0.3, "text_color": text_color, **stripe_opts}}
+                                   "options": {"text": unit, "font": font, "text_height": 0.09, "text_y": 0.3, "text_color": text_color, **stripe_opts}}
         assign["panel_roof"] = {"component": "decal.panel",
-                                "options": {"text": unit, "text_height": 0.32, "text_x": 0.35, "text_color": text_color_on("roof")}}
+                                "options": {"text": unit, "font": font, "text_height": 0.32, "text_x": 0.35, "text_color": text_color_on("roof")}}
     elif stripe:
         assign["panel_quarter"] = {"component": "decal.panel", "options": dict(stripe_opts)}
     if stripe:

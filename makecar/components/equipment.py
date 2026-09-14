@@ -19,6 +19,7 @@ from ..connectors import PointConnector, PolygonConnector, RectangleConnector
 from .base import CarComponent, ComponentResult, BuildContext, register
 from .exterior import _part, _pipe
 from .fills import grid_mesh
+from .text import DEFAULT_FONT, load_font, layout as text_layout, planar_mapper, sized_to_fit, text_mesh
 from . import interior_helpers as H
 
 LENS_COLORS = {"red": "#d8262d", "blue": "#2557d6", "amber": "#e9a33a", "clear": "#e8eef5"}
@@ -327,51 +328,6 @@ class DeckLight(CarComponent):
 
 
 # =============================================================== DECALS
-FONT = {
-    "A": ".###.|#...#|#...#|#####|#...#|#...#|#...#", "B": "####.|#...#|#...#|####.|#...#|#...#|####.",
-    "C": ".####|#....|#....|#....|#....|#....|.####", "D": "####.|#...#|#...#|#...#|#...#|#...#|####.",
-    "E": "#####|#....|#....|####.|#....|#....|#####", "F": "#####|#....|#....|####.|#....|#....|#....",
-    "G": ".####|#....|#....|#.###|#...#|#...#|.####", "H": "#...#|#...#|#...#|#####|#...#|#...#|#...#",
-    "I": "#####|..#..|..#..|..#..|..#..|..#..|#####", "J": "..###|...#.|...#.|...#.|...#.|#..#.|.##..",
-    "K": "#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#", "L": "#....|#....|#....|#....|#....|#....|#####",
-    "M": "#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#", "N": "#...#|##..#|#.#.#|#..##|#...#|#...#|#...#",
-    "O": ".###.|#...#|#...#|#...#|#...#|#...#|.###.", "P": "####.|#...#|#...#|####.|#....|#....|#....",
-    "Q": ".###.|#...#|#...#|#...#|#.#.#|#..#.|.##.#", "R": "####.|#...#|#...#|####.|#.#..|#..#.|#...#",
-    "S": ".####|#....|#....|.###.|....#|....#|####.", "T": "#####|..#..|..#..|..#..|..#..|..#..|..#..",
-    "U": "#...#|#...#|#...#|#...#|#...#|#...#|.###.", "V": "#...#|#...#|#...#|#...#|#...#|.#.#.|..#..",
-    "W": "#...#|#...#|#...#|#.#.#|#.#.#|##.##|#...#", "X": "#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#",
-    "Y": "#...#|#...#|.#.#.|..#..|..#..|..#..|..#..", "Z": "#####|....#|...#.|..#..|.#...|#....|#####",
-    "0": ".###.|#...#|#..##|#.#.#|##..#|#...#|.###.", "1": "..#..|.##..|..#..|..#..|..#..|..#..|.###.",
-    "2": ".###.|#...#|....#|...#.|..#..|.#...|#####", "3": "#####|...#.|..#..|...#.|....#|#...#|.###.",
-    "4": "...#.|..##.|.#.#.|#..#.|#####|...#.|...#.", "5": "#####|#....|####.|....#|....#|#...#|.###.",
-    "6": "..##.|.#...|#....|####.|#...#|#...#|.###.", "7": "#####|....#|...#.|..#..|.#...|.#...|.#...",
-    "8": ".###.|#...#|#...#|.###.|#...#|#...#|.###.", "9": ".###.|#...#|#...#|.####|....#|...#.|.##..",
-    " ": ".....|.....|.....|.....|.....|.....|.....", "-": ".....|.....|.....|#####|.....|.....|.....",
-    ".": ".....|.....|.....|.....|.....|.....|..#..", "&": ".##..|#..#.|#..#.|.##..|#.#.#|#..#.|.##.#",
-    "/": "....#|...#.|...#.|..#..|.#...|.#...|#....", "'": "..#..|..#..|.....|.....|.....|.....|.....",
-}
-
-
-def glyph_runs(text: str) -> List[Tuple[float, float, float, float]]:
-    """Filled rectangles (x0, x1, y0, y1) in pixel units for `text`; y up, baseline 0, 7 px tall, 6 px pitch."""
-    runs = []
-    for k, ch in enumerate(text.upper()):
-        rows = FONT.get(ch, FONT[" "]).split("|")
-        for r, row in enumerate(rows):
-            y0, y1 = 6 - r, 7 - r
-            c = 0
-            while c < 5:
-                if row[c] == "#":
-                    c1 = c
-                    while c1 < 5 and row[c1] == "#":
-                        c1 += 1
-                    runs.append((k * 6 + c, k * 6 + c1, y0, y1))
-                    c = c1
-                else:
-                    c += 1
-    return runs
-
-
 class SurfaceGrid:
     """Bilinear surface over a (rows, cols, 3) point grid: axis 0 (u) runs along rows, axis 1 (v) along columns.
 
@@ -457,6 +413,19 @@ def _reading(conn: PolygonConnector, orient: str) -> str:
     return "rear"
 
 
+def _text_directions(conn: PolygonConnector, orient: str) -> Tuple[np.ndarray, np.ndarray]:
+    """World-space (advance, up) for reading text on this connector."""
+    if orient in VIEW_DIRS:
+        return tuple(np.asarray(v, dtype=float) for v in VIEW_DIRS[orient])  # type: ignore[return-value]
+    n = conn.frame.z_axis
+    if conn.meta.get("grid_points") is None and abs(n[2]) < 0.5:
+        # any upright surface (a plate, a fascia rectangle): read it facing the surface
+        up = np.array([0.0, 0.0, 1.0])
+        adv = np.cross(-n, up)
+        return adv / np.linalg.norm(adv), up
+    return tuple(np.asarray(v, dtype=float) for v in VIEW_DIRS[_reading(conn, orient)])  # type: ignore[return-value]
+
+
 class PanelFrame:
     """Panel coordinates on a surface grid: x runs along the car (0 = rear edge, 1 = front edge);
     y runs up a side panel (0 = sill) or left-to-right across a top panel."""
@@ -480,6 +449,91 @@ class PanelFrame:
         return np.array([self.S.to_param(0, arc[0]), self.S.to_param(1, arc[1])], dtype=float)
 
 
+def text_mapper(conn: PolygonConnector, orient: str, fx: float, fy: float):
+    """(mapper, room) for a text block centred at panel fractions (fx, fy): text-plane metres ->
+    world points and normals, on the panel's surface grid when it has one, else flat in its plane.
+    `room` is the panel's extent along the reading direction."""
+    adv_dir, up_dir = _text_directions(conn, orient)
+    grid = conn.meta.get("grid_points")
+    if grid is not None:
+        S = SurfaceGrid(grid, conn.frame.z_axis)
+        F = PanelFrame(S, side_panel=abs(float(conn.frame.z_axis[2])) < 0.5)
+        (ax_a, sa), (ax_u, su) = S.axis_for(adv_dir), S.axis_for(up_dir)
+        if ax_a == ax_u:
+            raise ValueError(f"{conn.name}: panel grid too skewed to place text")
+        centre = np.asarray(F.arc(fx, fy), dtype=float)
+
+        def mapper(P: np.ndarray):
+            q = np.tile(centre, (len(P), 1))
+            q[:, ax_a] += sa * P[:, 0] / S.length[ax_a]
+            q[:, ax_u] += su * P[:, 1] / S.length[ax_u]
+            u, v = S.to_param(0, q[:, 0]), S.to_param(1, q[:, 1])
+            return S.point(u, v), S.normal(u, v)
+
+        return mapper, S.length[ax_a]
+    fr = conn.frame
+    adv = np.array([adv_dir @ fr.x_axis, adv_dir @ fr.y_axis])
+    up = np.array([up_dir @ fr.x_axis, up_dir @ fr.y_axis])
+    if np.linalg.norm(adv) < 1e-6 or np.linalg.norm(up) < 1e-6:
+        raise ValueError(f"{conn.name}: text direction lies out of the connector's plane; set orient")
+    adv, up = adv / np.linalg.norm(adv), up / np.linalg.norm(up)
+    lp = conn.local_points()
+    a, b = lp @ adv, lp @ up
+    origin = (a.min() + fx * (a.max() - a.min())) * adv + (b.min() + fy * (b.max() - b.min())) * up
+    return planar_mapper(fr, adv, up, origin), float(a.max() - a.min())
+
+
+def _colour_material(kind: str, color: str) -> str:
+    return f"{kind}_{str(color).lstrip('#').lower()}"
+
+
+def add_text(m: Mesh, conn: PolygonConnector, ctx: BuildContext, text: str, *, font: str = DEFAULT_FONT, size: float = 0.12,
+             x: float = 0.5, y: float = 0.5, color: str = "#f4f4f0", align: str = "center", line_spacing: float = 1.15,
+             letter_spacing: float = 0.0, slant_deg: float = 0.0, kerning: bool = True, orient: str = "auto",
+             fit: bool = True, thickness: float = 0.0015, case: Optional[str] = None, material: Optional[str] = None) -> dict:
+    """Lay `text` out on the connector and merge the letters into `m` (world space).
+    The material is named by colour, so decals in different colours survive being merged into one car."""
+    fnt = load_font(font)
+    material = material or _colour_material("text", color)
+    text = {"upper": text.upper(), "lower": text.lower()}.get(str(case or "").lower(), text)
+    mapper, room = text_mapper(conn, orient, float(x), float(y))
+    lay_fn = lambda s: text_layout(text, fnt, s, align, float(line_spacing), float(letter_spacing), float(slant_deg), bool(kerning))  # noqa: E731
+    lay = sized_to_fit(lay_fn, float(size), room * 0.85) if fit else lay_fn(float(size))
+    letters = text_mesh(lay, mapper, float(thickness), material, base=0.0005, name="text")
+    m.materials[material] = ctx.material(material, color, shininess=0.5)
+    m.merge(letters)
+    return {"text": text, "font": fnt.name, "size": lay.height if "\n" not in text else float(size), "width": lay.width,
+            "cap_height": lay.height if "\n" not in text else None, "glyphs": len(lay.glyphs)}
+
+
+@register
+class TextBox(CarComponent):
+    """A block of text on any polygon connector: curved onto a body panel's surface grid, or
+    flat in the connector's plane (a plate, a fascia rectangle, the roof mount).
+
+    `size` is the cap height in metres; `x`/`y` place the block centre as fractions of the
+    panel (x along the car from the rear edge, y up a side panel or across a top one)."""
+
+    name = "text.box"
+    accepts = (PolygonConnector,)
+    default_for = ()
+    options = {"text": "TEXT", "font": DEFAULT_FONT, "size": 0.12, "color": "#f4f4f0", "x": 0.5, "y": 0.5,
+               "align": "center", "line_spacing": 1.15, "letter_spacing": 0.0, "slant_deg": 0.0, "kerning": True,
+               "orient": "auto", "fit": True, "thickness": 0.0015, "case": None}
+    description = "text block with real fonts (sans, sans-bold, sans-condensed-bold, serif-bold), wrapped onto the connector"
+
+    def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
+        text = str(opts["text"] or "")
+        if not text.strip():
+            raise ValueError(f"{conn.name}: text.box needs some text")
+        m = Mesh(name="text_box")
+        info = add_text(m, conn, ctx, text, **{k: opts[k] for k in ("font", "size", "x", "y", "color", "align", "line_spacing",
+                                                                    "letter_spacing", "slant_deg", "kerning", "orient", "fit",
+                                                                    "thickness", "case")})
+        m.transform(np.linalg.inv(conn.frame.matrix))
+        return ComponentResult(m, [], info)
+
+
 @register
 class PanelDecal(CarComponent):
     """Lettering and/or a stripe on a body panel, wrapped onto the panel's surface grid.
@@ -490,10 +544,11 @@ class PanelDecal(CarComponent):
     name = "decal.panel"
     accepts = (PolygonConnector,)
     default_for = ()
-    options = {"text": None, "text_height": 0.15, "text_x": 0.5, "text_y": 0.42, "text_color": "#f4f4f0",
-               "orient": "auto", "stripe": False, "stripe_y": 0.66, "stripe_height": 0.06, "stripe_x": (0.02, 0.98),
+    options = {"text": None, "font": DEFAULT_FONT, "text_height": 0.15, "text_x": 0.5, "text_y": 0.42, "text_color": "#f4f4f0",
+               "align": "center", "line_spacing": 1.15, "letter_spacing": 0.0, "slant_deg": 0.0, "orient": "auto",
+               "stripe": False, "stripe_y": 0.66, "stripe_height": 0.06, "stripe_x": (0.02, 0.98),
                "stripe_color": "#1b3a8a", "stripe_accent": "#d9b13b", "thickness": 0.0015}
-    description = "dot-matrix lettering and a reflective stripe, conforming to a body panel"
+    description = "lettering (real fonts) and a reflective stripe, conforming to a body panel"
 
     def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
         grid = conn.meta.get("grid_points")
@@ -510,45 +565,25 @@ class PanelDecal(CarComponent):
             hy = float(opts["stripe_height"]) / F.len_y
             yc = float(opts["stripe_y"])
             nu = max(6, int(F.len_x * abs(x1 - x0) / 0.03))
-            mats["decal_stripe"] = ctx.material("decal_stripe", opts["stripe_color"], shininess=0.6)
-            bands = [("decal_stripe", yc - hy / 2, yc + hy / 2, "stripe")]
+            stripe_mat = _colour_material("stripe", opts["stripe_color"])
+            mats[stripe_mat] = ctx.material(stripe_mat, opts["stripe_color"], shininess=0.6)
+            bands = [(stripe_mat, yc - hy / 2, yc + hy / 2, "stripe")]
             if opts["stripe_accent"]:
-                mats["decal_accent"] = ctx.material("decal_accent", opts["stripe_accent"], shininess=0.6)
-                bands.append(("decal_accent", yc - hy * 0.95, yc - hy * 0.65, "accent"))
+                accent_mat = _colour_material("stripe", opts["stripe_accent"])
+                mats[accent_mat] = ctx.material(accent_mat, opts["stripe_accent"], shininess=0.6)
+                bands.append((accent_mat, yc - hy * 0.95, yc - hy * 0.65, "accent"))
             for mat, y_lo, y_hi, nm in bands:
                 a, b = F.raw(F.arc(x0, y_lo)), F.raw(F.arc(x1, y_hi))
                 lo, hi = np.minimum(a, b), np.maximum(a, b)
                 nus = (nu, 2) if F.ax_x == 0 else (2, nu)
                 _part(m, S.slab(lo[0], hi[0], lo[1], hi[1], t, mat, nu=nus[0], nv=nus[1], name=nm), nm)
             info["stripe_y"] = yc
-        text = opts["text"]
-        if text:
-            text = str(text)
-            reading = _reading(conn, str(opts["orient"]))
-            adv_dir, up_dir = VIEW_DIRS[reading]
-            (ax_a, sa), (ax_u, su) = S.axis_for(adv_dir), S.axis_for(up_dir)
-            if ax_a == ax_u:
-                raise ValueError(f"{conn.name}: panel grid too skewed to place text")
-            px = float(opts["text_height"]) / 7.0
-            n_px = len(text) * 6 - 1
-            room = S.length[ax_a] * 0.80
-            if n_px * px > room:
-                px = room / n_px
-            width, height = n_px * px, 7 * px
-            centre = F.arc(float(opts["text_x"]), float(opts["text_y"]))
-            mats["decal_text"] = ctx.material("decal_text", opts["text_color"], shininess=0.5)
-
-            def raw(a: float, b: float) -> np.ndarray:
-                q = list(centre)
-                q[ax_a] += sa * (a - width / 2) / S.length[ax_a]
-                q[ax_u] += su * (b - height / 2) / S.length[ax_u]
-                return F.raw(q)
-
-            for k, (x0, x1, y0, y1) in enumerate(glyph_runs(text)):
-                p0, p1 = raw(x0 * px, y0 * px), raw(x1 * px, y1 * px)
-                lo, hi = np.minimum(p0, p1), np.maximum(p0, p1)
-                _part(m, S.slab(lo[0], hi[0], lo[1], hi[1], t * 1.4, "decal_text", base=t * 0.2, name="glyph"), f"glyph_{k}")
-            info.update({"text": text, "text_px": px, "reading": reading})
+        if opts["text"]:
+            info.update(add_text(m, conn, ctx, str(opts["text"]), font=opts["font"], size=float(opts["text_height"]),
+                                 x=float(opts["text_x"]), y=float(opts["text_y"]), color=opts["text_color"], align=opts["align"],
+                                 line_spacing=opts["line_spacing"], letter_spacing=opts["letter_spacing"],
+                                 slant_deg=opts["slant_deg"], orient=str(opts["orient"]), thickness=t))
+            info["reading"] = _reading(conn, str(opts["orient"]))
         if m.n_faces == 0:
             raise ValueError(f"{conn.name}: decal.panel needs text and/or stripe")
         m.materials.update(mats)
