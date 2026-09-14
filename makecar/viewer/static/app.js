@@ -4,17 +4,37 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { TransformControls } from 'three/addons/controls/TransformControls.js';
 
 // ---------------------------------------------------------------- API
+// The static web build sets window.makecarTransport to run the same API in a Pyodide worker.
+const WEB = !!window.makecarTransport;
+const transport = window.makecarTransport || (async (url, body) => {
+  const r = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  return { ok: r.ok, statusText: r.statusText, buf: await r.arrayBuffer() };
+});
+const decode = (buf) => new TextDecoder().decode(buf);
+const errorOf = (r) => { try { return JSON.parse(decode(r.buf)).error || r.statusText; } catch (e) { return r.statusText || 'request failed'; } };
 const api = {
   async json(url, body) {
-    const r = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
-    const j = await r.json();
-    if (!r.ok || j.error) throw new Error(j.error || r.statusText);
-    return j;
+    const r = await transport(url, body);
+    if (!r.ok) throw new Error(errorOf(r));
+    return JSON.parse(decode(r.buf));
   },
   async bin(url, body) {
-    const r = await fetch(url, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
-    if (!r.ok) { let m = r.statusText; try { m = (await r.json()).error || m; } catch (e) {} throw new Error(m); }
-    return parseMCB(await r.arrayBuffer());
+    const r = await transport(url, body);
+    if (!r.ok) throw new Error(errorOf(r));
+    return parseMCB(r.buf);
+  },
+  async text(url) {
+    const r = await transport(url);
+    if (!r.ok) throw new Error(errorOf(r));
+    return decode(r.buf);
+  },
+  async download(url, body, filename) {
+    const r = await transport(url, body);
+    if (!r.ok) throw new Error(errorOf(r));
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([r.buf]));
+    a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   },
 };
 function parseMCB(buf) {
@@ -344,11 +364,24 @@ $('#sc-save').addEventListener('click', async () => {
 });
 
 // ---------------------------------------------------------------- sidebar: config
-async function loadConfigText() { try { $('#cfg-text').value = await (await fetch('/api/config.yaml')).text(); } catch (e) {} }
+async function loadConfigText() { try { $('#cfg-text').value = await api.text('/api/config.yaml'); } catch (e) {} }
 $('#cfg-reload').addEventListener('click', loadConfigText);
 $('#cfg-apply').addEventListener('click', async () => { try { state = await api.json('/api/config', { yaml: $('#cfg-text').value }); connectors = state.connectors; await fetchBody(); renderSidebar(); updateHeader(); autoAssemble(); $('#cfg-status').textContent = 'applied'; } catch (e) { $('#cfg-status').textContent = e.message; msg(e.message, false); } });
-$('#cfg-export').addEventListener('click', async () => { try { $('#cfg-status').textContent = 'exporting…'; const r = await api.json('/api/export', { formats: ['obj', 'json'] }); $('#cfg-status').textContent = 'wrote ' + r.files.map(f => f.split('/').slice(-2).join('/')).join(', '); } catch (e) { $('#cfg-status').textContent = e.message; } });
-$('#btn-save').addEventListener('click', async () => { try { let path = state.config_path; if (!path) { path = prompt('Save config as (path):', 'configs/untitled.yaml'); if (!path) return; } const r = await api.json('/api/save', { path }); state.config_path = r.saved; state.dirty = false; updateHeader(); loadConfigText(); msg('saved ' + r.saved); } catch (e) { msg(e.message, false); } });
+const carName = () => state.config.name || 'untitled';
+$('#cfg-export').addEventListener('click', async () => {
+  try {
+    $('#cfg-status').textContent = 'exporting…';
+    if (WEB) { await api.download('/api/export.zip', { formats: ['obj', 'json'] }, `${carName()}.zip`); $('#cfg-status').textContent = `downloaded ${carName()}.zip`; return; }
+    const r = await api.json('/api/export', { formats: ['obj', 'json'] }); $('#cfg-status').textContent = 'wrote ' + r.files.map(f => f.split('/').slice(-2).join('/')).join(', ');
+  } catch (e) { $('#cfg-status').textContent = e.message; }
+});
+$('#btn-save').addEventListener('click', async () => {
+  try {
+    if (WEB) { await api.download('/api/config.yaml', null, `${carName()}.yaml`); state.dirty = false; updateHeader(); msg(`downloaded ${carName()}.yaml`); return; }
+    let path = state.config_path; if (!path) { path = prompt('Save config as (path):', 'configs/untitled.yaml'); if (!path) return; }
+    const r = await api.json('/api/save', { path }); state.config_path = r.saved; state.dirty = false; updateHeader(); loadConfigText(); msg('saved ' + r.saved);
+  } catch (e) { msg(e.message, false); }
+});
 $('#btn-assemble').addEventListener('click', () => fetchAssembly().catch(e => msg(e.message, false)));
 
 // ---------------------------------------------------------------- toolbar

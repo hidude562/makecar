@@ -4,6 +4,8 @@
 
 MakeHuman but for cars. You write a config file and it builds the whole car, the outside and the inside.
 
+You can try the editor in your browser here: https://hidude562.github.io/makecar/
+
 ## How It Works
 
 It works the same way MakeHuman does for people. There is one base body mesh, and its topology never changes. A target is a set of offsets for each vertex on that mesh. A slider sets how much of a target gets added. Vertex *j* of every ring is always the same feature (the sill, the belt line, the roof rail), so a target made on one body still works on any other body.
@@ -18,7 +20,7 @@ The body has:
 
 The morphed body gives out connectors. These are like the joints in MakeHuman. A connector is a point, polygon, rectangle or circle, and it is placed from vertex groups on the morphed mesh. That way the connectors follow every slider.
 
-Components attach to connectors. These are the wheels, seats, lamps, dashboard and so on. Some components use targets too. For instance, a wheel connector that has a bigger radius drives the `radius` slider on the wheel. Components can also have their own connectors (the dashboard has a cluster, a screen and vents), and those get filled in the same way.
+Components attach to connectors. These are the wheels, seats, lamps, dashboard and so on. Some components use targets too. For instance, a wheel connector that has a bigger radius drives the `radius` slider on the wheel. Some components also give out connectors (the dashboard has a cluster, a screen and vents), and those get filled in the same way.
 
 To add a component, register it with `@register` and set `default_for` to the tags it should take over.
 
@@ -102,6 +104,26 @@ This opens http://127.0.0.1:8765. It is a local web app that uses the python `ht
 - **Sculpt:** a mirrored brush that pushes or pulls the body. *Save as target* writes a `.target` file and adds it as a `custom/<name>` slider.
 - **Config:** the live yaml. You can edit it and save it from here.
 
+## Web Editor
+
+The viewer also runs as a static site on GitHub Pages. It runs the same Python code in the browser with Pyodide. The first load downloads around 10 MB (python, numpy and makecar), and then it is ready in 10 seconds or so. A slider change takes a second. Assembling the parts again takes 1 to 2 seconds, which is a little slower than running it locally. Some things work differently:
+
+- Save and Export download the file instead of writing it.
+- A sculpted target only lasts until you close the tab.
+- `?config=suv` opens a different config. It can be any file name from `configs/` or `configs/measured/`.
+
+To build the site yourself:
+
+```bash
+python -m scripts.build_web -o site
+```
+
+Then serve the `site` folder with `python -m http.server`. The build script also builds the target libraries and puts them in the site, so the browser does not have to build them.
+
+## Deploy
+
+Pushing to `main` deploys the site. `.github/workflows/pages.yml` runs a quick set of tests (around 200 of them), builds the site and publishes it. The full test suite runs separately in `tests.yml`. That way a slow test run does not hold up the site.
+
 ## Output
 
 Each car goes in `output/<name>/`:
@@ -136,10 +158,11 @@ makecar/
   body/        params, the loft generator, styles, targets, connectors, CarBody
   components/  exterior and interior parts
   reference/   photo tracing for the measured cars
-  viewer/      the web viewer
+  viewer/      the viewer (session.py is the api, server.py serves it locally)
   export/      obj, svg blueprint, png renderer
 configs/       sample configs
 references/    reference photos and credits
-scripts/       helper scripts
+scripts/       helper scripts, including the web build
+web/           the Pyodide worker for the web editor
 tests/         pytest
 ```

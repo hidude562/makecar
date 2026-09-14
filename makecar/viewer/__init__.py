@@ -7,4 +7,4 @@ and interaction.  Edits are ordinary config state (modifier values, connector
 overrides, component assignments) or `.target` files, so anything done in the
 viewer can be saved and reproduced from the command line.
 """
-from .server import serve, ViewerSession  # noqa: F401
+from .session import ViewerSession, dispatch  # noqa: F401

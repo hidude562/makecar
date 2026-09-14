@@ -194,3 +194,16 @@ def test_export(server):
     status, _, body = c.post("/api/export", {"formats": ["json"]})
     r = json.loads(body)
     assert status == 200 and any(f.endswith("assembly.json") for f in r["files"])
+
+
+def test_export_zip_and_unknown_endpoints(server):
+    import io
+    import zipfile
+
+    c = Client(server["port"])
+    status, ctype, body = c.post("/api/export.zip", {"formats": ["json"]})
+    assert status == 200 and ctype == "application/zip"
+    names = zipfile.ZipFile(io.BytesIO(body)).namelist()
+    assert "viewer_test/assembly.json" in names and "viewer_test/connectors.json" in names
+    assert c.get("/api/nope")[0] == 404
+    assert c.post("/api/nope", {})[0] == 404
