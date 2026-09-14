@@ -19,7 +19,7 @@ from ..connectors import PointConnector, PolygonConnector, RectangleConnector
 from .base import CarComponent, ComponentResult, BuildContext, register
 from .exterior import _part, _pipe
 from .fills import grid_mesh
-from .text import DEFAULT_FONT, load_font, layout as text_layout, planar_mapper, sized_to_fit, text_mesh
+from .text import DEFAULT_FONT, load_font, layout as text_layout, planar_mapper, sized_to_fit, text_layers
 from . import interior_helpers as H
 
 LENS_COLORS = {"red": "#d8262d", "blue": "#2557d6", "amber": "#e9a33a", "clear": "#e8eef5"}
@@ -490,20 +490,30 @@ def _colour_material(kind: str, color: str) -> str:
 def add_text(m: Mesh, conn: PolygonConnector, ctx: BuildContext, text: str, *, font: str = DEFAULT_FONT, size: float = 0.12,
              x: float = 0.5, y: float = 0.5, color: str = "#f4f4f0", align: str = "center", line_spacing: float = 1.15,
              letter_spacing: float = 0.0, slant_deg: float = 0.0, kerning: bool = True, orient: str = "auto",
-             fit: bool = True, thickness: float = 0.0015, case: Optional[str] = None, material: Optional[str] = None) -> dict:
+             fit: bool = True, thickness: float = 0.0015, case: Optional[str] = None, outline: float = 0.0,
+             outline_color: str = "#14213d", material: Optional[str] = None, group: Optional[str] = None) -> dict:
     """Lay `text` out on the connector and merge the letters into `m` (world space).
     The material is named by colour, so decals in different colours survive being merged into one car."""
     fnt = load_font(font)
     material = material or _colour_material("text", color)
+    outline = float(outline or 0.0)
+    outline_material = _colour_material("text", outline_color) if outline > 0 else None
     text = {"upper": text.upper(), "lower": text.lower()}.get(str(case or "").lower(), text)
     mapper, room = text_mapper(conn, orient, float(x), float(y))
     lay_fn = lambda s: text_layout(text, fnt, s, align, float(line_spacing), float(letter_spacing), float(slant_deg), bool(kerning))  # noqa: E731
     lay = sized_to_fit(lay_fn, float(size), room * 0.85) if fit else lay_fn(float(size))
-    letters = text_mesh(lay, mapper, float(thickness), material, base=0.0005, name="text")
+    letters = text_layers(lay, mapper, float(thickness), material, base=0.0005, outline=outline,
+                          outline_material=outline_material, name="text")
     m.materials[material] = ctx.material(material, color, shininess=0.5)
-    m.merge(letters)
-    return {"text": text, "font": fnt.name, "size": lay.height if "\n" not in text else float(size), "width": lay.width,
-            "cap_height": lay.height if "\n" not in text else None, "glyphs": len(lay.glyphs)}
+    if outline_material:
+        m.materials[outline_material] = ctx.material(outline_material, outline_color, shininess=0.5)
+    m.merge(letters, group_prefix=group)
+    return {"text": text, "font": fnt.name, "size": lay.size, "width": lay.width, "height": lay.height,
+            "glyphs": len(lay.glyphs), "outline": outline}
+
+
+TEXT_KEYS = ("font", "size", "x", "y", "color", "align", "line_spacing", "letter_spacing", "slant_deg", "kerning", "orient",
+             "fit", "thickness", "case", "outline", "outline_color")
 
 
 @register
@@ -519,17 +529,15 @@ class TextBox(CarComponent):
     default_for = ()
     options = {"text": "TEXT", "font": DEFAULT_FONT, "size": 0.12, "color": "#f4f4f0", "x": 0.5, "y": 0.5,
                "align": "center", "line_spacing": 1.15, "letter_spacing": 0.0, "slant_deg": 0.0, "kerning": True,
-               "orient": "auto", "fit": True, "thickness": 0.0015, "case": None}
-    description = "text block with real fonts (sans, sans-bold, sans-condensed-bold, serif-bold), wrapped onto the connector"
+               "orient": "auto", "fit": True, "thickness": 0.0015, "case": None, "outline": 0.0, "outline_color": "#14213d"}
+    description = "text block with real fonts (see makecar/data/fonts), optional outline, wrapped onto the connector"
 
     def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
         text = str(opts["text"] or "")
         if not text.strip():
             raise ValueError(f"{conn.name}: text.box needs some text")
         m = Mesh(name="text_box")
-        info = add_text(m, conn, ctx, text, **{k: opts[k] for k in ("font", "size", "x", "y", "color", "align", "line_spacing",
-                                                                    "letter_spacing", "slant_deg", "kerning", "orient", "fit",
-                                                                    "thickness", "case")})
+        info = add_text(m, conn, ctx, text, **{k: opts[k] for k in TEXT_KEYS})
         m.transform(np.linalg.inv(conn.frame.matrix))
         return ComponentResult(m, [], info)
 
@@ -546,9 +554,10 @@ class PanelDecal(CarComponent):
     default_for = ()
     options = {"text": None, "font": DEFAULT_FONT, "text_height": 0.15, "text_x": 0.5, "text_y": 0.42, "text_color": "#f4f4f0",
                "align": "center", "line_spacing": 1.15, "letter_spacing": 0.0, "slant_deg": 0.0, "orient": "auto",
+               "case": None, "outline": 0.0, "outline_color": "#14213d", "texts": (),
                "stripe": False, "stripe_y": 0.66, "stripe_height": 0.06, "stripe_x": (0.02, 0.98),
                "stripe_color": "#1b3a8a", "stripe_accent": "#d9b13b", "thickness": 0.0015}
-    description = "lettering (real fonts) and a reflective stripe, conforming to a body panel"
+    description = "lettering (real fonts, outlines, extra text blocks) and a reflective stripe, conforming to a body panel"
 
     def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
         grid = conn.meta.get("grid_points")
@@ -582,8 +591,21 @@ class PanelDecal(CarComponent):
             info.update(add_text(m, conn, ctx, str(opts["text"]), font=opts["font"], size=float(opts["text_height"]),
                                  x=float(opts["text_x"]), y=float(opts["text_y"]), color=opts["text_color"], align=opts["align"],
                                  line_spacing=opts["line_spacing"], letter_spacing=opts["letter_spacing"],
-                                 slant_deg=opts["slant_deg"], orient=str(opts["orient"]), thickness=t))
+                                 slant_deg=opts["slant_deg"], orient=str(opts["orient"]), thickness=t, case=opts["case"],
+                                 outline=opts["outline"], outline_color=opts["outline_color"]))
             info["reading"] = _reading(conn, str(opts["orient"]))
+        blocks = []
+        for i, block in enumerate(opts["texts"] or ()):
+            kw = dict(block)
+            text = str(kw.pop("text", "") or "")
+            bad = set(kw) - set(TEXT_KEYS)
+            if bad:
+                raise ValueError(f"{conn.name}: texts[{i}] has unknown keys {sorted(bad)}; use {TEXT_KEYS}")
+            if text.strip():
+                kw.setdefault("thickness", t)
+                blocks.append(add_text(m, conn, ctx, text, group=f"text{i}", **kw))
+        if blocks:
+            info["texts"] = blocks
         if m.n_faces == 0:
             raise ValueError(f"{conn.name}: decal.panel needs text and/or stripe")
         m.materials.update(mats)

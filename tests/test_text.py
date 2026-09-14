@@ -20,14 +20,14 @@ def _area(c):
 
 class TestFonts:
     def test_shipped_fonts_load_with_metrics_and_kerning(self):
-        assert {"sans", "sans-bold", "sans-condensed-bold", "serif-bold"} <= set(font_names())
+        assert {"sans", "sans-bold", "sans-condensed-bold", "serif-bold", "serif-condensed-bold", "mono-bold"} <= set(font_names())
         assert (FONT_DIR / "LICENSE.txt").exists()
         for name in font_names():
             f = load_font(name)
             assert f.units_per_em > 0 and 0 < f.cap_height < f.ascender and f.descender < 0
             assert {"A", "Z", "0", "9", " ", "-"} <= set(f.glyphs)
             assert f.glyph("O").contours and not f.glyph(" ").contours
-            assert f.kerning.get("AV", 0) < 0
+            assert f.kerning.get("AV", 0) < 0 or name == "mono-bold"
             assert f.glyph("é") is not None
         assert load_font("sans-bold") is load_font("sans-bold")
         with pytest.raises(KeyError):
@@ -123,6 +123,35 @@ class TestTextBox:
     def test_decal_panel_uses_the_same_engine(self, sedan, ctx):
         r = get_component("decal.panel").build(sedan.connector("panel_hood"), {"text": "POLICE", "font": "sans-condensed-bold", "text_height": 0.16}, ctx)
         assert r.info["font"] == "sans-condensed-bold" and r.info["reading"] == "front" and "glyph_5" in r.mesh.groups
+
+    def test_outline_and_text_blocks(self, sedan, ctx):
+        comp = get_component("text.box")
+        plain = comp.build(sedan.connector("panel_door_front_L"), {"text": "POLICE", "size": 0.14}, ctx).mesh
+        out = comp.build(sedan.connector("panel_door_front_L"), {"text": "POLICE", "size": 0.14, "outline": 0.006, "outline_color": "#ffffff"}, ctx).mesh
+        assert "outline/glyph_0" in out.groups and "glyph_0" in out.groups
+        assert {"text_f4f4f0", "text_ffffff"} <= set(out.materials)
+        lo_p, hi_p = plain.bounds()
+        lo_o, hi_o = out.bounds()
+        assert hi_o[2] - lo_o[2] > hi_p[2] - lo_p[2] + 0.010     # 6 mm on each side, a little chord loss
+        # the outline sits under the letters, the letters on top
+        assert out.vertices[out.groups["glyph_0"]][:, 1].max() > out.vertices[out.groups["outline/glyph_0"]][:, 1].max()
+        r = get_component("decal.panel").build(sedan.connector("panel_door_front_L"), {"texts": [
+            {"text": "CITY OF SPRINGFIELD", "size": 0.05, "y": 0.55}, {"text": "POLICE", "size": 0.13, "y": 0.34, "slant_deg": 12}]}, ctx)
+        assert len(r.info["texts"]) == 2 and "text0/glyph_0" in r.mesh.groups and "text1/glyph_5" in r.mesh.groups
+        with pytest.raises(ValueError):
+            get_component("decal.panel").build(sedan.connector("panel_door_front_L"), {"texts": [{"text": "X", "font_size": 1}]}, ctx)
+
+    def test_plates_carry_real_characters(self, sedan, ctx):
+        plate = get_component("plate.standard")
+        us = plate.build(sedan.connector("plate_front"), {"region": "us", "text": "ABC 1234"}, ctx).mesh
+        assert {"number/glyph_0", "number/glyph_7"} <= set(us.groups) and "number/glyph_3" not in us.groups   # the space
+        gov = plate.build(sedan.connector("plate_rear"), {"style": "government", "text": "PD 400"}, ctx).mesh
+        assert "band/glyph_0" in gov.groups and "govband" in [z for z in gov.zones] or "plate_band_text" in gov.materials
+        # no text option: a number is drawn per car and shared by both plates through the hints
+        a = plate.build(sedan.connector("plate_front"), {"region": "eu"}, ctx).mesh
+        b = plate.build(sedan.connector("plate_rear"), {"region": "eu"}, ctx).mesh
+        glyphs = lambda m: {g for g in m.groups if g.startswith("number/")}  # noqa: E731
+        assert ctx.hints["plate_number"].count(" ") == 2 and glyphs(a) == glyphs(b) and len(glyphs(a)) == 7
 
     def test_decals_in_two_colours_survive_the_car_merge(self, sedan):
         asm = assemble(sedan, {"defaults": False, "assign": {

@@ -18,6 +18,7 @@ from typing import Callable, Dict, List, Optional, Sequence, Tuple
 import numpy as np
 
 from ..geometry.mesh import Mesh
+from ..geometry.frame import Frame
 
 FONT_DIR = Path(__file__).resolve().parent.parent / "data" / "fonts"
 DEFAULT_FONT = "sans-bold"
@@ -242,6 +243,38 @@ def text_mesh(lay: Layout, mapper: Mapper, thickness: float, material: str, base
         m.add_group(gname, range(va, vb))
         m.add_zone(gname, range(fa, fb))
     return m
+
+
+def outlined(lay: Layout, width: float, directions: int = 12) -> Layout:
+    """The layout with every glyph grown by `width`: the union of copies shifted around a circle.
+    Filled with the nonzero rule, the copies never cancel, so this is a clean outline layer."""
+    angles = np.linspace(0.0, 2 * np.pi, directions, endpoint=False)
+    shifts = np.column_stack([np.cos(angles), np.sin(angles)]) * width
+    glyphs = [PlacedGlyph(g.char, [c + sh for sh in shifts for c in g.contours] + list(g.contours)) for g in lay.glyphs]
+    return Layout(glyphs, lay.width + 2 * width, lay.height + 2 * width, lay.line_widths, lay.size)
+
+
+def text_layers(lay: Layout, mapper: Mapper, thickness: float, material: str, base: float = 0.0,
+                outline: float = 0.0, outline_material: Optional[str] = None, name: str = "text") -> Mesh:
+    """Letters with an optional outline layer underneath (groups: glyph_k and outline/glyph_k)."""
+    m = Mesh(name=name)
+    if outline > 0 and outline_material:
+        m.merge(text_mesh(outlined(lay, outline), mapper, thickness, outline_material, base, name + "_outline"), group_prefix="outline")
+        base += thickness + 0.0002
+    m.merge(text_mesh(lay, mapper, thickness, material, base, name))
+    return m
+
+
+def flat_text(text: str, font: str, size: float, material: str, *, origin=(0.0, 0.0, 0.0), advance=(1.0, 0.0), up=(0.0, 1.0),
+              thickness: float = 0.001, base: float = 0.0, fit_width: Optional[float] = None, outline: float = 0.0,
+              outline_material: Optional[str] = None, **layout_kw) -> Mesh:
+    """Text in a local XY plane (letters rise along +z), for lettering built inside a component's own frame.
+    `advance` / `up` are the reading directions in that plane; `origin` is the block centre."""
+    fnt = load_font(font)
+    lay_fn = lambda sz: layout(text, fnt, sz, **layout_kw)  # noqa: E731
+    lay = sized_to_fit(lay_fn, size, fit_width) if fit_width else lay_fn(size)
+    mapper = planar_mapper(Frame.identity(origin), np.asarray(advance, dtype=float), np.asarray(up, dtype=float), np.zeros(3))
+    return text_layers(lay, mapper, thickness, material, base, outline, outline_material)
 
 
 # ------------------------------------------------------------------ mappers

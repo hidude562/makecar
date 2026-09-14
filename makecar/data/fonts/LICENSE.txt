@@ -1,4 +1,5 @@
-The fonts in this folder (sans, sans-bold, sans-condensed-bold, serif-bold) are
+The fonts in this folder (sans, sans-bold, sans-condensed-bold, serif-bold,
+serif-condensed-bold, mono-bold) are
 flattened glyph outlines taken from the DejaVu fonts (https://dejavu-fonts.github.io/)
 by scripts/extract_font.py. They are renamed as the license below asks for
 modified versions. The DejaVu changes are in the public domain; the Bitstream

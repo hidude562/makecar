@@ -43,8 +43,14 @@ OTHER_STYLES = ["coupe", "hatchback", "wagon", "van", "sports"]
 FLEET_PAINT = [("black", "#111214", 0.40), ("white", "#f4f4f0", 0.35), ("gray", "#6b6e73", 0.15), ("silver", "#b9bcc2", 0.10)]
 OTHER_PAINT = [("dark blue", "#1c2a55"), ("dark green", "#1f3a2a"), ("maroon", "#5a1a22"), ("tan", "#b7a888"),
                ("red", "#a8221f"), ("brown", "#4d3a2a"), ("teal", "#2c6b6f"), ("orange", "#c8641b"), ("light blue", "#7f9fc4")]
-AGENCIES = ["POLICE", "POLICE", "POLICE", "SHERIFF", "STATE TROOPER", "HIGHWAY PATROL", "STATE POLICE"]
+AGENCIES = ["POLICE", "POLICE", "POLICE", "SHERIFF", "STATE TROOPER", "HIGHWAY PATROL", "STATE POLICE", "METRO POLICE"]
 STRIPES = [("#1b3a8a", "#d9b13b"), ("#b3121b", "#f4f4f0"), ("#0d5c3a", "#d9b13b"), ("#14213d", "#c0c4cc")]
+FONTS = [("sans-bold", 3.0), ("sans-condensed-bold", 2.0), ("serif-bold", 1.2), ("serif-condensed-bold", 1.0),
+         ("mono-bold", 0.6), ("sans", 0.6)]
+CITIES = ["SPRINGFIELD", "RIVERSIDE", "FAIRVIEW", "FRANKLIN", "GREENVILLE", "MADISON", "SALEM", "GEORGETOWN",
+          "OAK RIDGE", "CLAYTON", "BRISTOL", "MILFORD", "KINGSTON", "ASHLAND", "CEDAR FALLS", "LAKEWOOD"]
+UNITS = ["K-9 UNIT", "TRAFFIC UNIT", "PATROL", "COMMUNITY POLICING", "EMERGENCY 911", "SUPERVISOR", "DIAL 911"]
+GOLD, WHITE, NAVY, BLACK = "#d9b13b", "#f4f4f0", "#14213d", "#0b0b0d"
 DARK_GLASS = {"tint": "#0b0d10", "alpha": 0.88}
 
 
@@ -57,6 +63,30 @@ def _luminance(color: str) -> float:
     c = color.lstrip("#")
     r, g, b = (int(c[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
     return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
+
+def banner_style(rng: random.Random, light_paint: bool, stripe_color: str, stripe_accent: str) -> Dict[str, object]:
+    """Lettering style for one car: font, slant, spacing, colours and an optional outline."""
+    font = _weighted(rng, FONTS)[0]
+    style: Dict[str, object] = {"font": font}
+    if rng.random() < 0.3:
+        style["slant_deg"] = round(rng.uniform(8, 14), 1)
+    if rng.random() < 0.4:
+        style["letter_spacing"] = round(rng.uniform(0.006, 0.025), 3)
+    if font in ("serif-bold", "serif-condensed-bold", "sans") and rng.random() < 0.35:
+        style["case"] = "title"
+    fill = rng.choice([NAVY, stripe_color, BLACK]) if light_paint else rng.choice([WHITE, GOLD, stripe_accent])
+    style["color"] = fill
+    if rng.random() < 0.45:
+        style["outline"] = round(rng.uniform(0.004, 0.009), 3)
+        style["outline_color"] = rng.choice([WHITE, GOLD]) if _luminance(fill) < 0.5 else rng.choice([NAVY, stripe_color, BLACK])
+    return style
+
+
+def _title(text: str) -> str:
+    words = text.split(" ")
+    return " ".join(w if w in ("K-9", "911") else w.lower() if (w in ("OF", "THE") and i) else w.capitalize()
+                    for i, w in enumerate(words))
 
 
 def draw_features(tier: str, rng: random.Random) -> Dict[str, bool]:
@@ -107,12 +137,12 @@ def police_config(tier: str, seed: int = 0, name: Optional[str] = None, features
         zone_paint = secondary if livery.get(zone) == "secondary" else paint
         return "#14213d" if _luminance(zone_paint) > 0.5 else "#f4f4f0"
 
-    text_color = text_color_on("doors")
+    door_light = _luminance(secondary if livery.get("doors") == "secondary" else paint) > 0.5
 
     # ------------------------------------------------------------- components
     assign: Dict[str, object] = {"plate": {"options": {"region": "us"}}}
     if f["government_plates"]:
-        assign["plate"] = {"options": {"style": "government"}}
+        assign["plate"] = {"options": {"style": "government", "text": f"PD {unit}"}}
     if f["light_bar"]:
         assign["roof_mount"] = {"component": "light.bar",
                                 "options": {"colors": "red_blue" if rng.random() < 0.85 else "blue",
@@ -152,25 +182,47 @@ def police_config(tier: str, seed: int = 0, name: Optional[str] = None, features
 
     stripe = bool(f["stripe"])
     stripe_opts = {"stripe": True, "stripe_color": stripe_color, "stripe_accent": stripe_accent} if stripe else {}
-    font = rng.choice(["sans-bold", "sans-bold", "sans-condensed-bold", "serif-bold"])
-    if len(agency) > 9 and font == "sans-bold":
-        font = "sans-condensed-bold"
+    lettering = banner_style(rng, door_light, stripe_color, stripe_accent)
+    font = str(lettering["font"])
+    title = lettering.get("case") == "title"
+    word = _title(agency) if title else agency
+    city = rng.choice(CITIES)
+    county = f"{city} COUNTY" if agency == "SHERIFF" else f"CITY OF {city}"
+    small = {k: v for k, v in lettering.items() if k not in ("case",)}
+    small["font"] = "sans-condensed-bold" if font == "mono-bold" else font
+
+    def text_block(text: str, size: float, y: float, **more) -> Dict[str, object]:
+        return {"text": text, "size": size, "y": y, "font": font, **{k: v for k, v in lettering.items() if k != "case" and k != "font"}, **more}
+
     if f["lettering"]:
-        assign["panel_door_front"] = {"component": "decal.panel",
-                                      "options": {"text": agency, "font": font, "text_height": 0.14, "text_color": text_color, **stripe_opts}}
-        rear_text = "EMERGENCY 911" if rng.random() < 0.3 else None
+        stacked = rng.random() < 0.4
+        door: Dict[str, object] = {"component": "decal.panel", "options": {**stripe_opts}}
+        if stacked:
+            door["options"]["texts"] = [
+                {**text_block(_title(county) if title else county, round(rng.uniform(0.045, 0.06), 3), 0.54), "outline": 0.0,
+                 "letter_spacing": 0.004},
+                text_block(word, round(rng.uniform(0.11, 0.14), 3), 0.34),
+            ]
+        else:
+            door["options"]["texts"] = [text_block(word, round(rng.uniform(0.12, 0.17), 3), round(rng.uniform(0.36, 0.46), 2))]
+        assign["panel_door_front"] = door
+        rear_text = rng.choice(UNITS) if rng.random() < 0.45 else (county if not stacked and rng.random() < 0.5 else None)
         if rear_text or stripe:
-            assign["panel_door_rear"] = {"component": "decal.panel",
-                                         "options": {"text": rear_text, "font": font, "text_height": 0.06, "text_y": 0.3, "text_color": text_color, **stripe_opts}}
-        assign["panel_deck"] = {"component": "decal.panel", "options": {"text": agency, "font": font, "text_height": 0.10, "text_color": text_color_on("deck")}}
+            rear: Dict[str, object] = {"component": "decal.panel", "options": {**stripe_opts}}
+            if rear_text:
+                rear["options"]["texts"] = [{**text_block(_title(rear_text) if title else rear_text, round(rng.uniform(0.05, 0.07), 3), 0.3),
+                                             "font": small["font"], "outline": 0.0}]
+            assign["panel_door_rear"] = rear
+        assign["panel_deck"] = {"component": "decal.panel", "options": {"texts": [
+            {**text_block(word, 0.10, 0.5), "color": text_color_on("deck"), "outline_color": lettering.get("outline_color", NAVY)}]}}
         if rng.random() < 0.35:
-            assign["panel_hood"] = {"component": "decal.panel",
-                                    "options": {"text": agency, "font": font, "text_height": 0.16, "text_x": 0.55, "text_color": text_color_on("hood")}}
+            assign["panel_hood"] = {"component": "decal.panel", "options": {"texts": [
+                {**text_block(word, 0.16, 0.5), "x": 0.55, "color": text_color_on("hood"), "outline_color": lettering.get("outline_color", NAVY)}]}}
     if f["unit_number"]:
-        assign["panel_quarter"] = {"component": "decal.panel",
-                                   "options": {"text": unit, "font": font, "text_height": 0.09, "text_y": 0.3, "text_color": text_color, **stripe_opts}}
-        assign["panel_roof"] = {"component": "decal.panel",
-                                "options": {"text": unit, "font": font, "text_height": 0.32, "text_x": 0.35, "text_color": text_color_on("roof")}}
+        assign["panel_quarter"] = {"component": "decal.panel", "options": {**stripe_opts, "texts": [
+            {**text_block(unit, 0.09, 0.3), "font": small["font"], "case": None}]}}
+        assign["panel_roof"] = {"component": "decal.panel", "options": {"texts": [
+            {**text_block(unit, 0.32, 0.5), "x": 0.35, "font": small["font"], "color": text_color_on("roof"), "outline": 0.0}]}}
     elif stripe:
         assign["panel_quarter"] = {"component": "decal.panel", "options": dict(stripe_opts)}
     if stripe:
@@ -185,7 +237,7 @@ def police_config(tier: str, seed: int = 0, name: Optional[str] = None, features
         "palette": {"paint": paint, "paint_secondary": secondary, "interior": "#1e1f22", "seat": "#26272b",
                     "interior_accent": "#3a3c40", "wood": "#2b2c30"},
         "components": {"defaults": True, "assign": assign},
-        "police": {"tier": tier, "agency": agency, "unit": unit, "paint": paint_name, "features": f},
+        "police": {"tier": tier, "agency": agency, "unit": unit, "paint": paint_name, "features": f, "lettering": lettering},
     }
 
 

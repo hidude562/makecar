@@ -59,9 +59,11 @@ def test_all_features_on_map_to_the_kit():
     assert assign["wheel"]["component"] == "wheel.steel" and assign["wheel"]["options"]["hubcap"] is False
     assert assign["rear_window"]["options"]["alpha"] > 0.8
     assert assign["panel_door_front"]["component"] == "decal.panel"
-    assert assign["panel_door_front"]["options"]["text"] == raw["police"]["agency"]
+    door_texts = assign["panel_door_front"]["options"]["texts"]
+    assert door_texts[-1]["text"].upper() == raw["police"]["agency"] and door_texts[-1]["font"] == raw["police"]["lettering"]["font"]
     assert assign["panel_door_front"]["options"]["stripe"] is True
-    assert assign["panel_quarter"]["options"]["text"] == raw["police"]["unit"]
+    assert assign["panel_quarter"]["options"]["texts"][0]["text"] == raw["police"]["unit"]
+    assert assign["plate"]["options"]["text"] == f"PD {raw['police']['unit']}"
     assert raw["body"]["modifiers"]["ground_clearance"] > 0
     assert raw["body"]["style"] in ("sedan", "suv", "pickup")
     assert raw["police"]["paint"] in ("black", "white", "gray", "silver")
@@ -86,6 +88,26 @@ def test_two_tone_needs_black_or_white_paint():
     assert other["body"]["livery"] == {} and other["police"]["features"]["two_tone"] is False
 
 
+def test_banners_vary_between_cars():
+    seen = {"font": set(), "outline": 0, "slant": 0, "spacing": 0, "title": 0, "stacked": 0, "rear_text": 0}
+    for seed in range(60):
+        raw = police_config("marked", seed, features={k: True for k in ODDS})
+        style = raw["police"]["lettering"]
+        seen["font"].add(style["font"])
+        seen["outline"] += bool(style.get("outline"))
+        seen["slant"] += bool(style.get("slant_deg"))
+        seen["spacing"] += bool(style.get("letter_spacing"))
+        seen["title"] += style.get("case") == "title"
+        texts = raw["components"]["assign"]["panel_door_front"]["options"]["texts"]
+        seen["stacked"] += len(texts) == 2
+        seen["rear_text"] += "texts" in raw["components"]["assign"]["panel_door_rear"]["options"]
+        for block in texts:
+            assert set(block) <= {"text", "size", "y", "x", "font", "color", "slant_deg", "letter_spacing", "outline", "outline_color", "case"}
+    assert len(seen["font"]) >= 4
+    for key in ("outline", "slant", "spacing", "title", "stacked", "rear_text"):
+        assert 5 <= seen[key] <= 55, (key, seen[key])
+
+
 def test_generate_mixes_tiers_and_names_cars():
     cars = generate(6, "mixed", seed=2)
     assert [c["name"][:7] for c in cars] == ["police_"] * 6
@@ -105,7 +127,10 @@ def test_a_generated_car_builds(tier):
     if tier == "marked":
         assert {"light.bar", "bumper.push_bar", "light.spotlight", "antenna.whip", "partition.cage", "mount.laptop",
                 "decal.panel"} <= comps
-        assert any(i.component == "decal.panel" and i.result.info.get("text") == raw["police"]["agency"] for i in asm.instances)
+        door = next(i for i in asm.instances if i.connector.name == "panel_door_front_L")
+        assert door.result.info["texts"][-1]["text"].upper() == raw["police"]["agency"]
+        plate = next(i for i in asm.instances if i.connector.name == "plate_front")
+        assert "number/glyph_0" in plate.result.mesh.groups and "band/glyph_0" in plate.result.mesh.groups
         if raw["body"]["livery"]:
             assert "paint_secondary" in res.mesh.face_materials
     assert asm.body.mesh.n_faces > 1000 and all(i.result.mesh.n_faces > 0 for i in asm.instances)

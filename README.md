@@ -162,7 +162,7 @@ This makes police cars with random kit. There are three tiers: marked patrol, un
 | Government plates | 85% | 30% | 5% |
 | Push bumper | 60% | 20% | 5% |
 
-The rest of a patrol car's kit is my guess. A roof light bar is on 90% of marked cars. All of them get agency lettering. 45% get a black and white two tone and 70% get a side stripe. 80% get a unit number on the quarter panels and the roof. A prisoner partition is in 85% of marked cars, 40% of unmarked ones and 5% of undercover ones. A raised ride height goes 50%, 25% and 5%.
+The lettering changes from car to car too: the words, a city or county line, the font, italics, letter spacing, an outline and the colours are all rolled. Fleet plates get the unit number. The rest of a patrol car's kit is my guess. A roof light bar is on 90% of marked cars. All of them get agency lettering. 45% get a black and white two tone and 70% get a side stripe. 80% get a unit number on the quarter panels and the roof. A prisoner partition is in 85% of marked cars, 40% of unmarked ones and 5% of undercover ones. A raised ride height goes 50%, 25% and 5%.
 
 The kit is all normal components, so you can put any of it on any car from a config. The body now emits mounts for it: `roof_mount`, `bumper_front`, `spotlight_L/R`, `antenna_aux_L/R` and `cabin_partition`. It also emits a `panel_*` connector for each door, fender and quarter panel, plus the hood, the roof and the deck. They have no default, so a plain car ignores them.
 
@@ -191,15 +191,17 @@ components:
     plate_front: {component: text.box, options: {text: "PD-400", size: 0.05, color: "#f4f4f0"}}
 ```
 
-`text.box` puts real text on any polygon connector. On a body panel it follows the curve of the skin. On a plain rectangle (a plate, the roof mount) it lies flat in the plane. `size` is the cap height in metres. `x` and `y` place the block on the panel, x along the car and y up the panel. There is `align`, `line_spacing`, `letter_spacing`, `slant_deg` (a fake italic), `case`, `kerning` and `fit`, which shrinks the text so it stays on the panel. Newlines in `text` make more lines. `decal.panel` uses the same engine and adds a stripe.
+`text.box` puts real text on any polygon connector. On a body panel it follows the curve of the skin. On a plain rectangle (a plate, the roof mount) it lies flat in the plane. `size` is the cap height in metres. `x` and `y` place the block on the panel, x along the car and y up the panel. There is `align`, `line_spacing`, `letter_spacing`, `slant_deg` (a fake italic), `case`, `kerning` and `fit`, which shrinks the text so it stays on the panel. `outline` (metres) draws a border in `outline_color` under the letters. Newlines in `text` make more lines. `decal.panel` uses the same engine and adds a stripe, and its `texts` list takes several blocks, each with a size and a place, which is how the police cars get a small city line over a big word.
 
-Four fonts ship in `makecar/data/fonts`: `sans`, `sans-bold`, `sans-condensed-bold` and `serif-bold`. They come from the DejaVu fonts. To add one, run this on any TrueType file (it needs fonttools):
+Plates draw their characters the same way. `plate.standard` picks a random number per car, or you set `text`. Fleet plates (`style: government`) get a band that says so.
+
+Six fonts ship in `makecar/data/fonts`: `sans`, `sans-bold`, `sans-condensed-bold`, `serif-bold`, `serif-condensed-bold` and `mono-bold`. They come from the DejaVu fonts. To add one, run this on any TrueType file (it needs fonttools):
 
 ```bash
 python -m scripts.extract_font MyFont.ttf -o makecar/data/fonts/my-font.json
 ```
 
-Then use `font: my-font`, or give the path to the json. The letters are geometry, not a texture. The font json has the glyph outlines. Each glyph is cut into thin trapezoids with the nonzero winding rule, so the hole in an O comes out right. Then the trapezoids and the outline walls get lifted onto the panel through its surface grid, which is sampled at the loft's own stations so the letters sit on the skin.
+Then use `font: my-font`, or give the path to the json. The letters are geometry, not a texture. The font json has the glyph outlines. Each glyph is cut into thin trapezoids with the nonzero winding rule, so the hole in an O comes out right. Then the trapezoids and the outline walls get lifted onto the panel through its surface grid, which is sampled at the loft stations so the letters sit on the skin.
 
 ## Turntable Gif
 

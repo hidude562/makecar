@@ -1096,13 +1096,23 @@ class Intake(HoneycombGrille):
     description = "lower bumper honeycomb intake in a three-dimensional surround"
 
 
+def _plate_number(rng, region: str) -> str:
+    letters, digits = "ABCDEFGHJKLMNPRSTUVWXYZ", "0123456789"
+
+    def pick(n, pool):
+        return "".join(pool[int(i)] for i in rng.integers(0, len(pool), n))
+
+    return f"{pick(2, letters)} {pick(3, digits)} {pick(2, letters)}" if region == "eu" else f"{pick(3, letters)} {pick(4, digits)}"
+
+
 @register
 class LicensePlate(CarComponent):
     name = "plate.standard"
     accepts = (RectangleConnector,)
     default_for = ("plate",)
-    options = {"region": "eu", "color": "#f2f2ee", "text_color": "#1a1a1a", "style": "standard"}
-    description = "license plate (EU 520x110 or US 300x150) with a dark text band; style 'government' for fleet plates"
+    options = {"region": "eu", "color": "#f2f2ee", "text_color": "#1a1a1a", "style": "standard", "text": None,
+               "font": "sans-condensed-bold"}
+    description = "license plate (EU 520x110 or US 300x150) with real characters (random per car unless `text` is set); style 'government' for fleet plates"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
         opts = dict(opts)
@@ -1114,17 +1124,23 @@ class LicensePlate(CarComponent):
                 "plate_text": ctx.material("plate_text", opts["text_color"], shininess=0.2),
                 "plate_blue": ctx.material("plate_blue", "#1c3d8f", shininess=0.3)}
         m = P.box(w, h, 0.006, material="plate", center=(0, 0, 0.003), name="plate")
+        # Local x is the car's right and local y points down, so seen from outside the plate reads
+        # towards -x with "up" along -y: the EU band goes on the viewer's left (+x).
+        from .text import flat_text
+        eu = opts.get("region", "eu") == "eu"
+        band_w = w * 0.08 if eu else 0.0
+        number = str(opts.get("text") or ctx.hints.setdefault("plate_number", _plate_number(ctx.rng, "eu" if eu else "us")))
         if government:
-            m.merge(P.box(w * 0.92, h * 0.14, 0.002, material="plate_text", center=(0, h * 0.38, 0.007), name="govband"))
-            m.merge(P.box(w * 0.5, h * 0.09, 0.002, material="plate_text", center=(0, -h * 0.40, 0.007), name="govtext"))
-        # crude "characters": 7 dark blocks
-        n = 7
-        cw = w * 0.09
-        for k in range(n):
-            x = -w * 0.36 + k * (w * 0.78) / (n - 1)
-            m.merge(P.box(cw, h * 0.55, 0.002, material="plate_text", center=(x, 0, 0.007), name="char"))
-        if opts.get("region", "eu") == "eu":
-            m.merge(P.box(w * 0.08, h - 0.01, 0.002, material="plate_blue", center=(-w / 2 + w * 0.05, 0, 0.007), name="euband"))
+            mats["plate_band_text"] = ctx.material("plate_band_text", "#f3f4f0", shininess=0.3)
+            m.merge(P.box(w * 0.92, h * 0.16, 0.002, material="plate_text", center=(0, -h * 0.37, 0.007), name="govband"))
+            m.merge(flat_text("GOVERNMENT", opts["font"], h * 0.085, "plate_band_text", origin=(0, -h * 0.37, 0.008),
+                              advance=(-1, 0), up=(0, -1), thickness=0.0008, letter_spacing=h * 0.03), group_prefix="band")
+        cap = h * (0.62 if eu else 0.42 if government else 0.48)
+        y_number = h * 0.08 if government else 0.0
+        m.merge(flat_text(number, opts["font"], cap, "plate_text", origin=(-band_w / 2, y_number, 0.006), advance=(-1, 0),
+                          up=(0, -1), thickness=0.0015, fit_width=(w - band_w) * 0.86, letter_spacing=cap * 0.06), group_prefix="number")
+        if eu:
+            m.merge(P.box(band_w, h - 0.01, 0.002, material="plate_blue", center=(w / 2 - band_w / 2, 0, 0.007), name="euband"))
         if conn.meta.get("position") == "front":
             # The new bumper separates the EU plate from both inserts. Its
             # bracket reaches back through the mount's 12mm skin clearance;
