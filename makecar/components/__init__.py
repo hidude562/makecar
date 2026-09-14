@@ -5,3 +5,4 @@ from .base import (  # noqa: F401
 )
 from . import exterior  # noqa: F401,E402
 from . import interior  # noqa: F401,E402
+from . import equipment  # noqa: F401,E402

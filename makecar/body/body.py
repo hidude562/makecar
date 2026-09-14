@@ -122,7 +122,7 @@ class CarBody:
         return values
 
     def build(self, style=None, modifiers=None, sculpt=None, hints: Optional[Dict] = None,
-              paint="#8a1c1c") -> BodyResult:
+              paint="#8a1c1c", paint_secondary="#f4f4f0", livery: Optional[Dict[str, str]] = None) -> BodyResult:
         values = self.resolve_values(style, modifiers, sculpt)
         mesh = self.library.morph(values)
         hints = dict(hints or {})
@@ -149,6 +149,9 @@ class CarBody:
             "trim": Material("trim", (0.09, 0.09, 0.10), 1.0, 0.25),
             "bed": Material("bed", (0.14, 0.14, 0.15), 1.0, 0.1),
         })
+        if livery:
+            from .panels import apply_livery
+            apply_livery(mesh, meas, hints, livery, paint_secondary)
         full = mesh.copy()
         shell = mesh.copy()
         drop = np.concatenate([shell.zones[z] for z in shell.zones if z.startswith("aperture/")]) if shell.zones else []

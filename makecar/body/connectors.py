@@ -421,6 +421,8 @@ def emit_connectors(mesh: Mesh, meas: Dict[str, float], hints: Dict) -> List[Con
     out += interior_connectors(mesh, meas, hints)
     from .connectors_extra import extra_exterior_connectors
     out += extra_exterior_connectors(mesh, meas, hints)
+    from .mounts import equipment_connectors
+    out += equipment_connectors(mesh, meas, hints, out)
     return out
 
 

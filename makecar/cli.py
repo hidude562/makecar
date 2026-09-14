@@ -120,6 +120,22 @@ def cmd_random(args):
         run_config(cfg, out_root)
 
 
+def cmd_police(args):
+    from .police import generate
+
+    out_root = Path(args.out)
+    for raw in generate(args.count, args.tier, args.seed):
+        cfg = CarConfig.from_dict(raw)
+        print(f"{cfg.name}: {raw['description']}")
+        if args.configs:
+            d = Path(args.configs)
+            d.mkdir(parents=True, exist_ok=True)
+            cfg.save(d / f"{cfg.name}.yaml")
+        if not args.no_build:
+            run_config(cfg, out_root)
+            cfg.save(out_root / cfg.name / "config.yaml")
+
+
 def cmd_viewer(args):
     from .viewer.server import serve
 
@@ -148,6 +164,14 @@ def main(argv=None):
     r.add_argument("--seed", type=int, default=0)
     r.add_argument("--amount", type=float, default=0.6)
     r.set_defaults(fn=cmd_random)
+    p = sub.add_parser("police", help="generate police cars (marked, unmarked, undercover) with realistic odds per feature")
+    p.add_argument("-o", "--out", default="output")
+    p.add_argument("-n", "--count", type=int, default=3)
+    p.add_argument("--tier", choices=["marked", "unmarked", "undercover", "mixed"], default="mixed")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--configs", metavar="DIR", help="also write each config as DIR/<name>.yaml")
+    p.add_argument("--no-build", action="store_true", help="only write the configs")
+    p.set_defaults(fn=cmd_police)
     c = sub.add_parser("connectors", help="list the connectors a config produces")
     c.add_argument("config")
     c.set_defaults(fn=cmd_connectors)

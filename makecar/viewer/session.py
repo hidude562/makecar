@@ -48,7 +48,8 @@ class ViewerSession:
         body = self.car_body
         mods = randomised_modifiers(cfg, body)
         self.body_result = body.build(cfg.body.get("style", "sedan"), mods, cfg.body.get("sculpt") or {},
-                                      cfg.hints(), paint=cfg.palette().paint)
+                                      cfg.hints(), paint=cfg.palette().paint, paint_secondary=cfg.palette().paint_secondary,
+                     livery=cfg.body.get("livery") or None)
         self.assembly = None
         return self.body_result
 

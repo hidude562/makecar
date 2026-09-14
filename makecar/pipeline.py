@@ -64,7 +64,8 @@ def build_car(cfg: CarConfig) -> tuple[BodyResult, CarAssembly, Dict[str, float]
     t = time.time()
     mods = randomised_modifiers(cfg, body)
     res = body.build(cfg.body.get("style", "sedan"), mods, cfg.body.get("sculpt") or {}, cfg.hints(),
-                     paint=cfg.palette().paint)
+                     paint=cfg.palette().paint, paint_secondary=cfg.palette().paint_secondary,
+                     livery=cfg.body.get("livery") or None)
     timings["body"] = time.time() - t
     t = time.time()
     asm = assemble(res, cfg.components, cfg.palette(), cfg.seed, connectors_cfg=cfg.raw.get("connectors"))
@@ -283,8 +284,11 @@ def spec_text(cfg: CarConfig, res: BodyResult, asm: CarAssembly) -> str:
             walk(inst.id, indent + 1)
 
     walk(None, 1)
-    if asm.unattached:
-        lines += ["", "Unattached connectors: " + ", ".join(asm.unattached)]
+    missing = asm.missing()
+    if missing:
+        lines += ["", "Unattached connectors: " + ", ".join(missing)]
+    if len(asm.unattached) > len(missing):
+        lines += [f"Opt-in mounts left empty: {len(asm.unattached) - len(missing)}"]
     if asm.disabled:
         lines += ["Disabled connectors: " + ", ".join(asm.disabled)]
     return "\n".join(lines) + "\n"

@@ -36,6 +36,7 @@ from ..morph.target import Target, Modifier
 class Palette:
     """Colours shared across components (from the config)."""
     paint: str = "#8a1c1c"
+    paint_secondary: str = "#f4f4f0"
     trim: str = "#141416"
     chrome: str = "#c9ccd1"
     glass: str = "#7fa3b8"

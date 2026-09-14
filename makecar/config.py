@@ -56,6 +56,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "random": {"amount": 0.0, "groups": ["proportions", "greenhouse", "front", "rear", "stance", "lower_body"],
                    "exclude": ["bed_depth", "quarter_window_length"]},
         "custom_targets": None,   # directory of .target files -> custom/<name> modifiers (relative to the config)
+        "livery": {},             # panel zone -> "secondary" (palette.paint_secondary) or a colour, see body/panels.py
     },
     "palette": {},
     "components": {"defaults": True, "disable": [], "assign": {}},
@@ -241,6 +242,13 @@ def validate(cfg: dict) -> None:
                 raise ValueError(f"body.{group}.{k} must be a number") from None
             if not (-1.0 <= fv <= 1.0):
                 raise ValueError(f"body.{group}.{k} must be in [-1, 1] (MakeHuman-style slider)")
+    from .body.panels import ZONES
+    livery = body.get("livery") or {}
+    if not isinstance(livery, dict):
+        raise ValueError("body.livery must be a mapping of panel zone -> 'primary' | 'secondary' | colour")
+    for zone in livery:
+        if zone not in ZONES:
+            raise ValueError(f"body.livery zone {zone!r} unknown; choose from {list(ZONES)}")
     fmts = cfg["output"].get("formats", [])
     bad = [f for f in fmts if f not in ALL_FORMATS]
     if bad:

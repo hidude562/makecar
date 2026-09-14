@@ -409,7 +409,7 @@ def test_right_hand_drive_manual_and_component_options(style):
                                          ("seat", "seat.bucket"), ("cargo_floor", "floor.cargo")])
 def test_existing_tag_assignments_do_not_select_extension_points(tag, component):
     cabin = assemble(CarBody().build("suv"), {"assign": {tag: component}})
-    assert not cabin.unattached or set(cabin.unattached) <= {"roof_rail_L", "roof_rail_R"}
+    assert cabin.missing() == []
     for part in cabin.instances:
         if "interior_detail" in part.connector.tags:
             assert tag not in part.connector.tags

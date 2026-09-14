@@ -122,6 +122,11 @@ class CarAssembly:
                 m.merge(inst.result.mesh, group_prefix=inst.id)
         return m
 
+    def missing(self) -> List[str]:
+        """Unattached connectors that are not opt-in mounts, i.e. ones that should have had a default."""
+        by_name = {c.name: c for c in self.connectors}
+        return [n for n in self.unattached if not (by_name[n].tags & OPT_IN_TAGS)]
+
     def connector_component(self, conn_name: str) -> Optional[str]:
         for inst in self.instances:
             if inst.connector.name == conn_name:
@@ -155,9 +160,12 @@ class CarAssembly:
         return out
 
 
+# connectors that ship with no default on purpose (fleet equipment, decal panels, roof rails)
+OPT_IN_TAGS = {"roof_rail", "roof_mount", "bumper", "spotlight", "antenna_aux", "partition", "panel"}
+
 INTERIOR_TAGS = {"seat", "steering_wheel", "dashboard", "pedals", "console", "floor", "bulkhead", "shelf", "cargo_floor",
                  "headliner", "door_card", "rearview_mirror", "cluster", "screen", "vent", "glovebox", "hvac", "shifter",
-                 "cupholder", "dome_light", "grab_handle", "speaker",
+                 "cupholder", "dome_light", "grab_handle", "speaker", "partition", "laptop", "visor_light", "deck_light",
                  # detail parts mounted on connectors from extra_interior_connectors
                  "interior_detail"}
 

@@ -96,8 +96,8 @@ class TestAssembly:
     def test_all_styles_assemble_completely(self, style):
         cfg = CarConfig.from_dict({"name": style, "body": {"style": style}})
         res, asm, _ = build_car(cfg)
-        # only the opt-in roof rails may stay unattached by default
-        assert set(asm.unattached) <= {"roof_rail_L", "roof_rail_R"}, asm.unattached
+        # only opt-in mounts (roof rails, fleet equipment, decal panels) may stay unattached by default
+        assert asm.missing() == [], asm.missing()
         assert asm.disabled == []
         full = asm.mesh()
         assert np.isfinite(full.vertices).all()

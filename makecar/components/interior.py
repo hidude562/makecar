@@ -957,8 +957,8 @@ class CenterConsole(CarComponent):
     name = "console.center"
     accepts = (RectangleConnector,)
     default_for = ("console",)
-    options = {"armrest": True, "panel_material": "int_wood", "cup_cover": 0.35}
-    description = "centre console with armrest lid and trim panel; emits shifter and cupholder connectors"
+    options = {"armrest": True, "panel_material": "int_wood", "cup_cover": 0.35, "laptop_mount": False}
+    description = "centre console with armrest lid and trim panel; emits shifter and cupholder connectors (and a laptop mount)"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
         Lc, Wc = conn.width, conn.height
@@ -1007,6 +1007,9 @@ class CenterConsole(CarComponent):
             CircleConnector("cupholder_1", Frame.from_normal([0.0, 0.0, hc], [0, 0, 1], x_hint=(1, 0, 0)), 0.04, tags=["cupholder"]),
             CircleConnector("cupholder_2", Frame.from_normal([-0.09, 0.0, hc], [0, 0, 1], x_hint=(1, 0, 0)), 0.04, tags=["cupholder"]),
         ]
+        if opts.get("laptop_mount"):
+            subs.append(RectangleConnector("laptop", Frame.from_normal([xf - 0.16, 0.0, hc + rise * 0.55], [0, 0, 1], x_hint=(1, 0, 0)),
+                                           0.30, 0.24, tags=["laptop"], meta={"driver_y": conn.meta.get("driver_y", 0.42)}))
         return ComponentResult(_finish(m, ctx), subs, {"height": hc})
 
 
@@ -1170,8 +1173,8 @@ class ParcelShelf(CarComponent):
     name = "shelf.parcel"
     accepts = (RectangleConnector,)
     default_for = ("shelf",)
-    options = {"speakers": True}
-    description = "carpeted parcel shelf with two speaker grilles"
+    options = {"speakers": True, "deck_lights": False}
+    description = "carpeted parcel shelf with two speaker grilles (and an optional rear deck light bar)"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
         w, h = conn.width, conn.height
@@ -1179,7 +1182,11 @@ class ParcelShelf(CarComponent):
         if opts.get("speakers", True) and h > 0.9:
             for y in (-(h / 2 - 0.30), h / 2 - 0.30):
                 m.merge(H.grille(0.075, f"shelf_speaker_{y:+.2f}").translate((0, y, 0.035)))
-        return ComponentResult(_finish(m, ctx))
+        subs = []
+        if opts.get("deck_lights"):
+            subs.append(RectangleConnector("deck_light", Frame.from_normal([-w / 2 + 0.12, 0.0, 0.03], [0, 0, 1], x_hint=(0, 1, 0)),
+                                           min(0.6, h - 0.5), 0.04, tags=["deck_light"]))
+        return ComponentResult(_finish(m, ctx), subs)
 
 
 @register
@@ -1254,8 +1261,8 @@ class Headliner(CarComponent):
     name = "headliner.fabric"
     accepts = (PolygonConnector,)
     default_for = ("headliner",)
-    options = {"color": None, "visors": True}
-    description = "fabric headliner with sun visors; emits dome light and grab handle connectors"
+    options = {"color": None, "visors": True, "visor_lights": False}
+    description = "fabric headliner with sun visors; emits dome light and grab handle connectors (and a visor light bar)"
 
     def build_local(self, conn: PolygonConnector, opts, ctx) -> ComponentResult:
         w, h = conn.width, conn.height
@@ -1290,6 +1297,11 @@ class Headliner(CarComponent):
                 m.merge(H.named(visor, "visor_L" if s < 0 else "visor_R"))
                 for dy in (-0.11, 0.11):
                     m.merge(P.box(0.025, 0.025, 0.026, material="int_plastic", center=(x + 0.065, y + dy, z + 0.012), name="visor_clip"))
+        if opts.get("visor_lights"):
+            x = x_max - 0.12
+            z = H.grid_local_z(grid, conn.frame, x, y_mid) + 0.008
+            subs.append(RectangleConnector("visor_light", Frame.from_normal([x, y_mid, z], [0, 0, 1], x_hint=(0, 1, 0)),
+                                           min(0.95, 2 * y_half - 0.55), 0.04, tags=["visor_light"]))
         extra = {}
         if opts.get("color"):
             extra["int_fabric"] = ctx.material("int_fabric", opts["color"], shininess=0.05)

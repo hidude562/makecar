@@ -140,6 +140,48 @@ Each car goes in `output/<name>/`:
 ![sedan](docs/images/hero_family_sedan.png)
 ![sedan interior](docs/images/interior_family_sedan.png)
 
+## Police Cars
+
+```bash
+python -m makecar police -n 4 --tier marked -o output
+```
+
+This makes police cars with random kit. There are three tiers: marked patrol, unmarked patrol and true undercover. Each piece of kit is rolled separately with the odds for that tier, so no two cars come out the same. `--tier mixed` is the default and picks a tier per car. `--seed` makes it repeatable. `--configs DIR` also writes the yaml for each car. The odds live in `makecar/police.py`:
+
+| Kit | Marked | Unmarked | Undercover |
+|---|---|---|---|
+| Concealed emergency lights (grille, windshield, rear deck, mirrors) | 80% | 95% | 30% |
+| Siren | 100% | 95% | 30% |
+| A model fleets buy (sedan, suv or pickup) | 95% | 80% | 25% |
+| Black, white, gray or silver paint | 85% | 80% | 75% |
+| Dark rear windows | 80% | 75% | 50% |
+| Laptop mount inside | 85% | 65% | 5% |
+| Plain black steel wheels | 60% | 50% | 15% |
+| Spotlight by the windshield | 70% | 40% | 5% |
+| Extra antennas | 60% | 30% | 5% |
+| Government plates | 85% | 30% | 5% |
+| Push bumper | 60% | 20% | 5% |
+
+The rest of a patrol car's kit is my guess. A roof light bar is on 90% of marked cars. All of them get agency lettering. 45% get a black and white two tone and 70% get a side stripe. 80% get a unit number on the quarter panels and the roof. A prisoner partition is in 85% of marked cars, 40% of unmarked ones and 5% of undercover ones. A raised ride height goes 50%, 25% and 5%.
+
+The kit is all normal components, so you can put any of it on any car from a config. The body now emits mounts for it: `roof_mount`, `bumper_front`, `spotlight_L/R`, `antenna_aux_L/R` and `cabin_partition`. It also emits a `panel_*` connector for each door, fender and quarter panel, plus the hood, the roof and the deck. They have no default, so a plain car ignores them.
+
+```yaml
+body:
+  livery: {doors: secondary, roof: secondary}    # two tone from palette.paint_secondary
+components:
+  assign:
+    roof_mount: light.bar
+    bumper_front: {component: bumper.push_bar, options: {siren: true}}
+    spotlight_L: light.spotlight
+    cabin_partition: {component: partition.cage, options: {style: bars}}
+    console: {options: {laptop_mount: true}}
+    grille: {options: {emergency_lights: true}}
+    panel_door_front: {component: decal.panel, options: {text: POLICE, stripe: true}}
+```
+
+The lettering is a 5x7 dot font. Each dot is a thin box that sits on the panel's surface grid, so the text follows the curve of the door. `configs/police_marked.yaml`, `police_unmarked.yaml` and `police_undercover.yaml` are three cars the generator made. They open in the web editor too.
+
 ## Turntable Gif
 
 ```bash
@@ -155,10 +197,11 @@ This is how I made the gif at the top. It morphs through all 8 body styles while
 makecar/
   geometry/    mesh, frames, curves, primitives
   morph/       Target, Modifier, MorphableMesh
-  body/        params, the loft generator, styles, targets, connectors, CarBody
-  components/  exterior and interior parts
+  body/        params, the loft generator, styles, targets, connectors, mounts, panels, CarBody
+  components/  exterior, interior and fleet equipment parts, decals
   reference/   photo tracing for the measured cars
   viewer/      the viewer (session.py is the api, server.py serves it locally)
+  police.py    the police car generator
   export/      obj, svg blueprint, png renderer
 configs/       sample configs
 references/    reference photos and credits

@@ -290,7 +290,7 @@ def test_all_style_face_budgets_and_hint_opt_in_assembly(detailed_assembly):
     flaps = [i for i in detailed_assembly.instances if "mud_flap" in i.connector.tags]
     assert detailed_assembly.body.hints["mud_flaps"] is True
     assert len(flaps) == 4 and all(i.component == "mud_flap.standard" for i in flaps)
-    assert set(detailed_assembly.unattached) <= {"roof_rail_L", "roof_rail_R"}
+    assert detailed_assembly.missing() == []
     for flap in flaps:
         assert {"rivet_0", "rivet_1"} <= flap.result.mesh.groups.keys()
         assert flap.result.mesh.vertices[:, 2].min() > 0.07

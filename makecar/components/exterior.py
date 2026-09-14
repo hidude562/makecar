@@ -988,7 +988,7 @@ class Grille(CarComponent):
     name = "grille.slats"
     accepts = (RectangleConnector,)
     default_for = ("grille",)
-    options = {"slats": None, "frame": True, "mesh": False, "badge": False}
+    options = {"slats": None, "frame": True, "mesh": False, "badge": False, "emergency_lights": False, "siren": False}
     description = "deep horizontal slats interrupted around an inset roundel, with an open surround"
     pattern = "slats"
 
@@ -1044,6 +1044,23 @@ class Grille(CarComponent):
         if badge_r:
             _part(m, P.tube(badge_r, badge_r - .004, .012, 24, material="chrome", center=(0, 0, .003)), "badge_rim")
             _part(m, P.cylinder(badge_r - .005, .008, 24, material="grille_dark", center=(0, 0, .004)), "badge")
+        if opts.get("emergency_lights"):
+            # concealed LED modules at each end (local +x is the car's right: blue there, red on the driver's side)
+            from .equipment import _lens
+            lh = min(.03, ih * .5)
+            for sign, lens in ((-1, "lens_red"), (1, "lens_blue")):
+                x = sign * (iw / 2 - .06)
+                _part(m, P.box(.095, lh + .01, .010, material="grille_dark", center=(x, 0, -.004)), f"led_bezel_{lens}")
+                _part(m, P.box(.085, lh, .016, material=lens, center=(x, 0, .005)), f"led_{lens}")
+                mats[lens] = _lens(lens.split("_")[1])
+        if opts.get("siren"):
+            # siren speaker horn behind the insert, offset to one side
+            r = min(.06, ih * .45, iw * .12)
+            x = iw / 2 - r - .02
+            _part(m, P.cylinder(r, .03, 20, material="grille_dark", center=(x, 0, .003)), "siren_horn")
+            for k in range(3):
+                _part(m, P.tube(r * (.85 - .25 * k) + .004, r * (.85 - .25 * k), .006, 20, material="mesh_dark",
+                                center=(x, 0, .021)), f"siren_ring_{k}")
         # These mounts clear the WHOLE stepped fascia footprint. Seat the back
         # of the 10mm radiator backing at the mount, with no obsolete rake or
         # negative offset burying it in the uncut skin.
@@ -1084,15 +1101,22 @@ class LicensePlate(CarComponent):
     name = "plate.standard"
     accepts = (RectangleConnector,)
     default_for = ("plate",)
-    options = {"region": "eu", "color": "#f2f2ee", "text_color": "#1a1a1a"}
-    description = "license plate (EU 520x110 or US 300x150) with a dark text band"
+    options = {"region": "eu", "color": "#f2f2ee", "text_color": "#1a1a1a", "style": "standard"}
+    description = "license plate (EU 520x110 or US 300x150) with a dark text band; style 'government' for fleet plates"
 
     def build_local(self, conn: RectangleConnector, opts, ctx) -> ComponentResult:
+        opts = dict(opts)
+        government = opts.get("style") == "government"
+        if government:
+            opts.update(region="us", color="#f3f4f0", text_color="#1d2b53")
         w, h = (0.52, 0.11) if opts.get("region", "eu") == "eu" else (0.305, 0.152)
         mats = {"plate": ctx.material("plate", opts["color"], shininess=0.4),
                 "plate_text": ctx.material("plate_text", opts["text_color"], shininess=0.2),
                 "plate_blue": ctx.material("plate_blue", "#1c3d8f", shininess=0.3)}
         m = P.box(w, h, 0.006, material="plate", center=(0, 0, 0.003), name="plate")
+        if government:
+            m.merge(P.box(w * 0.92, h * 0.14, 0.002, material="plate_text", center=(0, h * 0.38, 0.007), name="govband"))
+            m.merge(P.box(w * 0.5, h * 0.09, 0.002, material="plate_text", center=(0, -h * 0.40, 0.007), name="govtext"))
         # crude "characters": 7 dark blocks
         n = 7
         cw = w * 0.09
@@ -1270,7 +1294,7 @@ class SideMirror(CarComponent):
     name = "mirror.side"
     accepts = (PointConnector,)
     default_for = ("mirror",)
-    options = {"housing_color": None}
+    options = {"housing_color": None, "emergency_light": False}
     description = "door mirror on a short stalk, housing in body colour, mirror glass facing rearwards"
 
     def build_local(self, conn: PointConnector, opts, ctx) -> ComponentResult:
@@ -1298,6 +1322,11 @@ class SideMirror(CarComponent):
         path = np.column_stack([np.full(len(signal_edge), .0695), signal_edge[:, 1] + .025,
                                 signal_edge[:, 0] + .145])
         _part(m, _pipe(path, .0035, "mirror_signal"), "turn_signal")
+        if opts.get("emergency_light"):
+            from .equipment import _lens, _lens_for
+            lens = _lens_for(conn.meta.get("side", "left"))
+            _part(m, P.box(.014, .022, .048, material=lens, center=(.079, .025, .192)), "emergency_lens")
+            mats[lens] = _lens(lens.split("_")[1])
         m.scale([1, 1 if conn.frame.y_axis[2] >= 0 else -1, 1])
         m.materials.update(mats)
         return ComponentResult(m)
