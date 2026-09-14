@@ -7,3 +7,10 @@ build/
 dist/
 logs/
 popo-wt/
+.claude/
+.venv/
+.env
+.DS_Store
+*.swp
+.vscode/
+.idea/
